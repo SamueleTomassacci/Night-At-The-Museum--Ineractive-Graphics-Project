@@ -1,0 +1,134 @@
+import * as THREE from "three";
+
+function createCanvas(size = 256) {
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  return { canvas, context: canvas.getContext("2d") };
+}
+
+function textureFromCanvas(canvas, repeatX = 1, repeatY = 1) {
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(repeatX, repeatY);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+export function createFloorTexture() {
+  const { canvas, context } = createCanvas(512);
+  context.fillStyle = "#596174";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  for (let y = 0; y < 8; y += 1) {
+    for (let x = 0; x < 8; x += 1) {
+      const shade = 78 + ((x + y) % 2) * 12 + Math.floor(Math.random() * 8);
+      context.fillStyle = `rgb(${shade}, ${shade + 7}, ${shade + 20})`;
+      context.fillRect(x * 64, y * 64, 64, 64);
+      context.strokeStyle = "rgba(230, 235, 255, 0.2)";
+      context.strokeRect(x * 64, y * 64, 64, 64);
+    }
+  }
+  for (let i = 0; i < 180; i += 1) {
+    context.strokeStyle = `rgba(255,255,255,${Math.random() * 0.09})`;
+    context.beginPath();
+    context.moveTo(Math.random() * 512, Math.random() * 512);
+    context.lineTo(Math.random() * 512, Math.random() * 512);
+    context.stroke();
+  }
+  return textureFromCanvas(canvas, 8, 8);
+}
+
+export function createWallTexture() {
+  const { canvas, context } = createCanvas(512);
+  const gradient = context.createLinearGradient(0, 0, 0, 512);
+  gradient.addColorStop(0, "#aeb6c8");
+  gradient.addColorStop(1, "#7d879d");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 36; i += 1) {
+    context.fillStyle = `rgba(255,255,255,${0.03 + Math.random() * 0.05})`;
+    context.fillRect(Math.random() * 512, Math.random() * 512, 80 + Math.random() * 180, 2);
+  }
+  for (let y = 64; y < 512; y += 64) {
+    context.strokeStyle = "rgba(35, 43, 62, 0.18)";
+    context.beginPath();
+    context.moveTo(0, y);
+    context.lineTo(512, y + Math.sin(y) * 4);
+    context.stroke();
+  }
+  return textureFromCanvas(canvas, 3, 2);
+}
+
+export function createWoodTexture() {
+  const { canvas, context } = createCanvas(256);
+  context.fillStyle = "#5c3524";
+  context.fillRect(0, 0, 256, 256);
+  for (let x = 0; x < 256; x += 1) {
+    const wave = Math.sin(x * 0.08) * 12 + Math.sin(x * 0.23) * 5;
+    context.strokeStyle = `rgba(${92 + wave}, ${52 + wave * 0.4}, ${31}, 0.55)`;
+    context.beginPath();
+    context.moveTo(x, 0);
+    context.lineTo(x + Math.sin(x * 0.04) * 12, 256);
+    context.stroke();
+  }
+  return textureFromCanvas(canvas, 2, 1);
+}
+
+export function createNormalTexture() {
+  const { canvas, context } = createCanvas(256);
+  context.fillStyle = "#8080ff";
+  context.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 900; i += 1) {
+    const v = 110 + Math.floor(Math.random() * 50);
+    context.fillStyle = `rgb(${v}, ${v}, 255)`;
+    context.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 3, 1 + Math.random() * 3);
+  }
+  return textureFromCanvas(canvas, 8, 8);
+}
+
+export function createPaintingTexture(seed = 1) {
+  const { canvas, context } = createCanvas(384);
+  const hue = (seed * 73) % 360;
+  const gradient = context.createLinearGradient(0, 0, 384, 384);
+  gradient.addColorStop(0, `hsl(${hue}, 55%, 40%)`);
+  gradient.addColorStop(0.45, `hsl(${(hue + 80) % 360}, 68%, 56%)`);
+  gradient.addColorStop(1, `hsl(${(hue + 160) % 360}, 42%, 24%)`);
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 384, 384);
+  for (let i = 0; i < 14; i += 1) {
+    context.fillStyle = `hsla(${(hue + i * 31) % 360}, 72%, ${42 + Math.random() * 28}%, 0.75)`;
+    context.beginPath();
+    context.ellipse(Math.random() * 384, Math.random() * 384, 20 + Math.random() * 90, 12 + Math.random() * 60, Math.random() * Math.PI, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.strokeStyle = "rgba(255,255,255,0.32)";
+  context.lineWidth = 4;
+  context.beginPath();
+  context.moveTo(40, 280);
+  context.bezierCurveTo(120, 160, 220, 360, 344, 120);
+  context.stroke();
+  return textureFromCanvas(canvas, 1, 1);
+}
+
+export function createSarcophagusTexture() {
+  const { canvas, context } = createCanvas(512);
+  context.fillStyle = "#b98a36";
+  context.fillRect(0, 0, 512, 512);
+  context.fillStyle = "#173a61";
+  context.fillRect(220, 30, 72, 420);
+  context.fillStyle = "#e1c56c";
+  for (let y = 70; y < 430; y += 58) {
+    context.beginPath();
+    context.arc(256, y, 24, 0, Math.PI * 2);
+    context.fill();
+  }
+  context.strokeStyle = "#422919";
+  context.lineWidth = 10;
+  context.strokeRect(32, 32, 448, 448);
+  context.strokeStyle = "rgba(255,255,255,0.28)";
+  context.lineWidth = 3;
+  context.strokeRect(58, 58, 396, 396);
+  return textureFromCanvas(canvas, 1, 1);
+}
