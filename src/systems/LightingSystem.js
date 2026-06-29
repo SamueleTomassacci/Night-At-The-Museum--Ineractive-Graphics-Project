@@ -4,12 +4,14 @@ import { COLORS } from "../utils/constants.js";
 export class LightingSystem {
   constructor(scene) {
     this.scene = scene;
+    this.mode = "blue";
     this.enabled = true;
     this.awakening = false;
     this.roomLights = [];
     this.flickerLights = [];
     this.egyptianTorches = [];
     this.createLights();
+    this.setMode(this.mode);
   }
 
   createLights() {
@@ -43,6 +45,8 @@ export class LightingSystem {
     light.position.set(...position);
     light.castShadow = true;
     light.userData.baseIntensity = intensity;
+    light.userData.blueColor = color;
+    light.userData.dayColor = name === "Egyptian" ? 0xffd49a : 0xffffff;
     light.userData.name = name;
     this.roomLights.push(light);
     if (flicker) {
@@ -57,38 +61,101 @@ export class LightingSystem {
     light.position.set(...position);
     light.castShadow = true;
     light.userData.baseIntensity = 0.55;
+    light.userData.blueColor = COLORS.torch;
+    light.userData.dayColor = 0xffd9a6;
     this.egyptianTorches.push(light);
     this.flickerLights.push(light);
     this.scene.add(light);
     return light;
   }
 
-  setEnabled(enabled) {
-    this.enabled = enabled;
-    const scalar = enabled ? 1 : 0.08;
-    this.ambient.intensity = 0.34 * scalar;
-    this.hemi.intensity = 0.55 * scalar;
-    this.directional.intensity = 1.2 * scalar;
+  setMode(mode) {
+    const modes = {
+      off: {
+        background: 0x02040a,
+        fog: 0x02040a,
+        fogDensity: 0.016,
+        ambientColor: 0x26304c,
+        ambient: 0.04,
+        hemiSky: 0x26304c,
+        hemiGround: 0x04030a,
+        hemi: 0.04,
+        directionalColor: 0x4f5f91,
+        directional: 0.05,
+        roomScalar: 0,
+        torchScalar: 0,
+        dinoSpot: 0
+      },
+      blue: {
+        background: 0x101936,
+        fog: 0x101936,
+        fogDensity: 0.014,
+        ambientColor: 0x6f83c6,
+        ambient: 0.62,
+        hemiSky: 0xa8bfff,
+        hemiGround: 0x191220,
+        hemi: 0.92,
+        directionalColor: 0xb8c6ff,
+        directional: 1.7,
+        roomScalar: 1.35,
+        torchScalar: 1.2,
+        dinoSpot: this.awakening ? 3.4 : 2.55
+      },
+      day: {
+        background: 0xc9ddff,
+        fog: 0xd8e8ff,
+        fogDensity: 0.005,
+        ambientColor: 0xffffff,
+        ambient: 1.28,
+        hemiSky: 0xffffff,
+        hemiGround: 0xd6c4aa,
+        hemi: 1.55,
+        directionalColor: 0xfff5df,
+        directional: 2.75,
+        roomScalar: 0.8,
+        torchScalar: 0.25,
+        dinoSpot: this.awakening ? 1.55 : 0.95
+      }
+    };
+    const selected = modes[mode] ?? modes.blue;
+    this.mode = modes[mode] ? mode : "blue";
+    this.enabled = this.mode !== "off";
+    this.scene.background.setHex(selected.background);
+    if (this.scene.fog) {
+      this.scene.fog.color.setHex(selected.fog);
+      this.scene.fog.density = selected.fogDensity;
+    }
+    this.ambient.color.setHex(selected.ambientColor);
+    this.ambient.intensity = selected.ambient;
+    this.hemi.color.setHex(selected.hemiSky);
+    this.hemi.groundColor.setHex(selected.hemiGround);
+    this.hemi.intensity = selected.hemi;
+    this.directional.color.setHex(selected.directionalColor);
+    this.directional.intensity = selected.directional;
     this.roomLights.forEach(light => {
-      light.intensity = light.userData.baseIntensity * scalar;
+      light.color.setHex(this.mode === "day" ? light.userData.dayColor : light.userData.blueColor);
+      light.intensity = light.userData.baseIntensity * selected.roomScalar;
+      light.userData.currentScalar = selected.roomScalar;
     });
     this.egyptianTorches.forEach(light => {
-      light.intensity = light.userData.baseIntensity * scalar;
+      light.color.setHex(this.mode === "day" ? light.userData.dayColor : light.userData.blueColor);
+      light.intensity = light.userData.baseIntensity * selected.torchScalar;
+      light.userData.currentScalar = selected.torchScalar;
     });
-    this.dinoSpot.intensity = 2.2 * scalar;
+    this.dinoSpot.color.setHex(this.mode === "day" ? 0xffffff : 0xc7d5ff);
+    this.dinoSpot.intensity = selected.dinoSpot;
+    return this.mode;
   }
 
-  toggle() {
-    this.setEnabled(!this.enabled);
-    return this.enabled;
+  cycleMode() {
+    const modes = ["off", "blue", "day"];
+    const next = modes[(modes.indexOf(this.mode) + 1) % modes.length];
+    return this.setMode(next);
   }
 
   setAwakening(enabled = true) {
     this.awakening = enabled;
-    if (enabled) {
-      this.dinoSpot.color.setHex(0xffffff);
-      this.dinoSpot.intensity = this.enabled ? 3.4 : 0.08;
-    }
+    this.setMode(this.mode);
   }
 
   boostEgyptianTorches(active) {
@@ -98,17 +165,19 @@ export class LightingSystem {
   }
 
   update(deltaTime, elapsedTime) {
-    if (!this.enabled) {
+    if (this.mode === "off") {
       return;
     }
     if (this.awakening) {
       this.flickerLights.forEach((light, index) => {
         const pulse = Math.sin(elapsedTime * (8.5 + index) + index * 3.1) * 0.18 + Math.random() * 0.08;
-        light.intensity = Math.max(0.15, light.userData.baseIntensity + pulse);
+        const scalar = this.mode === "day" ? 0.35 : 1;
+        light.intensity = Math.max(0.15, light.userData.baseIntensity * light.userData.currentScalar + pulse * scalar);
       });
     }
     this.egyptianTorches.forEach((light, index) => {
-      light.intensity = light.userData.baseIntensity + Math.sin(elapsedTime * 9 + index) * 0.12;
+      const scalar = this.mode === "day" ? 0.25 : 1.2;
+      light.intensity = light.userData.baseIntensity * scalar + Math.sin(elapsedTime * 9 + index) * 0.12 * scalar;
     });
   }
 }

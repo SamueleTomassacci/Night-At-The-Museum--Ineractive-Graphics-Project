@@ -40,12 +40,12 @@ inputManager.addEventListener("keyPressed", event => {
     ui.setCamera(cameraManager.getLabel());
   }
   if (event.detail === "l") {
-    ui.setLights(lightingSystem.toggle());
+    ui.setLightMode(lightingSystem.cycleMode());
   }
 });
 
-ui.addEventListener("toggleLights", () => {
-  ui.setLights(lightingSystem.toggle());
+ui.addEventListener("lightModeChanged", event => {
+  ui.setLightMode(lightingSystem.setMode(event.detail));
 });
 
 ui.addEventListener("toggleShadows", () => {
@@ -80,6 +80,6 @@ function loop(time) {
 }
 
 ui.setCamera(cameraManager.getLabel());
-ui.setLights(lightingSystem.enabled);
+ui.setLightMode(lightingSystem.mode);
 ui.setShadows(shadowsEnabled);
 requestAnimationFrame(loop);

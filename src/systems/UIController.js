@@ -6,7 +6,7 @@ export class UIController extends EventTarget {
     this.root = root;
     this.values = {
       camera: CAMERA_LABELS.thirdPerson,
-      lights: "on",
+      lights: "Blu notte",
       museum: "quiet",
       shadows: "on",
       quality: "medium"
@@ -31,7 +31,11 @@ export class UIController extends EventTarget {
         <div class="museum-row"><span class="museum-key">Museo</span><span data-field="museum" class="museum-value"></span></div>
       </div>
       <div class="museum-actions">
-        <button class="museum-control" data-action="lights">Luci</button>
+        <select class="museum-control" data-action="lightMode" aria-label="Luci">
+          <option value="off">Luci off</option>
+          <option value="blue" selected>Luci blu</option>
+          <option value="day">Luci giorno</option>
+        </select>
         <button class="museum-control" data-action="shadows">Ombre</button>
         <select class="museum-control" data-action="quality" aria-label="Qualita">
           <option value="low">Low</option>
@@ -41,7 +45,7 @@ export class UIController extends EventTarget {
       </div>
     `;
     this.root.appendChild(this.panel);
-    this.panel.querySelector('[data-action="lights"]').addEventListener("click", () => this.dispatchEvent(new CustomEvent("toggleLights")));
+    this.panel.querySelector('[data-action="lightMode"]').addEventListener("change", event => this.dispatchEvent(new CustomEvent("lightModeChanged", { detail: event.target.value })));
     this.panel.querySelector('[data-action="shadows"]').addEventListener("click", () => this.dispatchEvent(new CustomEvent("toggleShadows")));
     this.panel.querySelector('[data-action="quality"]').addEventListener("change", event => this.dispatchEvent(new CustomEvent("qualityChanged", { detail: event.target.value })));
     this.refresh();
@@ -52,8 +56,14 @@ export class UIController extends EventTarget {
     this.refresh();
   }
 
-  setLights(enabled) {
-    this.values.lights = enabled ? "on" : "off";
+  setLightMode(mode) {
+    const labels = {
+      off: "Off",
+      blue: "Blu notte",
+      day: "Giorno"
+    };
+    this.values.lights = labels[mode] ?? labels.blue;
+    this.panel.querySelector('[data-action="lightMode"]').value = mode;
     this.refresh();
   }
 
@@ -71,7 +81,6 @@ export class UIController extends EventTarget {
     this.panel.querySelector('[data-field="camera"]').textContent = this.values.camera;
     this.panel.querySelector('[data-field="lights"]').textContent = this.values.lights;
     this.panel.querySelector('[data-field="museum"]').textContent = this.values.museum;
-    this.panel.querySelector('[data-action="lights"]').textContent = `Luci ${this.values.lights}`;
     this.panel.querySelector('[data-action="shadows"]').textContent = `Ombre ${this.values.shadows}`;
   }
 }
