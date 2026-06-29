@@ -17,7 +17,7 @@ export class GalleryRoom {
     this.group.add(factory.createWall(0.35, 3.5, 17, [8, 1.75, 14.5]));
     this.group.add(factory.createWall(5.8, 3.5, 0.35, [-5.1, 1.75, 6]));
     this.group.add(factory.createWall(5.8, 3.5, 0.35, [5.1, 1.75, 6]));
-    this.group.add(factory.createSign("LIVING CANVASES", [0, 3.15, 22.78], Math.PI, 4.4));
+    this.group.add(factory.createSign("LIVING CANVASES", [0, 3.15, 22.66], Math.PI, 4.4));
     this.group.add(factory.createBench([0, 0, 12.2], 0));
     this.group.add(factory.createColumn([-6.2, 0, 20.4]));
     this.group.add(factory.createColumn([6.2, 0, 20.4]));

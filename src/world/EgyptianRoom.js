@@ -17,7 +17,7 @@ export class EgyptianRoom {
     this.group.add(factory.createWall(0.35, 3.5, 17, [8, 1.75, -14.5]));
     this.group.add(factory.createWall(5.8, 3.5, 0.35, [-5.1, 1.75, -6]));
     this.group.add(factory.createWall(5.8, 3.5, 0.35, [5.1, 1.75, -6]));
-    this.group.add(factory.createSign("EGYPTIAN WING", [0, 3.15, -22.78], 0, 4.2));
+    this.group.add(factory.createSign("EGYPTIAN WING", [0, 3.15, -22.66], 0, 4.2));
     this.addObelisks(factory);
     const torchPositions = [
       [-6.7, 2.2, -10],

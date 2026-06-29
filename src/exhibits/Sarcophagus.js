@@ -16,7 +16,7 @@ export class Sarcophagus {
     const inner = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.18, 3.25), this.materials.trim);
     inner.position.y = 0.9;
     this.lidPivot = new THREE.Group();
-    this.lidPivot.position.set(-1.12, 1.1, 0);
+    this.lidPivot.position.set(-1.12, 1.18, 0);
     this.lid = new THREE.Mesh(new THREE.BoxGeometry(2.26, 0.3, 4.08), this.materials.sarcophagus);
     this.lid.position.x = 1.12;
     const face = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 16), this.materials.gold);

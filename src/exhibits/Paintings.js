@@ -15,13 +15,20 @@ class Painting {
   }
 
   createModel() {
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(2.25, 1.65, 0.18), this.materials.wood);
+    const topFrame = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.18, 0.18), this.materials.wood);
+    const bottomFrame = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.18, 0.18), this.materials.wood);
+    const leftFrame = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.65, 0.18), this.materials.wood);
+    const rightFrame = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.65, 0.18), this.materials.wood);
+    topFrame.position.y = 0.735;
+    bottomFrame.position.y = -0.735;
+    leftFrame.position.x = -1.035;
+    rightFrame.position.x = 1.035;
     const artMaterial = new THREE.MeshStandardMaterial({ map: createPaintingTexture(this.seed), roughness: 0.34, metalness: 0.04, emissive: 0x000000, side: THREE.DoubleSide });
     this.surface = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.22), artMaterial);
-    this.surface.position.z = -0.095;
+    this.surface.position.z = -0.12;
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.3), this.materials.glass);
-    glass.position.z = -0.105;
-    this.group.add(frame, this.surface, glass);
+    glass.position.z = -0.17;
+    this.group.add(topFrame, bottomFrame, leftFrame, rightFrame, this.surface, glass);
     this.group.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true;

@@ -5,7 +5,7 @@ export class Clock {
     this.materials = materials;
     this.onMidnight = onMidnight;
     this.group = new THREE.Group();
-    this.group.position.set(0, 2.8, -5.72);
+    this.group.position.set(-5.15, 2.45, -5.63);
     this.progress = 0;
     this.done = false;
     this.createModel();
