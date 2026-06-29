@@ -5,7 +5,7 @@ export class DinosaurRoom {
   constructor(factory) {
     this.group = new THREE.Group();
     this.group.name = "Dinosaur Room";
-    this.dinosaur = new Dinosaur(factory.materials);
+    this.dinosaur = new Dinosaur();
     this.createRoom(factory);
     this.group.add(this.dinosaur.group);
   }

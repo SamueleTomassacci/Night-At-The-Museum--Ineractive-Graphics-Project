@@ -27,11 +27,11 @@ npm run build
 - Three.js per rendering, camera, luci, geometrie e materiali
 - @tweenjs/tween.js per animazioni temporizzate
 - Vite come dev server e build tool
-- Nessun modello 3D esterno, nessun asset importato e nessuna animazione importata
+- Modello T-Rex GLTF riggato con la sua animazione incorporata
 - Texture procedurali create con CanvasTexture
 - Player gerarchico con camminata, rotazione e limiti di movimento
 - Tre modalita camera
-- Dinosauro gerarchico con corpo, collo, testa, mascella, coda, gambe e braccia
+- T-Rex scheletrico riggato e animato tramite AnimationMixer
 - Statua gerarchica con testa e braccio animati
 - Sarcofago cliccabile con coperchio animato e luce interna
 - Galleria con quattro quadri procedurali reattivi
@@ -84,4 +84,6 @@ src/
 
 ## Note
 
-Tutti i modelli sono composizioni di primitive Three.js. Le animazioni sono implementate in JavaScript con render loop, funzioni sinusoidali e tween.js. Le texture di pavimento, pareti, legno, quadri e sarcofago sono generate proceduralmente via canvas.
+Gli elementi del museo, escluso il T-Rex importato, sono composizioni di primitive Three.js. Le animazioni sono gestite tramite render loop, tween.js e AnimationMixer. Le texture di pavimento, pareti, legno, quadri e sarcofago sono generate proceduralmente via canvas.
+
+Il modello del T-Rex e basato su ["T-rex-skeleton-rigged-and-animated"](https://sketchfab.com/3d-models/t-rex-skeleton-rigged-and-animated-cca5cf48215142db91f657053bd74057) di [felixjoshua10251025](https://sketchfab.com/felixjoshua10251025), distribuito con licenza [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
