@@ -21,7 +21,8 @@ export class UIController extends EventTarget {
     this.panel.innerHTML = `
       <h1>Midnight Museum: The Awakening</h1>
       <div class="museum-grid">
-        <div class="museum-row"><span class="museum-key">WASD / frecce</span><span class="museum-value">movimento</span></div>
+        <div class="museum-row"><span class="museum-key">W / S</span><span class="museum-value">avanti / indietro</span></div>
+        <div class="museum-row"><span class="museum-key">A / D</span><span class="museum-value">ruota</span></div>
         <div class="museum-row"><span class="museum-key">C</span><span class="museum-value">camera</span></div>
         <div class="museum-row"><span class="museum-key">L</span><span class="museum-value">luci</span></div>
         <div class="museum-row"><span class="museum-key">Click</span><span class="museum-value">reperti</span></div>

@@ -14,7 +14,8 @@ npm run build
 
 ## Controlli
 
-- WASD o frecce: movimento del player
+- W / S: avanti e indietro rispetto alla direzione del player
+- A / D: rotazione del player anche da fermo
 - C: cambio camera tra terza persona, dall'alto e panoramica
 - L: accensione e spegnimento luci
 - Click mouse: interazione con sarcofago e quadri

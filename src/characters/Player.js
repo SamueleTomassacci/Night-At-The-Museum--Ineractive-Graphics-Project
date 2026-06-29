@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { damp } from "../utils/math.js";
 
 export class Player {
   constructor(materials, inputManager, collisionSystem) {
@@ -7,6 +6,7 @@ export class Player {
     this.inputManager = inputManager;
     this.collisionSystem = collisionSystem;
     this.speed = 5.4;
+    this.turnSpeed = 2.8;
     this.walkTime = 0;
     this.group = new THREE.Group();
     this.group.position.set(0, 0, 3.8);
@@ -48,12 +48,17 @@ export class Player {
   }
 
   update(deltaTime) {
-    const input = this.inputManager.getMovementVector();
-    const moving = input.lengthSq() > 0;
+    const turnInput = (this.inputManager.isDown("d") ? 1 : 0) - (this.inputManager.isDown("a") ? 1 : 0);
+    const moveInput = (this.inputManager.isDown("w") ? 1 : 0) - (this.inputManager.isDown("s") ? 1 : 0);
+    const moving = moveInput !== 0;
+
+    if (turnInput !== 0) {
+      this.group.rotation.y -= turnInput * this.turnSpeed * deltaTime;
+    }
+
     if (moving) {
-      this.group.position.addScaledVector(input, this.speed * deltaTime);
-      const targetRotation = Math.atan2(input.x, input.z);
-      this.group.rotation.y = damp(this.group.rotation.y, targetRotation, 14, deltaTime);
+      const forward = new THREE.Vector3(Math.sin(this.group.rotation.y), 0, Math.cos(this.group.rotation.y));
+      this.group.position.addScaledVector(forward, moveInput * this.speed * deltaTime);
       this.walkTime += deltaTime * 9.5;
     } else {
       this.walkTime += deltaTime * 3;
