@@ -8,17 +8,21 @@ const TAIL_BONES = [
   { name: "Cola2_ArmatureRexy", amplitude: 0.2 },
   { name: "Cola3_ArmatureRexy", amplitude: 0.3 },
   { name: "Cola4_ArmatureRexy", amplitude: 0.5 },
-  { name: "Cola5_ArmatureRexy", amplitude: 0.4 },
-  { name: "Cola6_ArmatureRexy", amplitude: 0.3 }
+  { name: "Cola5_ArmatureRexy", amplitude: 0.7 },
+  { name: "Cola6_ArmatureRexy", amplitude: 0.9 }
 ];
 const TAIL_SWING_AXIS = new THREE.Vector3(0, 0, 1);
 const JAW_BONE_NAME = "Boca_ArmatureRexy";
 const JAW_OPEN_AXIS = new THREE.Vector3(-1, 0, -0.022).normalize();
+const JAW_OPEN_ANGLE_FIRST = THREE.MathUtils.degToRad(15);
 const JAW_OPEN_ANGLE = THREE.MathUtils.degToRad(30);
-const JAW_MOVEMENT_DURATION = 450;
-const JAW_OPEN_PAUSE = 1200;
-const JAW_CYCLE_DURATION = JAW_MOVEMENT_DURATION * 2 + JAW_OPEN_PAUSE;
-const JAW_CLOSED_PAUSE = 4000;
+const STEP_DURATION = 400;
+const JAW_SECOND_OPEN_DURATION = 150;
+const JAW_OPEN_DURATION = STEP_DURATION + JAW_SECOND_OPEN_DURATION;
+const JAW_CLOSE_DURATION = 450;
+const JAW_OPEN_PAUSE = 2000;
+const JAW_CYCLE_DURATION = JAW_OPEN_DURATION + JAW_OPEN_PAUSE + JAW_CLOSE_DURATION;
+const JAW_CLOSED_PAUSE = 3000;
 const HEAD_BONE_NAME = "Cabeza_ArmatureRexy";
 const HEAD_IK_BONE_NAME = "CabezaIK_ArmatureRexy";
 const HEAD_NECK_BONES = [
@@ -35,6 +39,12 @@ const HEAD_TILT_ANGLE = THREE.MathUtils.degToRad(30);
 const BODY_BONE_NAME = "Mover_ArmatureRexy";
 const BODY_ROTATION_AXIS = new THREE.Vector3(1, 0.0, -0.5).normalize();
 const BODY_DOWN_ANGLE = THREE.MathUtils.degToRad(15);
+const BODY_STEP_FORWARD = 1.00;
+const BODY_STEP_DROP = 0.1;
+const BODY_VIBRATION_AXIS = new THREE.Vector3(0.33, 0.33, 0.33).normalize();
+const BODY_VIBRATION_ANGLE = THREE.MathUtils.degToRad(0.2);
+const BODY_VIBRATION_PERIOD = 120;
+const BODY_VIBRATION_FADE_DURATION = 150;
 const LEG_CHAINS = [
   {
     upper: "MusloL_ArmatureRexy",
@@ -73,18 +83,70 @@ const ARM_BONES = [
   },
 ];
 const LEFT_STEP_ROOT_NAME = "PiernaIKL_ArmatureRexy";
-const LEFT_STEP_LIFT = 0.0;
-const LEFT_STEP_FORWARD = 0.0;
+const LEFT_STEP_LIFT = 0.80;
+const LEFT_STEP_FORWARD = 1.;
 const LEFT_STEP_SIDE = 0.0;
 
 const LEFT_STEP_LIFT2 = 0.0;
-const LEFT_STEP_FORWARD2 = 0;
+const LEFT_STEP_FORWARD2 = 1.7;
 const LEFT_STEP_SIDE2 = 0.0;
-const LEFT_STEP_SECOND_DURATION = 200;
+const LEFT_STEP_FIRST_DURATION = STEP_DURATION * 0.5;
+const LEFT_STEP_SECOND_DURATION = LEFT_STEP_FIRST_DURATION;
 
 function cosineEase(progress) {
   const clampedProgress = THREE.MathUtils.clamp(progress, 0, 1);
   return (1 - Math.cos(Math.PI * clampedProgress)) * 0.5;
+}
+
+function hermiteInterpolate(start, end, startVelocity, endVelocity, elapsed, duration) {
+  const progress = THREE.MathUtils.clamp(elapsed / duration, 0, 1);
+  const progress2 = progress * progress;
+  const progress3 = progress2 * progress;
+  const startWeight = 2 * progress3 - 3 * progress2 + 1;
+  const startVelocityWeight = progress3 - 2 * progress2 + progress;
+  const endWeight = -2 * progress3 + 3 * progress2;
+  const endVelocityWeight = progress3 - progress2;
+
+  return startWeight * start
+    + startVelocityWeight * startVelocity * duration
+    + endWeight * end
+    + endVelocityWeight * endVelocity * duration;
+}
+
+function bodyVibrationAt(elapsed) {
+  const pauseElapsed = elapsed - JAW_OPEN_DURATION;
+
+  if (pauseElapsed < 0 || pauseElapsed > JAW_OPEN_PAUSE) {
+    return 0;
+  }
+
+  const fadeIn = THREE.MathUtils.clamp(
+    pauseElapsed / BODY_VIBRATION_FADE_DURATION,
+    0,
+    1
+  );
+  const fadeOut = THREE.MathUtils.clamp(
+    (JAW_OPEN_PAUSE - pauseElapsed) / BODY_VIBRATION_FADE_DURATION,
+    0,
+    1
+  );
+  const envelope = Math.min(fadeIn, fadeOut);
+
+  return Math.sin((pauseElapsed / BODY_VIBRATION_PERIOD) * Math.PI * 2) * envelope;
+}
+
+function bodyMovementProgressAt(elapsed) {
+  const returnStart = JAW_OPEN_DURATION + JAW_OPEN_PAUSE;
+
+  if (elapsed < STEP_DURATION) {
+    return cosineEase(elapsed / STEP_DURATION);
+  }
+
+  if (elapsed < returnStart) {
+    return 1;
+  }
+
+  return 1 - cosineEase((elapsed - returnStart) / JAW_CLOSE_DURATION);
 }
 
 export class Dinosaur {
@@ -106,7 +168,9 @@ export class Dinosaur {
     this.headTiltOffset = new THREE.Quaternion();
     this.bodyBone = null;
     this.bodyBaseQuaternion = new THREE.Quaternion();
+    this.bodyBasePosition = new THREE.Vector3();
     this.bodyOffset = new THREE.Quaternion();
+    this.bodyVibrationOffset = new THREE.Quaternion();
     this.model = null;
     this.legChains = [];
     this.armBones = [];
@@ -128,7 +192,7 @@ export class Dinosaur {
         model.rotation.x = 0;
         model.updateMatrixWorld(true);
 
-        // Porta il modello alle dimensioni della sala e appoggialo al pavimento.
+        // on the floor
         const initialBox = new THREE.Box3().setFromObject(model);
         const initialSize = initialBox.getSize(new THREE.Vector3());
         const scale = 3.2 / initialSize.y;
@@ -246,8 +310,6 @@ export class Dinosaur {
       return;
     }
 
-    // Il GLB esporta questo joint come ramo separato, nonostante deformi una
-    // vertebra alla base del cranio. Manteniamo la posa e ripariamo la gerarchia.
     model.updateMatrixWorld(true);
     headBone.attach(headIkBone);
   }
@@ -261,6 +323,7 @@ export class Dinosaur {
     }
 
     this.bodyBaseQuaternion.copy(this.bodyBone.quaternion);
+    this.bodyBasePosition.copy(this.bodyBone.position);
   }
 
   setupLegCompensation(model) {
@@ -320,6 +383,7 @@ export class Dinosaur {
     }
 
     this.leftStepBasePosition.copy(this.leftStepRoot.position);
+
   }
 
   applyLeftStep(elapsed) {
@@ -327,32 +391,37 @@ export class Dinosaur {
       return;
     }
 
-    const firstStepEnd = JAW_MOVEMENT_DURATION;
+    const firstStepEnd = LEFT_STEP_FIRST_DURATION;
     const secondStepEnd = firstStepEnd + LEFT_STEP_SECOND_DURATION;
-    const returnStart = JAW_MOVEMENT_DURATION + JAW_OPEN_PAUSE;
+    const returnStart = JAW_OPEN_DURATION + JAW_OPEN_PAUSE;
     let lift;
     let forward;
     let side;
 
-    if (elapsed < firstStepEnd) {
-      const progress = cosineEase(elapsed / firstStepEnd);
-      lift = LEFT_STEP_LIFT * progress;
-      forward = LEFT_STEP_FORWARD * progress;
-      side = LEFT_STEP_SIDE * progress;
-    } else if (elapsed < secondStepEnd) {
-      const progress = cosineEase(
-        (elapsed - firstStepEnd) / LEFT_STEP_SECOND_DURATION
-      );
-      lift = THREE.MathUtils.lerp(LEFT_STEP_LIFT, LEFT_STEP_LIFT2, progress);
-      forward = THREE.MathUtils.lerp(LEFT_STEP_FORWARD, LEFT_STEP_FORWARD2, progress);
-      side = THREE.MathUtils.lerp(LEFT_STEP_SIDE, LEFT_STEP_SIDE2, progress);
+    if (elapsed < secondStepEnd) {
+      const progress = THREE.MathUtils.clamp(elapsed / secondStepEnd, 0, 1);
+
+  
+      forward = LEFT_STEP_FORWARD2 * cosineEase(progress);
+
+      if (elapsed < firstStepEnd) {
+        const liftProgress = cosineEase(elapsed / firstStepEnd);
+        lift = LEFT_STEP_LIFT * liftProgress;
+        side = LEFT_STEP_SIDE * liftProgress;
+      } else {
+        const landingProgress = cosineEase(
+          (elapsed - firstStepEnd) / LEFT_STEP_SECOND_DURATION
+        );
+        lift = THREE.MathUtils.lerp(LEFT_STEP_LIFT, LEFT_STEP_LIFT2, landingProgress);
+        side = THREE.MathUtils.lerp(LEFT_STEP_SIDE, LEFT_STEP_SIDE2, landingProgress);
+      }
     } else if (elapsed < returnStart) {
       lift = LEFT_STEP_LIFT2;
       forward = LEFT_STEP_FORWARD2;
       side = LEFT_STEP_SIDE2;
     } else {
       const progress = cosineEase(
-        (elapsed - returnStart) / JAW_MOVEMENT_DURATION
+        (elapsed - returnStart) / JAW_CLOSE_DURATION
       );
       lift = THREE.MathUtils.lerp(LEFT_STEP_LIFT2, 0, progress);
       forward = THREE.MathUtils.lerp(LEFT_STEP_FORWARD2, 0, progress);
@@ -363,6 +432,18 @@ export class Dinosaur {
     this.leftStepRoot.position.x += side;
     this.leftStepRoot.position.z += lift;
     this.leftStepRoot.position.y -= forward;
+  }
+
+  applyBodyStep(elapsed) {
+    if (!this.bodyBone) {
+      return;
+    }
+
+    const progress = bodyMovementProgressAt(elapsed);
+
+    this.bodyBone.position.copy(this.bodyBasePosition);
+    this.bodyBone.position.y -= BODY_STEP_FORWARD * progress;
+    this.bodyBone.position.z -= BODY_STEP_DROP * Math.sin(Math.PI * progress);
   }
 
   rotateBoneToward(bone, currentDirection, targetDirection) {
@@ -447,13 +528,31 @@ export class Dinosaur {
       .onUpdate(() => {
         const elapsed = this.jawState.progress * JAW_CYCLE_DURATION;
         let openness = 1;
+        const transitionVelocity = 1 / JAW_OPEN_DURATION;
 
-        if (elapsed < JAW_MOVEMENT_DURATION) {
-          const progress = elapsed / JAW_MOVEMENT_DURATION;
-          openness = (1 - Math.cos(Math.PI * progress)) * 0.5;
-        } else if (elapsed > JAW_MOVEMENT_DURATION + JAW_OPEN_PAUSE) {
-          const progress = (elapsed - JAW_MOVEMENT_DURATION - JAW_OPEN_PAUSE) / JAW_MOVEMENT_DURATION;
-          openness = (1 + Math.cos(Math.PI * progress)) * 0.5;
+        if (elapsed < STEP_DURATION) {
+          openness = hermiteInterpolate(
+            0,
+            JAW_OPEN_ANGLE_FIRST / JAW_OPEN_ANGLE,
+            0,
+            transitionVelocity,
+            elapsed,
+            STEP_DURATION
+          );
+        } else if (elapsed < JAW_OPEN_DURATION) {
+          openness = hermiteInterpolate(
+            JAW_OPEN_ANGLE_FIRST / JAW_OPEN_ANGLE,
+            1,
+            transitionVelocity,
+            0,
+            elapsed - STEP_DURATION,
+            JAW_SECOND_OPEN_DURATION
+          );
+        } else if (elapsed > JAW_OPEN_DURATION + JAW_OPEN_PAUSE) {
+          const progress = (
+            elapsed - JAW_OPEN_DURATION - JAW_OPEN_PAUSE
+          ) / JAW_CLOSE_DURATION;
+          openness = 1 - cosineEase(progress);
         }
 
         this.jawOffset.setFromAxisAngle(JAW_OPEN_AXIS, JAW_OPEN_ANGLE * openness);
@@ -480,11 +579,16 @@ export class Dinosaur {
         if (this.bodyBone) {
           this.bodyOffset.setFromAxisAngle(
             BODY_ROTATION_AXIS,
-            BODY_DOWN_ANGLE * openness
+            BODY_DOWN_ANGLE * bodyMovementProgressAt(elapsed)
           );
           this.bodyBone.quaternion
             .copy(this.bodyBaseQuaternion)
             .multiply(this.bodyOffset);
+          this.bodyVibrationOffset.setFromAxisAngle(
+            BODY_VIBRATION_AXIS,
+            BODY_VIBRATION_ANGLE * bodyVibrationAt(elapsed)
+          );
+          this.bodyBone.quaternion.multiply(this.bodyVibrationOffset);
         }
 
         this.armBones.forEach(armBone => {
@@ -498,6 +602,7 @@ export class Dinosaur {
         });
 
         this.applyLeftStep(elapsed);
+        this.applyBodyStep(elapsed);
         this.solveLegCompensation();
       })
       .start();
