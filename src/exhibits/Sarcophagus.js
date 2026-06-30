@@ -40,14 +40,15 @@ export class Sarcophagus {
 
   toggle() {
     this.open = !this.open;
-    new TWEEN.Tween(this.lidPivot.rotation)
+    const lidTween = new TWEEN.Tween(this.lidPivot.rotation)
       .to({ z: this.open ? -1.35 : 0 }, 900)
-      .easing(TWEEN.Easing.Cubic.InOut)
-      .start();
-    new TWEEN.Tween(this.innerLight)
+      .easing(TWEEN.Easing.Cubic.InOut);
+    const lightTween = new TWEEN.Tween(this.innerLight)
       .to({ intensity: this.open ? 2.4 : 0 }, 700)
-      .easing(TWEEN.Easing.Quadratic.Out)
-      .start();
+      .easing(TWEEN.Easing.Quadratic.Out);
+    TWEEN.add(lidTween, lightTween);
+    lidTween.start();
+    lightTween.start();
   }
 
   update(deltaTime, elapsedTime) {

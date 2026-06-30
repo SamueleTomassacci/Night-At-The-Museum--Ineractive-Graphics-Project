@@ -1,8 +1,16 @@
 import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const COLUMN_MODEL_URL = "/models/Column/ionic_column.glb";
+const BENCH_MODEL_URL = "/models/bench/modern_bench_1.glb";
+const DOOR_MODEL_URL = "/models/Door/sliding_door.glb";
 
 export class AssetFactory {
   constructor(materials) {
     this.materials = materials;
+    this.columnModelPromise = null;
+    this.benchModelPromise = null;
+    this.doorModelPromise = null;
   }
 
   mesh(geometry, material, position = [0, 0, 0], castShadow = true, receiveShadow = true) {
@@ -24,23 +32,119 @@ export class AssetFactory {
 
   createColumn(position, height = 4.2) {
     const group = new THREE.Group();
-    const base = this.mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.34, 20), this.materials.trim, [0, 0.17, 0]);
-    const shaft = this.mesh(new THREE.CylinderGeometry(0.36, 0.42, height, 24), this.materials.wall, [0, height / 2 + 0.34, 0]);
-    const cap = this.mesh(new THREE.CylinderGeometry(0.64, 0.52, 0.32, 20), this.materials.trim, [0, height + 0.64, 0]);
-    group.add(base, shaft, cap);
     group.position.set(...position);
+
+    this.loadColumnModel()
+      .then(model => {
+        group.add(this.createColumnModelInstance(model, height + 0.8));
+      })
+      .catch(error => {
+        console.error("Impossibile caricare il modello della colonna:", error);
+      });
+
     return group;
   }
 
-  createDoorFrame(position, rotationY = 0) {
+  loadColumnModel() {
+    if (!this.columnModelPromise) {
+      const loader = new GLTFLoader();
+      this.columnModelPromise = loader.loadAsync(COLUMN_MODEL_URL).then(gltf => {
+        const model = gltf.scene;
+        model.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        return model;
+      });
+    }
+
+    return this.columnModelPromise;
+  }
+
+  createColumnModelInstance(model, height) {
+    const instance = model.clone(true);
+    const box = new THREE.Box3().setFromObject(instance);
+    const size = box.getSize(new THREE.Vector3());
+    const scale = height / Math.max(size.y, 0.001);
+
+    instance.scale.setScalar(scale);
+    instance.updateMatrixWorld(true);
+
+    const scaledBox = new THREE.Box3().setFromObject(instance);
+    const center = scaledBox.getCenter(new THREE.Vector3());
+    instance.position.set(-center.x, -scaledBox.min.y, -center.z);
+
+    return instance;
+  }
+
+  createDoorFrame(position, rotationY = 0, width = 3.6) {
     const group = new THREE.Group();
-    const sideA = this.mesh(new THREE.BoxGeometry(0.35, 3.2, 0.35), this.materials.wood, [-1.3, 1.6, 0]);
-    const sideB = this.mesh(new THREE.BoxGeometry(0.35, 3.2, 0.35), this.materials.wood, [1.3, 1.6, 0]);
-    const top = this.mesh(new THREE.BoxGeometry(3, 0.36, 0.38), this.materials.wood, [0, 3.25, 0]);
-    group.add(sideA, sideB, top);
     group.position.set(...position);
     group.rotation.y = rotationY;
+    group.userData.isDoor = true;
+    group.userData.doorVisual = null;
+    group.userData.isOpen = false;
+    group.userData.isAnimating = false;
+    group.userData.ready = false;
+    group.userData.closedPosition = new THREE.Vector3();
+    group.userData.openPosition = new THREE.Vector3(width * 0.42, 0, 0);
+    group.userData.autoCloseTimeout = null;
+
+    this.loadDoorModel()
+      .then(model => {
+        const doorVisual = this.createDoorModelInstance(model, 3.4, width);
+        group.add(doorVisual);
+        group.userData.doorVisual = doorVisual;
+        group.userData.closedPosition.copy(doorVisual.position);
+        group.userData.openPosition.copy(doorVisual.position).add(new THREE.Vector3(width * 0.42, 0, 0));
+        group.userData.ready = true;
+      })
+      .catch(error => {
+        console.error("Impossibile caricare il modello della porta:", error);
+      });
+
     return group;
+  }
+
+  loadDoorModel() {
+    if (!this.doorModelPromise) {
+      const loader = new GLTFLoader();
+      this.doorModelPromise = loader.loadAsync(DOOR_MODEL_URL).then(gltf => {
+        const model = gltf.scene;
+        model.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        return model;
+      });
+    }
+
+    return this.doorModelPromise;
+  }
+
+  createDoorModelInstance(model, height, width) {
+    const instance = model.clone(true);
+    const box = new THREE.Box3().setFromObject(instance);
+    const size = box.getSize(new THREE.Vector3());
+    const scale = height / Math.max(size.y, 0.001);
+
+    instance.scale.setScalar(scale);
+    instance.updateMatrixWorld(true);
+
+    const heightScaledBox = new THREE.Box3().setFromObject(instance);
+    const heightScaledSize = heightScaledBox.getSize(new THREE.Vector3());
+    instance.scale.x *= width / Math.max(heightScaledSize.x, 0.001);
+    instance.updateMatrixWorld(true);
+
+    const scaledBox = new THREE.Box3().setFromObject(instance);
+    const center = scaledBox.getCenter(new THREE.Vector3());
+    instance.position.set(-center.x, -scaledBox.min.y, -center.z);
+
+    return instance;
   }
 
   createSign(text, position, rotationY = 0, width = 3.1) {
@@ -71,13 +175,52 @@ export class AssetFactory {
 
   createBench(position, rotationY = 0) {
     const group = new THREE.Group();
-    const seat = this.mesh(new THREE.BoxGeometry(3.4, 0.24, 0.7), this.materials.wood, [0, 0.75, 0]);
-    const back = this.mesh(new THREE.BoxGeometry(3.4, 0.7, 0.18), this.materials.wood, [0, 1.08, 0.34]);
-    const legA = this.mesh(new THREE.BoxGeometry(0.18, 0.75, 0.18), this.materials.trim, [-1.35, 0.36, -0.2]);
-    const legB = this.mesh(new THREE.BoxGeometry(0.18, 0.75, 0.18), this.materials.trim, [1.35, 0.36, -0.2]);
-    group.add(seat, back, legA, legB);
     group.position.set(...position);
     group.rotation.y = rotationY;
+
+    this.loadBenchModel()
+      .then(model => {
+        group.add(this.createBenchModelInstance(model, 3.4));
+      })
+      .catch(error => {
+        console.error("Impossibile caricare il modello della panchina:", error);
+      });
+
     return group;
+  }
+
+  loadBenchModel() {
+    if (!this.benchModelPromise) {
+      const loader = new GLTFLoader();
+      this.benchModelPromise = loader.loadAsync(BENCH_MODEL_URL).then(gltf => {
+        const model = gltf.scene;
+        model.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        return model;
+      });
+    }
+
+    return this.benchModelPromise;
+  }
+
+  createBenchModelInstance(model, length) {
+    const instance = model.clone(true);
+    const box = new THREE.Box3().setFromObject(instance);
+    const size = box.getSize(new THREE.Vector3());
+    const horizontalLength = Math.max(size.x, size.z, 0.001);
+    const scale = length / horizontalLength;
+
+    instance.scale.setScalar(scale);
+    instance.updateMatrixWorld(true);
+
+    const scaledBox = new THREE.Box3().setFromObject(instance);
+    const center = scaledBox.getCenter(new THREE.Vector3());
+    instance.position.set(-center.x, -scaledBox.min.y, -center.z);
+
+    return instance;
   }
 }

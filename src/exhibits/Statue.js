@@ -56,15 +56,16 @@ export class Statue {
       return;
     }
     this.busy = true;
-    new TWEEN.Tween(this.rightArm.rotation)
+    const armTween = new TWEEN.Tween(this.rightArm.rotation)
       .to({ z: -1.65, x: -0.25 }, 1300)
       .easing(TWEEN.Easing.Sinusoidal.InOut)
       .yoyo(true)
       .repeat(1)
       .onComplete(() => {
         this.busy = false;
-      })
-      .start();
+      });
+    TWEEN.add(armTween);
+    armTween.start();
   }
 
   update(deltaTime, elapsedTime) {

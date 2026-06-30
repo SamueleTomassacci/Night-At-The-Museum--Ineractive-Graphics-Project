@@ -28,7 +28,10 @@ npm run build
 - @tweenjs/tween.js per animazioni temporizzate
 - Vite come dev server e build tool
 - Modello T-Rex GLTF riggato con la sua animazione incorporata
-- Texture procedurali create con CanvasTexture, con mappe PBR statiche ambientCG WoodFloor064 per il pavimento
+- Modello colonna GLB usato per le colonne dell'atrio
+- Modello panchina GLB usato per le panchine del museo
+- Modello porta GLB usato per le porte dell'atrio
+- Texture procedurali create con CanvasTexture, con mappe PBR statiche ambientCG WoodFloor064 per il pavimento e Concrete030 per le pareti
 - Player gerarchico con camminata, rotazione e limiti di movimento
 - Tre modalita camera
 - T-Rex scheletrico riggato e animato tramite AnimationMixer
@@ -84,6 +87,6 @@ src/
 
 ## Note
 
-Gli elementi del museo, escluso il T-Rex importato, sono composizioni di primitive Three.js. Le animazioni sono gestite tramite render loop, tween.js e AnimationMixer. Le texture di pareti, legno, quadri e sarcofago sono generate proceduralmente via canvas. Il pavimento usa mappe PBR statiche ambientCG WoodFloor064 caricate da `/texture/floor/` (`Color`, `NormalGL` e `Roughness`), con la precedente texture procedurale mantenuta come fallback; questa modifica non introduce animazioni esterne.
+Gli elementi del museo, esclusi il T-Rex importato e i modelli GLB di colonne, panchine e porte, sono composizioni di primitive Three.js. Le animazioni sono gestite tramite render loop, tween.js e AnimationMixer; i modelli GLB aggiunti non introducono animazioni esterne. Le texture di legno, quadri e sarcofago sono generate proceduralmente via canvas. Il pavimento usa mappe PBR statiche ambientCG WoodFloor064 caricate da `/texture/floor/`; le pareti usano mappe PBR statiche ambientCG Concrete030 caricate da `/texture/wall/`. Entrambi usano `Color`, `NormalGL` e `Roughness`, con le precedenti texture procedurali mantenute come fallback.
 
 Il modello del T-Rex e basato su ["T-rex-skeleton-rigged-and-animated"](https://sketchfab.com/3d-models/t-rex-skeleton-rigged-and-animated-cca5cf48215142db91f657053bd74057) di [felixjoshua10251025](https://sketchfab.com/felixjoshua10251025), distribuito con licenza [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).

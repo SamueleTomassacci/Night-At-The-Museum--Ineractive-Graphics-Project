@@ -1,0 +1,11 @@
+
+> midnight-museum-the-awakening@0.1.0 dev
+> vite --host 0.0.0.0 --host 127.0.0.1 --port 5173
+
+
+  VITE v7.3.6  ready in 244 ms
+
+  ➜  Local:   http://127.0.0.1:5173/
+10:55:08 [vite] (client) page reload src/systems/DoorInteractionSystem.js
+10:55:08 [vite] (client) page reload src/exhibits/Sarcophagus.js
+10:55:08 [vite] (client) page reload src/exhibits/Statue.js

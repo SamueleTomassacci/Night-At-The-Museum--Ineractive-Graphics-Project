@@ -45,6 +45,10 @@ export class Museum {
     ];
   }
 
+  getDoors() {
+    return this.hall.getDoors();
+  }
+
   updateTriggers(player) {
     const position = player.group.position;
     if (withinRect(position, ROOM_RECTS.dinosaur)) {

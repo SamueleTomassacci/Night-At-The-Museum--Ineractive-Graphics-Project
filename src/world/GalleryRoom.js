@@ -12,12 +12,12 @@ export class GalleryRoom {
 
   createRoom(factory) {
     this.group.add(factory.createFloor(16, 17, [0, 0, 14.5]));
-    this.group.add(factory.createWall(16, 3.5, 0.35, [0, 1.75, 23]));
-    this.group.add(factory.createWall(0.35, 3.5, 17, [-8, 1.75, 14.5]));
-    this.group.add(factory.createWall(0.35, 3.5, 17, [8, 1.75, 14.5]));
-    this.group.add(factory.createWall(5.8, 3.5, 0.35, [-5.1, 1.75, 6]));
-    this.group.add(factory.createWall(5.8, 3.5, 0.35, [5.1, 1.75, 6]));
-    this.group.add(factory.createSign("LIVING CANVASES", [0, 3.15, 22.66], Math.PI, 4.4));
+    this.group.add(factory.createWall(16, 4.8, 0.35, [0, 2.4, 23]));
+    this.group.add(factory.createWall(0.35, 4.8, 17, [-8, 2.4, 14.5]));
+    this.group.add(factory.createWall(0.35, 4.8, 17, [8, 2.4, 14.5]));
+    this.group.add(factory.createWall(5.8, 4.8, 0.35, [-5.1, 2.4, 6]));
+    this.group.add(factory.createWall(5.8, 4.8, 0.35, [5.1, 2.4, 6]));
+    this.group.add(factory.createSign("LIVING CANVASES", [0, 3.15, 22.76], Math.PI, 4.4));
     this.group.add(factory.createBench([0, 0, 12.2], 0));
     this.group.add(factory.createColumn([-6.2, 0, 20.4]));
     this.group.add(factory.createColumn([6.2, 0, 20.4]));

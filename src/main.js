@@ -12,6 +12,7 @@ import { AnimationSystem } from "./systems/AnimationSystem.js";
 import { LightingSystem } from "./systems/LightingSystem.js";
 import { CollisionSystem } from "./systems/CollisionSystem.js";
 import { UIController } from "./systems/UIController.js";
+import { DoorInteractionSystem } from "./systems/DoorInteractionSystem.js";
 
 const renderer = new Renderer();
 const sceneManager = new SceneManager();
@@ -25,10 +26,11 @@ const animationSystem = new AnimationSystem();
 const museum = new Museum(factory, lightingSystem, sceneManager);
 const player = new Player(materials, inputManager, collisionSystem);
 const interactionManager = new InteractionManager(cameraManager.camera, inputManager);
+const doorInteractionSystem = new DoorInteractionSystem(player, museum.getDoors());
 const ui = new UIController(document.getElementById("ui-root"));
 
 sceneManager.scene.add(museum.group, player.group);
-animationSystem.addMany([lightingSystem, ...museum.getAnimatables()]);
+animationSystem.addMany([lightingSystem, doorInteractionSystem, ...museum.getAnimatables()]);
 museum.getClickables().forEach(clickable => interactionManager.register(clickable.group, clickable));
 
 let shadowsEnabled = true;

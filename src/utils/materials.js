@@ -9,11 +9,25 @@ const FLOOR_TEXTURE_PATHS = {
   normal: "/texture/floor/WoodFloor064_2K-JPG_NormalGL.jpg",
   roughness: "/texture/floor/WoodFloor064_2K-JPG_Roughness.jpg"
 };
+const USE_EXTERNAL_WALL_TEXTURES = true;
+const WALL_TEXTURE_REPEAT = { x: 3, y: 2 };
+const WALL_TEXTURE_PATHS = {
+  color: "/texture/wall/Concrete030_2K-JPG_Color.jpg",
+  normal: "/texture/wall/Concrete030_2K-JPG_NormalGL.jpg",
+  roughness: "/texture/wall/Concrete030_2K-JPG_Roughness.jpg"
+};
 
 function configureFloorTexture(texture) {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(FLOOR_TEXTURE_REPEAT.x, FLOOR_TEXTURE_REPEAT.y);
+  return texture;
+}
+
+function configureWallTexture(texture) {
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(WALL_TEXTURE_REPEAT.x, WALL_TEXTURE_REPEAT.y);
   return texture;
 }
 
@@ -75,19 +89,61 @@ function createExternalFloorMaterial(fallbackTexture, fallbackNormal) {
   return material;
 }
 
-export function createMaterials({ useExternalFloorTextures = USE_EXTERNAL_FLOOR_TEXTURES } = {}) {
+function createExternalWallMaterial(fallbackTexture) {
+  const textureLoader = new THREE.TextureLoader();
+  const material = new THREE.MeshStandardMaterial({
+    map: null,
+    normalMap: null,
+    roughnessMap: null,
+    roughness: 0.82,
+    metalness: 0.0
+  });
+
+  let fallbackApplied = false;
+  const applyFallback = () => {
+    if (fallbackApplied) {
+      return;
+    }
+
+    fallbackApplied = true;
+    material.map = fallbackTexture;
+    material.normalMap = null;
+    material.roughnessMap = null;
+    material.roughness = 0.72;
+    material.metalness = 0.02;
+    material.color.setHex(COLORS.wall);
+    material.needsUpdate = true;
+  };
+
+  const colorTexture = configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.color, undefined, undefined, applyFallback));
+  colorTexture.colorSpace = THREE.SRGBColorSpace;
+
+  const normalTexture = configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.normal, undefined, undefined, applyFallback));
+  const roughnessTexture = configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.roughness, undefined, undefined, applyFallback));
+
+  material.map = colorTexture;
+  material.normalMap = normalTexture;
+  material.roughnessMap = roughnessTexture;
+
+  return material;
+}
+
+export function createMaterials({ useExternalFloorTextures = USE_EXTERNAL_FLOOR_TEXTURES, useExternalWallTextures = USE_EXTERNAL_WALL_TEXTURES } = {}) {
   const floorFallbackTexture = createFloorTexture();
   const floorFallbackNormal = createNormalTexture();
-  const wallTexture = createWallTexture();
+  const wallFallbackTexture = createWallTexture();
   const woodTexture = createWoodTexture();
   const sarcophagusTexture = createSarcophagusTexture();
   const floorMaterial = useExternalFloorTextures
     ? createExternalFloorMaterial(floorFallbackTexture, floorFallbackNormal)
     : createProceduralFloorMaterial(floorFallbackTexture, floorFallbackNormal);
+  const wallMaterial = useExternalWallTextures
+    ? createExternalWallMaterial(wallFallbackTexture)
+    : createProceduralWallMaterial(wallFallbackTexture);
 
   return {
     floor: floorMaterial,
-    wall: createProceduralWallMaterial(wallTexture),
+    wall: wallMaterial,
     trim: new THREE.MeshStandardMaterial({ color: COLORS.trim, roughness: 0.58 }),
     wood: new THREE.MeshStandardMaterial({ map: woodTexture, roughness: 0.48, metalness: 0.04 }),
     bone: new THREE.MeshStandardMaterial({ color: COLORS.bone, roughness: 0.42, metalness: 0.02 }),
