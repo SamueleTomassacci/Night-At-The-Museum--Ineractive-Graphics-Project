@@ -6,7 +6,7 @@ export class UIController extends EventTarget {
     this.root = root;
     this.values = {
       camera: CAMERA_LABELS.thirdPerson,
-      lights: "Blu notte",
+      lights: "Giorno",
       museum: "quiet",
       shadows: "on",
       quality: "medium"
@@ -33,8 +33,7 @@ export class UIController extends EventTarget {
       <div class="museum-actions">
         <select class="museum-control" data-action="lightMode" aria-label="Luci">
           <option value="off">Luci off</option>
-          <option value="blue" selected>Luci blu</option>
-          <option value="day">Luci giorno</option>
+          <option value="day" selected>Luci giorno</option>
         </select>
         <button class="museum-control" data-action="shadows">Ombre</button>
         <select class="museum-control" data-action="quality" aria-label="Qualita">
@@ -59,10 +58,9 @@ export class UIController extends EventTarget {
   setLightMode(mode) {
     const labels = {
       off: "Off",
-      blue: "Blu notte",
       day: "Giorno"
     };
-    this.values.lights = labels[mode] ?? labels.blue;
+    this.values.lights = labels[mode] ?? labels.day;
     this.panel.querySelector('[data-action="lightMode"]').value = mode;
     this.refresh();
   }

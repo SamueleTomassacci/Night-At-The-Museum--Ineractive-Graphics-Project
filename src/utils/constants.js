@@ -1,7 +1,8 @@
-export const CAMERA_MODES = ["thirdPerson", "topDown", "panorama"];
+export const CAMERA_MODES = ["thirdPerson", "firstPerson", "topDown", "panorama"];
 
 export const CAMERA_LABELS = {
   thirdPerson: "Terza persona",
+  firstPerson: "Prima persona",
   topDown: "Dall'alto",
   panorama: "Panoramica"
 };
@@ -41,6 +42,5 @@ export const COLORS = {
   torch: 0xff9a3d,
   bone: 0xe8dfc5,
   statue: 0xb7bcc9,
-  gold: 0xd7a531,
-  blueGlow: 0x86a8ff
+  gold: 0xd7a531
 };

@@ -33,7 +33,7 @@ export class DoorInteractionSystem {
     prompt.style.borderRadius = "6px";
     prompt.style.background = "rgba(12, 17, 28, 0.78)";
     prompt.style.color = "#ffe4ae";
-    prompt.style.font = "600 16px/1.2 Georgia, serif";
+    prompt.style.font = "600 18px/1.2 system-ui, sans-serif";
     prompt.style.letterSpacing = "0";
     prompt.style.pointerEvents = "none";
     prompt.style.display = "none";
@@ -108,7 +108,7 @@ export class DoorInteractionSystem {
     }
 
     this.clearAutoClose(door);
-    this.animateDoor(door, data.openPosition, () => {
+    this.animateDoor(door, data.openPositions, () => {
       data.isOpen = true;
       data.isAnimating = false;
       data.autoCloseTimeout = window.setTimeout(() => this.closeDoor(door), AUTO_CLOSE_DELAY_MS);
@@ -122,31 +122,40 @@ export class DoorInteractionSystem {
     }
 
     this.clearAutoClose(door);
-    this.animateDoor(door, data.closedPosition, () => {
+    this.animateDoor(door, data.closedPositions, () => {
       data.isOpen = false;
       data.isAnimating = false;
     });
   }
 
-  animateDoor(door, targetPosition, onComplete) {
+  animateDoor(door, targetPositions, onComplete) {
     const data = door.userData;
-    const doorVisual = data.doorVisual;
-    if (!doorVisual) {
+    const panels = data.slidingPanels?.length ? data.slidingPanels : [data.doorVisual].filter(Boolean);
+    if (panels.length === 0) {
       return;
     }
 
     data.isAnimating = true;
+    let completedTweens = 0;
 
-    const start = { x: doorVisual.position.x };
-    const tween = new TWEEN.Tween(start)
-      .to({ x: targetPosition.x }, DOOR_ANIMATION_DURATION_MS)
-      .easing(TWEEN.Easing.Quadratic.InOut)
-      .onUpdate(() => {
-        doorVisual.position.x = start.x;
-      })
-      .onComplete(onComplete);
-    TWEEN.add(tween);
-    tween.start();
+    panels.forEach((panel, index) => {
+      const targetPosition = targetPositions[index] ?? panel.position;
+      const start = { x: panel.position.x };
+      const tween = new TWEEN.Tween(start)
+        .to({ x: targetPosition.x }, DOOR_ANIMATION_DURATION_MS)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onUpdate(() => {
+          panel.position.x = start.x;
+        })
+        .onComplete(() => {
+          completedTweens += 1;
+          if (completedTweens === panels.length) {
+            onComplete();
+          }
+        });
+      TWEEN.add(tween);
+      tween.start();
+    });
   }
 
   clearAutoClose(door) {

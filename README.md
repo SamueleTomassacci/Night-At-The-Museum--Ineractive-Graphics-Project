@@ -16,7 +16,7 @@ npm run build
 
 - W / S: avanti e indietro rispetto alla direzione del player
 - A / D: rotazione del player anche da fermo
-- C: cambio camera tra terza persona, dall'alto e panoramica
+- C: cambio camera tra terza persona, prima persona, dall'alto e panoramica
 - L: accensione e spegnimento luci
 - Click mouse: interazione con sarcofago e quadri
 - Pannello UI: luci, ombre e qualita
@@ -30,10 +30,10 @@ npm run build
 - Modello T-Rex GLTF riggato con la sua animazione incorporata
 - Modello colonna GLB usato per le colonne dell'atrio
 - Modello panchina GLB usato per le panchine del museo
-- Modello porta GLB usato per le porte dell'atrio
+- Porte procedurali dell'atrio create con primitive Three.js e animate con tween.js
 - Texture procedurali create con CanvasTexture, con mappe PBR statiche ambientCG WoodFloor064 per il pavimento e Concrete030 per le pareti
 - Player gerarchico con camminata, rotazione e limiti di movimento
-- Tre modalita camera
+- Quattro modalita camera
 - T-Rex scheletrico riggato e animato tramite AnimationMixer
 - Statua gerarchica con testa e braccio animati
 - Sarcofago cliccabile con coperchio animato e luce interna

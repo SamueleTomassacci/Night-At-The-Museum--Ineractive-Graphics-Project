@@ -40,6 +40,7 @@ inputManager.addEventListener("keyPressed", event => {
   if (event.detail === "c") {
     cameraManager.cycleMode();
     ui.setCamera(cameraManager.getLabel());
+    museum.setCeilingVisible(!cameraManager.isOverheadView());
   }
   if (event.detail === "l") {
     ui.setLightMode(lightingSystem.cycleMode());
@@ -82,6 +83,7 @@ function loop(time) {
 }
 
 ui.setCamera(cameraManager.getLabel());
+museum.setCeilingVisible(!cameraManager.isOverheadView());
 ui.setLightMode(lightingSystem.mode);
 ui.setShadows(shadowsEnabled);
 requestAnimationFrame(loop);

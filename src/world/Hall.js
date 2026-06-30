@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-const WALL_HEIGHT = 4.8;
+const WALL_HEIGHT = 5.0;
 const DOOR_HEADER_BOTTOM = 3.35;
 const DOOR_HEADER_HEIGHT = WALL_HEIGHT - DOOR_HEADER_BOTTOM;
 const DOOR_HEADER_CENTER_Y = DOOR_HEADER_BOTTOM + DOOR_HEADER_HEIGHT / 2;
@@ -16,9 +16,9 @@ export class Hall {
     this.group.add(factory.createWall(4.4, DOOR_HEADER_HEIGHT, 0.35, [0, DOOR_HEADER_CENTER_Y, 6]));
     this.doors = [
       factory.createDoorFrame([-8, 0, 0], Math.PI * 0.5, 3.6),
-      factory.createDoorFrame([8, 0, 0], Math.PI * 0.5, 3.6),
+      factory.createDoorFrame([8, 0, 0], -Math.PI * 0.5, 3.6),
       factory.createDoorFrame([0, 0, -6], 0, 4.4),
-      factory.createDoorFrame([0, 0, 6], 0, 4.4)
+      factory.createDoorFrame([0, 0, 6], Math.PI, 4.4)
     ];
     this.doors.forEach(door => this.group.add(door));
     this.group.add(factory.createSign("DINOSAUR", [-7.76, 3.9, 0], Math.PI * 0.5, 3));

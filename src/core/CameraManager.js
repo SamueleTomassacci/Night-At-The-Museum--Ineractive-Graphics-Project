@@ -8,9 +8,11 @@ export class CameraManager {
     this.modeIndex = 0;
     this.mode = CAMERA_MODES[this.modeIndex];
     this.target = new THREE.Vector3();
-    this.offset = new THREE.Vector3(0, 5.2, 8);
+    this.offset = new THREE.Vector3(0, 2.8, 4.6);
+    this.firstPersonOffset = new THREE.Vector3(0, 1.78, 0);
+    this.forward = new THREE.Vector3();
     this.panoramaAngle = 0;
-    this.camera.position.set(0, 6, 10);
+    this.camera.position.set(0, 3.2, 5.2);
   }
 
   cycleMode() {
@@ -23,21 +25,33 @@ export class CameraManager {
     return CAMERA_LABELS[this.mode];
   }
 
+  isOverheadView() {
+    return this.mode === "topDown" || this.mode === "panorama";
+  }
+
   update(player, deltaTime, elapsedTime) {
     const playerPosition = player.group.position;
+    player.group.visible = this.mode !== "firstPerson";
     this.target.set(playerPosition.x, playerPosition.y + 1.3, playerPosition.z);
+    this.forward.set(Math.sin(player.group.rotation.y), 0, Math.cos(player.group.rotation.y));
 
     if (this.mode === "thirdPerson") {
       const behind = new THREE.Vector3(
-        Math.sin(player.group.rotation.y) * -this.offset.z,
+        this.forward.x * -this.offset.z,
         this.offset.y,
-        Math.cos(player.group.rotation.y) * -this.offset.z
+        this.forward.z * -this.offset.z
       );
       const desired = playerPosition.clone().add(behind);
       this.camera.position.x = damp(this.camera.position.x, desired.x, 7, deltaTime);
       this.camera.position.y = damp(this.camera.position.y, desired.y, 7, deltaTime);
       this.camera.position.z = damp(this.camera.position.z, desired.z, 7, deltaTime);
       this.camera.lookAt(this.target);
+    }
+
+    if (this.mode === "firstPerson") {
+      const desired = playerPosition.clone().add(this.firstPersonOffset).addScaledVector(this.forward, 0.18);
+      this.camera.position.copy(desired);
+      this.camera.lookAt(desired.clone().addScaledVector(this.forward, 10));
     }
 
     if (this.mode === "topDown") {

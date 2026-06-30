@@ -16,6 +16,11 @@ const WALL_TEXTURE_PATHS = {
   normal: "/texture/wall/Concrete030_2K-JPG_NormalGL.jpg",
   roughness: "/texture/wall/Concrete030_2K-JPG_Roughness.jpg"
 };
+const CEILING_TEXTURE_REPEAT = { x: 5, y: 5 };
+const CEILING_TEXTURE_PATHS = {
+  color: "/texture/ceiling/wooden_panels_diff_4k.jpg",
+  bump: "/texture/ceiling/wooden_panels_disp_4k%20(1).png"
+};
 
 function configureFloorTexture(texture) {
   texture.wrapS = THREE.RepeatWrapping;
@@ -28,6 +33,13 @@ function configureWallTexture(texture) {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   texture.repeat.set(WALL_TEXTURE_REPEAT.x, WALL_TEXTURE_REPEAT.y);
+  return texture;
+}
+
+function configureCeilingTexture(texture) {
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(CEILING_TEXTURE_REPEAT.x, CEILING_TEXTURE_REPEAT.y);
   return texture;
 }
 
@@ -128,6 +140,22 @@ function createExternalWallMaterial(fallbackTexture) {
   return material;
 }
 
+function createCeilingMaterial() {
+  const textureLoader = new THREE.TextureLoader();
+  const colorTexture = configureCeilingTexture(textureLoader.load(CEILING_TEXTURE_PATHS.color));
+  const bumpTexture = configureCeilingTexture(textureLoader.load(CEILING_TEXTURE_PATHS.bump));
+  colorTexture.colorSpace = THREE.SRGBColorSpace;
+
+  return new THREE.MeshStandardMaterial({
+    map: colorTexture,
+    bumpMap: bumpTexture,
+    bumpScale: 0.035,
+    roughness: 0.64,
+    metalness: 0.04,
+    side: THREE.DoubleSide
+  });
+}
+
 export function createMaterials({ useExternalFloorTextures = USE_EXTERNAL_FLOOR_TEXTURES, useExternalWallTextures = USE_EXTERNAL_WALL_TEXTURES } = {}) {
   const floorFallbackTexture = createFloorTexture();
   const floorFallbackNormal = createNormalTexture();
@@ -144,6 +172,7 @@ export function createMaterials({ useExternalFloorTextures = USE_EXTERNAL_FLOOR_
   return {
     floor: floorMaterial,
     wall: wallMaterial,
+    ceiling: createCeilingMaterial(),
     trim: new THREE.MeshStandardMaterial({ color: COLORS.trim, roughness: 0.58 }),
     wood: new THREE.MeshStandardMaterial({ map: woodTexture, roughness: 0.48, metalness: 0.04 }),
     bone: new THREE.MeshStandardMaterial({ color: COLORS.bone, roughness: 0.42, metalness: 0.02 }),

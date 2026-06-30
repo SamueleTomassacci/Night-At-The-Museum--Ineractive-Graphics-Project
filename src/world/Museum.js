@@ -22,10 +22,44 @@ export class Museum {
     this.galleryRoom = new GalleryRoom(factory);
     this.rooms = [this.hall, this.dinosaurRoom, this.statueRoom, this.egyptianRoom, this.galleryRoom];
     this.rooms.forEach(room => this.group.add(room.group));
+    this.ceilings = this.createCeilings(factory);
+    this.cornices = this.createCornices(factory);
+    this.group.add(this.ceilings, this.cornices);
     this.sceneManager.addEventListener("museumAwakens", () => {
       this.lightingSystem.setAwakening(true);
       this.dinosaurRoom.dinosaur.awaken();
     });
+  }
+
+  createCeilings(factory) {
+    const group = new THREE.Group();
+    group.name = "Museum Ceilings";
+
+    Object.values(ROOM_RECTS).forEach(rect => {
+      const width = rect.maxX - rect.minX;
+      const depth = rect.maxZ - rect.minZ;
+      group.add(factory.createCeiling(width, depth, [rect.center[0], 0, rect.center[1]]));
+    });
+
+    return group;
+  }
+
+  createCornices(factory) {
+    const group = new THREE.Group();
+    group.name = "Museum Cornices";
+
+    Object.values(ROOM_RECTS).forEach(rect => {
+      const width = rect.maxX - rect.minX;
+      const depth = rect.maxZ - rect.minZ;
+      group.add(factory.createCornice(width, depth, [rect.center[0], 0, rect.center[1]]));
+    });
+
+    return group;
+  }
+
+  setCeilingVisible(visible) {
+    this.ceilings.visible = visible;
+    this.cornices.visible = visible;
   }
 
   getAnimatables() {

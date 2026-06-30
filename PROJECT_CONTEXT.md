@@ -571,11 +571,10 @@ Registered current animatables:
 
 File: `src/systems/LightingSystem.js`
 
-The lighting system currently supports three modes:
+The lighting system currently supports two modes:
 
 ```text
 off
-blue
 day
 ```
 
@@ -583,21 +582,18 @@ The UI exposes these labels:
 
 ```text
 Luci off
-Luci blu
 Luci giorno
 ```
 
 The `L` key cycles:
 
 ```text
-off -> blue -> day -> off
+off -> day -> off
 ```
 
 Current lighting objects:
 
 - ambient light
-- hemisphere light
-- directional light
 - room point lights
 - Egyptian torch point lights
 - dinosaur spotlight
@@ -622,9 +618,8 @@ lightingSystem.cycleMode()
 
 Mode behavior:
 
-- `off`: very dark scene, most point lights off, tiny ambient/directional values
-- `blue`: brighter night mode with blue atmospheric lighting
-- `day`: bright white/warm lighting, brighter background and lighter fog
+- `off`: very dark scene, point lights off, tiny ambient value
+- `day`: bright white/warm indoor lighting, brighter background and lighter fog
 
 The system also changes:
 
@@ -632,8 +627,6 @@ The system also changes:
 - `scene.fog.color`
 - `scene.fog.density`
 - ambient color/intensity
-- hemisphere sky/ground colors and intensity
-- directional color/intensity
 - room light colors and intensities
 - torch colors and intensities
 - dinosaur spotlight color/intensity
@@ -803,7 +796,7 @@ Click painting = regenerate painting texture
 UI:
 
 ```text
-Light select = off / blue / day
+Light select = off / day
 Shadow button = toggle shadows
 Quality select = low / medium / high
 ```
@@ -817,12 +810,11 @@ Important changes already made after initial creation:
 3. `A` and `D` rotation direction was corrected so:
    - `A` rotates left
    - `D` rotates right
-4. Lighting changed from boolean on/off to three selectable modes:
+4. Lighting changed from boolean on/off to two selectable modes:
    - `off`
-   - `blue`
    - `day`
 5. The UI light control changed from a button to a select dropdown.
-6. `L` now cycles the three light modes.
+6. `L` now cycles the two light modes.
 
 ## Verification Status
 
