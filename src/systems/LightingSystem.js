@@ -18,11 +18,11 @@ export class LightingSystem {
     this.ambient = new THREE.AmbientLight(0x51639c, 0.35);
     this.scene.add(this.ambient);
 
-    this.addRoomLight("Atrium", [0, 4.65, 0], 0x9bb8ff, 7.5, 18);
-    this.addRoomLight("Dinosaur", [-16.5, 4.65, 0], 0x8fa6ff, 7.2, 18, true);
-    this.addRoomLight("Statue", [16.5, 4.65, 0], 0xb8c7ff, 6.6, 16, true);
-    this.addRoomLight("Gallery", [0, 4.6, 14.5], 0xa9b9ff, 7.0, 17, true);
-    this.addRoomLight("Egyptian", [0, 4.6, -14.5], 0xffb05c, 4.8, 16);
+    this.addRoomLight("Atrium", [0, 4.65, 0], 0x9bb8ff, 7.5, 24);
+    this.addRoomLight("Dinosaur", [-16.5, 4.65, 0], 0x8fa6ff, 7.2, 24, true);
+    this.addRoomLight("Statue", [16.5, 4.65, 0], 0xb8c7ff, 6.6, 22, true);
+    this.addRoomLight("Gallery", [0, 4.6, 14.5], 0xa9b9ff, 7.0, 23, true);
+    this.addRoomLight("Egyptian", [0, 4.6, -14.5], 0xffb05c, 4.8, 22);
 
     this.dinoSpot = new THREE.SpotLight(0xc7d5ff, 2.2, 18, Math.PI * 0.18, 0.32, 1.2);
     this.dinoSpot.position.set(-16.5, 4.7, 4.4);
@@ -35,6 +35,9 @@ export class LightingSystem {
     const light = new THREE.PointLight(color, intensity, distance, 1.6);
     light.position.set(...position);
     light.castShadow = true;
+    light.shadow.mapSize.set(1024, 1024);
+    light.shadow.bias = -0.0002;
+    light.shadow.normalBias = 0.04;
     light.userData.baseIntensity = intensity;
     light.userData.dayColor = name === "Egyptian" ? 0xffd49a : 0xffffff;
     light.userData.name = name;
