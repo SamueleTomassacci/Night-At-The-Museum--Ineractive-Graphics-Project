@@ -3,6 +3,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const COLUMN_MODEL_URL = "/models/Column/ionic_column.glb";
 const BENCH_MODEL_URL = "/models/bench/modern_bench_1.glb";
+const CEILING_LIGHT_MODEL_URL = "/models/Ceiling%20light/ceiling_light.glb";
 const CEILING_HEIGHT = 5.0;
 const CORNICE_HEIGHT = 0.28;
 const CORNICE_PROJECTION = 0.22;
@@ -19,6 +20,7 @@ export class AssetFactory {
     this.materials = materials;
     this.columnModelPromise = null;
     this.benchModelPromise = null;
+    this.ceilingLightModelPromise = null;
   }
 
   mesh(geometry, material, position = [0, 0, 0], castShadow = true, receiveShadow = true) {
@@ -74,6 +76,63 @@ export class AssetFactory {
     addAccent(new THREE.BoxGeometry(CORNICE_PROJECTION * 1.08, CORNICE_ACCENT_HEIGHT, depth), [position[0] + halfWidth - CORNICE_PROJECTION / 2, accentY, position[2]]);
 
     return group;
+  }
+
+  createCeilingLight(position, diameter = 1.25) {
+    const group = new THREE.Group();
+    group.position.set(...position);
+
+    this.loadCeilingLightModel()
+      .then(model => {
+        group.add(this.createCeilingLightModelInstance(model, diameter));
+      })
+      .catch(error => {
+        console.error("Impossibile caricare il modello del lampadario:", error);
+      });
+
+    return group;
+  }
+
+  loadCeilingLightModel() {
+    if (!this.ceilingLightModelPromise) {
+      const loader = new GLTFLoader();
+      this.ceilingLightModelPromise = loader.loadAsync(CEILING_LIGHT_MODEL_URL).then(gltf => {
+        const model = gltf.scene;
+        model.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = false;
+            child.receiveShadow = false;
+          }
+        });
+        return model;
+      });
+    }
+
+    return this.ceilingLightModelPromise;
+  }
+
+  createCeilingLightModelInstance(model, diameter) {
+    const instance = model.clone(true);
+    instance.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = false;
+        child.receiveShadow = false;
+      }
+    });
+
+    const box = new THREE.Box3().setFromObject(instance);
+    const size = box.getSize(new THREE.Vector3());
+    const horizontalSize = Math.max(size.x, size.z, 0.001);
+    const scale = diameter / horizontalSize;
+
+    instance.scale.setScalar(scale);
+    instance.updateMatrixWorld(true);
+
+    const scaledBox = new THREE.Box3().setFromObject(instance);
+    const center = scaledBox.getCenter(new THREE.Vector3());
+    instance.position.set(-center.x, -scaledBox.max.y, -center.z);
+
+    return instance;
   }
 
   createColumn(position, height = 4.2) {

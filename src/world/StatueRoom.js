@@ -21,5 +21,6 @@ export class StatueRoom {
     this.group.add(factory.createColumn([23, 0, -4]));
     this.group.add(factory.createColumn([23, 0, 4]));
     this.group.add(factory.createBench([16.5, 0, 4.45], Math.PI));
+    this.group.add(factory.createCeilingLight([16.5, 4.95, 0], 1.35));
   }
 }

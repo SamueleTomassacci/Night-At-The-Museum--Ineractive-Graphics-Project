@@ -594,7 +594,7 @@ off -> day -> off
 Current lighting objects:
 
 - ambient light
-- room point lights
+- room spotlights
 - Egyptian torch point lights
 - dinosaur spotlight
 

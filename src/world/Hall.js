@@ -31,6 +31,7 @@ export class Hall {
     this.group.add(factory.createColumn([5.9, 0, 4.1]));
     this.group.add(factory.createBench([-2.8, 0, 2.8], Math.PI * 0.5));
     this.group.add(factory.createBench([2.8, 0, 2.8], -Math.PI * 0.5));
+    this.group.add(factory.createCeilingLight([0, 4.95, 0], 1.35));
     this.group.add(clock.group);
   }
 

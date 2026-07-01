@@ -20,6 +20,7 @@ export class DinosaurRoom {
     this.group.add(factory.createSign("T-REX AWAKENING", [-16.5, 3.1, -5.76], 0, 4.8));
     this.group.add(factory.createColumn([-23, 0, -4]));
     this.group.add(factory.createColumn([-23, 0, 4]));
+    this.group.add(factory.createCeilingLight([-16.5, 4.95, 0], 1.35));
     this.createDisplayRopes(factory);
   }
 

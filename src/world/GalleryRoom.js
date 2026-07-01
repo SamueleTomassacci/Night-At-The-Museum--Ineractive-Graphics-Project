@@ -21,5 +21,6 @@ export class GalleryRoom {
     this.group.add(factory.createBench([0, 0, 12.2], 0));
     this.group.add(factory.createColumn([-6.2, 0, 20.4]));
     this.group.add(factory.createColumn([6.2, 0, 20.4]));
+    this.group.add(factory.createCeilingLight([0, 4.95, 14.5], 1.35));
   }
 }
