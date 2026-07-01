@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { ROOM_RECTS } from "../utils/constants.js";
-import { withinRect, distance2D } from "../utils/math.js";
+import { distance2D } from "../utils/math.js";
 import { Hall } from "./Hall.js";
 import { DinosaurRoom } from "./DinosaurRoom.js";
 import { StatueRoom } from "./StatueRoom.js";
@@ -25,7 +25,6 @@ export class Museum {
     this.group.add(this.ceilings, this.cornices);
     this.sceneManager.addEventListener("museumAwakens", () => {
       this.lightingSystem.setAwakening(true);
-      this.dinosaurRoom.dinosaur.awaken();
     });
   }
 
@@ -71,6 +70,7 @@ export class Museum {
 
   getClickables() {
     return [
+      this.dinosaurRoom.dinosaur,
       this.egyptianRoom.sarcophagus,
       ...this.galleryRoom.paintings.getClickables()
     ];
@@ -82,9 +82,6 @@ export class Museum {
 
   updateTriggers(player) {
     const position = player.group.position;
-    if (withinRect(position, ROOM_RECTS.dinosaur)) {
-      this.dinosaurRoom.dinosaur.awaken(position);
-    }
     const statueDistance = distance2D(position, this.statueRoom.statue.group.position);
     if (statueDistance < 5.2) {
       this.statueRoom.statue.awaken(position);

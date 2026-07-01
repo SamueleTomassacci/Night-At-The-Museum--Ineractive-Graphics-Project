@@ -53,6 +53,18 @@ ui.addEventListener("lightModeChanged", event => {
   ui.setLightMode(lightingSystem.setMode(event.detail));
 });
 
+ui.addEventListener("secondaryIntensityChanged", event => {
+  lightingSystem.setSecondaryIntensity(event.detail);
+});
+
+ui.addEventListener("flashlightIntensityChanged", event => {
+  lightingSystem.setFlashlightIntensity(event.detail);
+});
+
+ui.addEventListener("flashlightRangeChanged", event => {
+  lightingSystem.setFlashlightRange(event.detail);
+});
+
 ui.addEventListener("toggleShadows", () => {
   shadowsEnabled = !shadowsEnabled;
   renderer.setShadows(shadowsEnabled);

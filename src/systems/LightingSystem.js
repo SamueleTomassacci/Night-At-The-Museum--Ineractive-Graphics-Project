@@ -4,6 +4,9 @@ export class LightingSystem {
   constructor(scene) {
     this.scene = scene;
     this.mode = "day";
+    this.secondaryIntensity = 1;
+    this.flashlightIntensity = 1;
+    this.flashlightRange = 13;
     this.enabled = true;
     this.awakening = false;
     this.roomLights = [];
@@ -72,6 +75,7 @@ export class LightingSystem {
     if (!light) {
       return;
     }
+    light.distance = this.flashlightRange;
     this.flashlights.push(light);
     this.setMode(this.mode);
   }
@@ -85,7 +89,7 @@ export class LightingSystem {
         ambientColor: 0x26304c,
         ambient: 0.045,
         roomScalar: 0,
-        secondaryScalar: 1,
+        secondaryScalar: this.secondaryIntensity,
         flashlightScalar: 1,
         dinoSpot: 0
       },
@@ -124,14 +128,44 @@ export class LightingSystem {
       });
     });
     this.flashlights.forEach(light => {
-      light.intensity = light.userData.baseIntensity * selected.flashlightScalar;
+      const flashlightScalar = selected.flashlightScalar * this.flashlightIntensity;
+      light.intensity = light.userData.baseIntensity * flashlightScalar;
+      light.distance = this.flashlightRange;
       if (light.userData.emissiveMaterial) {
-        light.userData.emissiveMaterial.emissiveIntensity = selected.flashlightScalar * 1.8;
+        light.userData.emissiveMaterial.emissiveIntensity = flashlightScalar * 1.8;
       }
     });
     this.dinoSpot.color.setHex(0xffffff);
     this.dinoSpot.intensity = selected.dinoSpot;
     return this.mode;
+  }
+
+  setSecondaryIntensity(intensity) {
+    this.secondaryIntensity = THREE.MathUtils.clamp(Number(intensity) || 0, 0, 2);
+    if (this.mode === "off") {
+      this.secondaryLights.forEach(light => {
+        light.intensity = light.userData.baseIntensity * this.secondaryIntensity;
+        light.userData.currentScalar = this.secondaryIntensity;
+        light.userData.emissiveMaterials.forEach(material => {
+          material.emissiveIntensity = this.secondaryIntensity * 1.35;
+        });
+      });
+    }
+    return this.secondaryIntensity;
+  }
+
+  setFlashlightIntensity(intensity) {
+    this.flashlightIntensity = THREE.MathUtils.clamp(Number(intensity) || 0, 0, 2);
+    this.setMode(this.mode);
+    return this.flashlightIntensity;
+  }
+
+  setFlashlightRange(distance) {
+    this.flashlightRange = THREE.MathUtils.clamp(Number(distance) || 5, 5, 30);
+    this.flashlights.forEach(light => {
+      light.distance = this.flashlightRange;
+    });
+    return this.flashlightRange;
   }
 
   cycleMode() {

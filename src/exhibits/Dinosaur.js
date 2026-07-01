@@ -22,7 +22,6 @@ const JAW_OPEN_DURATION = STEP_DURATION + JAW_SECOND_OPEN_DURATION;
 const JAW_CLOSE_DURATION = 450;
 const JAW_OPEN_PAUSE = 2000;
 const JAW_CYCLE_DURATION = JAW_OPEN_DURATION + JAW_OPEN_PAUSE + JAW_CLOSE_DURATION;
-const JAW_CLOSED_PAUSE = 3000;
 const HEAD_BONE_NAME = "Cabeza_ArmatureRexy";
 const HEAD_IK_BONE_NAME = "CabezaIK_ArmatureRexy";
 const HEAD_NECK_BONES = [
@@ -178,7 +177,22 @@ export class Dinosaur {
     this.leftStepRoot = null;
     this.leftStepBasePosition = new THREE.Vector3();
     this.tweenGroup = new TWEEN.Group();
+    this.createClickHitbox();
     this.loadModel();
+  }
+
+  createClickHitbox() {
+    const hitbox = new THREE.Mesh(
+      new THREE.BoxGeometry(7.2, 3.4, 2.2),
+      new THREE.MeshBasicMaterial({
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      })
+    );
+    hitbox.name = "T-Rex Click Hitbox";
+    hitbox.position.y = 1.7;
+    this.group.add(hitbox);
   }
 
   loadModel() {
@@ -218,8 +232,6 @@ export class Dinosaur {
         this.setupLegCompensation(model);
         this.setupArmAnimation(model);
         this.setupLeftStep(model);
-        this.startTailAnimation();
-        this.startJawAnimation();
       },
       undefined,
       error => {
@@ -256,7 +268,6 @@ export class Dinosaur {
     this.tailTween = new TWEEN.Tween(this.tailState, this.tweenGroup)
       .to({ phase: Math.PI * 2 }, 2600)
       .easing(TWEEN.Easing.Linear.None)
-      .repeat(Infinity)
       .onUpdate(() => {
         this.tailBones.forEach(tailBone => {
           const angle =
@@ -266,6 +277,12 @@ export class Dinosaur {
           this.tailOffset.setFromAxisAngle(TAIL_SWING_AXIS, angle);
           tailBone.bone.quaternion.copy(tailBone.baseQuaternion).multiply(this.tailOffset);
         });
+      })
+      .onComplete(() => {
+        this.tailBones.forEach(tailBone => {
+          tailBone.bone.quaternion.copy(tailBone.baseQuaternion);
+        });
+        this.tailTween = null;
       })
       .start();
 
@@ -523,8 +540,6 @@ export class Dinosaur {
     this.jawTween = new TWEEN.Tween(this.jawState, this.tweenGroup)
       .to({ progress: 1 }, JAW_CYCLE_DURATION)
       .easing(TWEEN.Easing.Linear.None)
-      .repeat(Infinity)
-      .repeatDelay(JAW_CLOSED_PAUSE)
       .onUpdate(() => {
         const elapsed = this.jawState.progress * JAW_CYCLE_DURATION;
         let openness = 1;
@@ -605,12 +620,19 @@ export class Dinosaur {
         this.applyBodyStep(elapsed);
         this.solveLegCompensation();
       })
+      .onComplete(() => {
+        this.jawTween = null;
+      })
       .start();
   }
 
   awaken() {
     this.startTailAnimation();
     this.startJawAnimation();
+  }
+
+  onClick() {
+    this.awaken();
   }
 
   update(_deltaTime, elapsedTime) {

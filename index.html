@@ -121,6 +121,32 @@
       .museum-control:hover {
         border-color: rgba(255, 222, 153, 0.62);
       }
+
+      .museum-intensity {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 6px 12px;
+        margin-top: 12px;
+        color: #cdd8ff;
+        font-size: 13px;
+      }
+
+      .museum-intensity[hidden] {
+        display: none;
+      }
+
+      .museum-intensity output {
+        color: #ffffff;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .museum-intensity input {
+        grid-column: 1 / -1;
+        width: 100%;
+        accent-color: #ffc982;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
