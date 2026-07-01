@@ -47,6 +47,10 @@ inputManager.addEventListener("keyPressed", event => {
   }
 });
 
+inputManager.addEventListener("wheel", event => {
+  cameraManager.zoom(event.detail);
+});
+
 ui.addEventListener("lightModeChanged", event => {
   ui.setLightMode(lightingSystem.setMode(event.detail));
 });

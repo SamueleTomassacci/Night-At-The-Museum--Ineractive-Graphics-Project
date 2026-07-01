@@ -15,6 +15,20 @@ export class CameraManager {
     this.camera.position.set(0, 3.2, 5.2);
   }
 
+  zoom(deltaY) {
+    const direction = Math.sign(deltaY);
+    if (direction === 0) return this.camera.zoom;
+
+    const zoomStep = 1.1;
+    this.camera.zoom = THREE.MathUtils.clamp(
+      this.camera.zoom * (direction < 0 ? zoomStep : 1 / zoomStep),
+      0.5,
+      2
+    );
+    this.camera.updateProjectionMatrix();
+    return this.camera.zoom;
+  }
+
   cycleMode() {
     this.modeIndex = (this.modeIndex + 1) % CAMERA_MODES.length;
     this.mode = CAMERA_MODES[this.modeIndex];

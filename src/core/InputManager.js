@@ -25,6 +25,10 @@ export class InputManager extends EventTarget {
       this.updatePointer(event);
       this.dispatchEvent(new CustomEvent("click", { detail: { pointer: this.pointer.clone(), event } }));
     });
+    domElement.addEventListener("wheel", event => {
+      event.preventDefault();
+      this.dispatchEvent(new CustomEvent("wheel", { detail: event.deltaY }));
+    }, { passive: false });
   }
 
   updatePointer(event) {
