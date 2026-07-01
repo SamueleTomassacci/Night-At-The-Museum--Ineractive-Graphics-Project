@@ -45,7 +45,8 @@ export class CameraManager {
 
   update(player, deltaTime, elapsedTime) {
     const playerPosition = player.group.position;
-    player.group.visible = this.mode !== "firstPerson";
+    player.group.visible = true;
+    player.setModelVisible(this.mode !== "firstPerson");
     this.target.set(playerPosition.x, playerPosition.y + 1.3, playerPosition.z);
     this.forward.set(Math.sin(player.group.rotation.y), 0, Math.cos(player.group.rotation.y));
 

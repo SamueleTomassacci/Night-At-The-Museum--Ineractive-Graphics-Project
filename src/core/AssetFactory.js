@@ -135,6 +135,46 @@ export class AssetFactory {
     return instance;
   }
 
+  createWallSconce(position, rotationY = 0) {
+    const group = new THREE.Group();
+    group.name = "Wall Sconce";
+    group.position.set(...position);
+    group.rotation.y = rotationY;
+
+    const metal = new THREE.MeshStandardMaterial({
+      color: 0x10131a,
+      roughness: 0.34,
+      metalness: 0.72
+    });
+    const warmGlass = new THREE.MeshPhysicalMaterial({
+      color: 0xffd7a0,
+      roughness: 0.18,
+      metalness: 0,
+      transmission: 0.25,
+      transparent: true,
+      opacity: 0.72,
+      emissive: 0xffa64c,
+      emissiveIntensity: 0
+    });
+
+    const backplate = this.mesh(new THREE.BoxGeometry(0.48, 0.72, 0.08), metal, [0, 0, 0], true, true);
+    const topCap = this.mesh(new THREE.BoxGeometry(0.58, 0.08, 0.1), this.materials.gold, [0, 0.4, 0.01], true, true);
+    const bottomCap = this.mesh(new THREE.BoxGeometry(0.58, 0.08, 0.1), this.materials.gold, [0, -0.4, 0.01], true, true);
+
+    const arm = this.mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.36, 16), this.materials.gold, [0, 0.02, 0.2], true, true);
+    arm.rotation.x = Math.PI * 0.5;
+
+    const shade = this.mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.52, 28), warmGlass, [0, 0.02, 0.39], true, false);
+    const shadeTop = this.mesh(new THREE.TorusGeometry(0.16, 0.018, 8, 28), this.materials.gold, [0, 0.29, 0.39], true, true);
+    const shadeBottom = this.mesh(new THREE.TorusGeometry(0.19, 0.018, 8, 28), this.materials.gold, [0, -0.25, 0.39], true, true);
+    shadeTop.rotation.x = Math.PI * 0.5;
+    shadeBottom.rotation.x = Math.PI * 0.5;
+
+    group.add(backplate, topCap, bottomCap, arm, shade, shadeTop, shadeBottom);
+    group.userData.emissiveMaterial = warmGlass;
+    return group;
+  }
+
   createColumn(position, height = 4.2) {
     const group = new THREE.Group();
     group.position.set(...position);

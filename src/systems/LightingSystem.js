@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { COLORS } from "../utils/constants.js";
 
 export class LightingSystem {
   constructor(scene) {
@@ -9,7 +8,8 @@ export class LightingSystem {
     this.awakening = false;
     this.roomLights = [];
     this.flickerLights = [];
-    this.egyptianTorches = [];
+    this.secondaryLights = [];
+    this.flashlights = [];
     this.createLights();
     this.setMode(this.mode);
   }
@@ -50,16 +50,30 @@ export class LightingSystem {
     return light;
   }
 
-  createTorch(position) {
-    const light = new THREE.PointLight(COLORS.torch, 0.55, 7.5, 1.8);
+  createSecondaryWallLight(position) {
+    const light = new THREE.PointLight(0xffc982, 0, 5.8, 1.75);
     light.position.set(...position);
-    light.castShadow = true;
-    light.userData.baseIntensity = 0.55;
-    light.userData.dayColor = 0xffd9a6;
-    this.egyptianTorches.push(light);
-    this.flickerLights.push(light);
+    light.castShadow = false;
+    light.userData.baseIntensity = 0.82;
+    light.userData.emissiveMaterials = [];
+    this.secondaryLights.push(light);
     this.scene.add(light);
     return light;
+  }
+
+  registerSecondaryEmitter(light, material) {
+    if (!light || !material) {
+      return;
+    }
+    light.userData.emissiveMaterials.push(material);
+  }
+
+  registerFlashlight(light) {
+    if (!light) {
+      return;
+    }
+    this.flashlights.push(light);
+    this.setMode(this.mode);
   }
 
   setMode(mode) {
@@ -69,9 +83,10 @@ export class LightingSystem {
         fog: 0x02040a,
         fogDensity: 0.016,
         ambientColor: 0x26304c,
-        ambient: 0.025,
+        ambient: 0.045,
         roomScalar: 0,
-        torchScalar: 0,
+        secondaryScalar: 1,
+        flashlightScalar: 1,
         dinoSpot: 0
       },
       day: {
@@ -81,7 +96,8 @@ export class LightingSystem {
         ambientColor: 0xffffff,
         ambient: 0.45,
         roomScalar: 1,
-        torchScalar: 0.25,
+        secondaryScalar: 0,
+        flashlightScalar: 0,
         dinoSpot: this.awakening ? 1.55 : 0.95
       }
     };
@@ -100,10 +116,18 @@ export class LightingSystem {
       light.intensity = light.userData.baseIntensity * selected.roomScalar;
       light.userData.currentScalar = selected.roomScalar;
     });
-    this.egyptianTorches.forEach(light => {
-      light.color.setHex(light.userData.dayColor);
-      light.intensity = light.userData.baseIntensity * selected.torchScalar;
-      light.userData.currentScalar = selected.torchScalar;
+    this.secondaryLights.forEach(light => {
+      light.intensity = light.userData.baseIntensity * selected.secondaryScalar;
+      light.userData.currentScalar = selected.secondaryScalar;
+      light.userData.emissiveMaterials.forEach(material => {
+        material.emissiveIntensity = selected.secondaryScalar * 1.35;
+      });
+    });
+    this.flashlights.forEach(light => {
+      light.intensity = light.userData.baseIntensity * selected.flashlightScalar;
+      if (light.userData.emissiveMaterial) {
+        light.userData.emissiveMaterial.emissiveIntensity = selected.flashlightScalar * 1.8;
+      }
     });
     this.dinoSpot.color.setHex(0xffffff);
     this.dinoSpot.intensity = selected.dinoSpot;
@@ -121,26 +145,12 @@ export class LightingSystem {
     this.setMode(this.mode);
   }
 
-  boostEgyptianTorches(active) {
-    this.egyptianTorches.forEach(light => {
-      light.userData.baseIntensity = active ? 1.45 : 0.55;
-    });
-  }
-
   update(deltaTime, elapsedTime) {
-    if (this.mode === "off") {
-      return;
-    }
-    if (this.awakening) {
+    if (this.mode === "day" && this.awakening) {
       this.flickerLights.forEach((light, index) => {
         const pulse = Math.sin(elapsedTime * (8.5 + index) + index * 3.1) * 0.18 + Math.random() * 0.08;
-        const scalar = this.mode === "day" ? 0.35 : 1;
-        light.intensity = Math.max(0.15, light.userData.baseIntensity * light.userData.currentScalar + pulse * scalar);
+        light.intensity = Math.max(0.15, light.userData.baseIntensity * light.userData.currentScalar + pulse * 0.35);
       });
     }
-    this.egyptianTorches.forEach((light, index) => {
-      const scalar = this.mode === "day" ? 0.25 : 1.2;
-      light.intensity = light.userData.baseIntensity * scalar + Math.sin(elapsedTime * 9 + index) * 0.12 * scalar;
-    });
   }
 }

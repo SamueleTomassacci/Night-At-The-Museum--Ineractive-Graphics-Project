@@ -1,15 +1,62 @@
 import * as THREE from "three";
-import { createPaintingTexture } from "../utils/proceduralTextures.js";
 import { distance2D } from "../utils/math.js";
 
+const PAINTING_IMAGE_URLS = [
+  "/images/van_gogh_1.jpg",
+  "/images/van_gogh_2.jpeg",
+  "/images/seraut.jpg",
+  "/images/picasso.jpg",
+  "/images/monet.jpg",
+  "/images/daVinci.jpeg",
+  "/images/botticelli.jpg"
+];
+const PAINTING_ASPECT = 1.8 / 1.22;
+const PAINTING_PROMPT_DISTANCE = 4.2;
+
+const textureLoader = new THREE.TextureLoader();
+const textureCache = new Map();
+
+function loadPaintingTexture(url) {
+  if (!textureCache.has(url)) {
+    const texture = textureLoader.load(url, loadedTexture => {
+      fitTextureToPainting(loadedTexture);
+      loadedTexture.needsUpdate = true;
+    });
+    texture.colorSpace = THREE.SRGBColorSpace;
+    textureCache.set(url, texture);
+  }
+
+  return textureCache.get(url);
+}
+
+function fitTextureToPainting(texture) {
+  const image = texture.image;
+  if (!image?.width || !image?.height) {
+    return;
+  }
+
+  const imageAspect = image.width / image.height;
+  texture.offset.set(0, 0);
+  texture.repeat.set(1, 1);
+
+  if (imageAspect > PAINTING_ASPECT) {
+    texture.repeat.x = PAINTING_ASPECT / imageAspect;
+    texture.offset.x = (1 - texture.repeat.x) / 2;
+  } else {
+    texture.repeat.y = imageAspect / PAINTING_ASPECT;
+    texture.offset.y = (1 - texture.repeat.y) / 2;
+  }
+}
+
 class Painting {
-  constructor(materials, index, position, rotationY) {
+  constructor(materials, index, position, rotationY, textureIndex, onRequestTextureChange) {
     this.materials = materials;
     this.index = index;
+    this.textureIndex = textureIndex;
+    this.onRequestTextureChange = onRequestTextureChange;
     this.group = new THREE.Group();
     this.group.position.set(...position);
     this.group.rotation.y = rotationY;
-    this.seed = index + 1;
     this.reactive = false;
     this.createModel();
   }
@@ -23,7 +70,7 @@ class Painting {
     bottomFrame.position.y = -0.735;
     leftFrame.position.x = -1.035;
     rightFrame.position.x = 1.035;
-    const artMaterial = new THREE.MeshStandardMaterial({ map: createPaintingTexture(this.seed), roughness: 0.34, metalness: 0.04, emissive: 0x000000, side: THREE.DoubleSide });
+    const artMaterial = new THREE.MeshStandardMaterial({ map: this.getTexture(), roughness: 0.34, metalness: 0.04, emissive: 0x000000, side: THREE.DoubleSide });
     this.surface = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.22), artMaterial);
     this.surface.position.z = -0.12;
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.3), this.materials.glass);
@@ -37,10 +84,18 @@ class Painting {
     });
   }
 
-  onClick() {
-    this.seed += 7;
-    this.surface.material.map = createPaintingTexture(this.seed);
+  getTexture() {
+    return loadPaintingTexture(PAINTING_IMAGE_URLS[this.textureIndex]);
+  }
+
+  setTextureIndex(textureIndex) {
+    this.textureIndex = textureIndex;
+    this.surface.material.map = this.getTexture();
     this.surface.material.needsUpdate = true;
+  }
+
+  onClick() {
+    this.onRequestTextureChange(this);
   }
 
   react(strength) {
@@ -59,13 +114,53 @@ export class Paintings {
   constructor(materials) {
     this.materials = materials;
     this.group = new THREE.Group();
+    this.nextTextureCursor = 4;
+    this.prompt = this.createPrompt();
     this.paintings = [
-      new Painting(materials, 0, [-5.4, 2.3, 21.7], 0),
-      new Painting(materials, 1, [-1.8, 2.3, 21.7], 0),
-      new Painting(materials, 2, [1.8, 2.3, 21.7], 0),
-      new Painting(materials, 3, [5.4, 2.3, 21.7], 0)
+      new Painting(materials, 0, [-2.4, 2.3, 22.68], 0, 0, painting => this.changePaintingTexture(painting)),
+      new Painting(materials, 1, [2.4, 2.3, 22.68], 0, 1, painting => this.changePaintingTexture(painting)),
+      new Painting(materials, 2, [-7.68, 2.3, 15.2], Math.PI * 0.5, 2, painting => this.changePaintingTexture(painting)),
+      new Painting(materials, 3, [7.68, 2.3, 15.2], -Math.PI * 0.5, 3, painting => this.changePaintingTexture(painting))
     ];
     this.paintings.forEach(painting => this.group.add(painting.group));
+  }
+
+  createPrompt() {
+    const prompt = document.createElement("div");
+    prompt.textContent = "Click the painting to change the artwork";
+    prompt.style.position = "fixed";
+    prompt.style.left = "50%";
+    prompt.style.bottom = "72px";
+    prompt.style.transform = "translateX(-50%)";
+    prompt.style.padding = "10px 16px";
+    prompt.style.border = "1px solid rgba(255, 228, 174, 0.65)";
+    prompt.style.borderRadius = "6px";
+    prompt.style.background = "rgba(12, 17, 28, 0.78)";
+    prompt.style.color = "#ffe4ae";
+    prompt.style.font = "600 18px/1.2 system-ui, sans-serif";
+    prompt.style.letterSpacing = "0";
+    prompt.style.pointerEvents = "none";
+    prompt.style.display = "none";
+    prompt.style.zIndex = "20";
+    document.body.appendChild(prompt);
+    return prompt;
+  }
+
+  changePaintingTexture(selectedPainting) {
+    const usedByOtherPaintings = new Set(
+      this.paintings
+        .filter(painting => painting !== selectedPainting)
+        .map(painting => painting.textureIndex)
+    );
+
+    for (let i = 0; i < PAINTING_IMAGE_URLS.length; i += 1) {
+      const candidate = (this.nextTextureCursor + i) % PAINTING_IMAGE_URLS.length;
+      if (!usedByOtherPaintings.has(candidate) && candidate !== selectedPainting.textureIndex) {
+        selectedPainting.setTextureIndex(candidate);
+        this.nextTextureCursor = (candidate + 1) % PAINTING_IMAGE_URLS.length;
+        return;
+      }
+    }
   }
 
   getClickables() {
@@ -85,6 +180,7 @@ export class Paintings {
       }
     });
     this.paintings.forEach(painting => painting.react(painting === nearest && nearestDistance < 5 ? 1 - nearestDistance / 5 : 0));
+    this.prompt.style.display = nearestDistance < PAINTING_PROMPT_DISTANCE ? "block" : "none";
   }
 
   update(deltaTime, elapsedTime) {

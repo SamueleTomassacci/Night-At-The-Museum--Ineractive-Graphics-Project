@@ -25,6 +25,7 @@ const collisionSystem = new CollisionSystem();
 const animationSystem = new AnimationSystem();
 const museum = new Museum(factory, lightingSystem, sceneManager);
 const player = new Player(materials, inputManager, collisionSystem);
+lightingSystem.registerFlashlight(player.flashlight);
 const interactionManager = new InteractionManager(cameraManager.camera, inputManager);
 const doorInteractionSystem = new DoorInteractionSystem(player, museum.getDoors());
 const ui = new UIController(document.getElementById("ui-root"));
@@ -41,9 +42,6 @@ inputManager.addEventListener("keyPressed", event => {
     cameraManager.cycleMode();
     ui.setCamera(cameraManager.getLabel());
     museum.setCeilingVisible(!cameraManager.isOverheadView());
-  }
-  if (event.detail === "l") {
-    ui.setLightMode(lightingSystem.cycleMode());
   }
 });
 
@@ -65,10 +63,6 @@ ui.addEventListener("qualityChanged", event => {
   renderer.setQuality(event.detail);
   shadowsEnabled = renderer.renderer.shadowMap.enabled;
   ui.setShadows(shadowsEnabled);
-});
-
-sceneManager.addEventListener("museumAwakens", () => {
-  ui.setMuseumState(sceneManager.state);
 });
 
 window.addEventListener("resize", () => renderer.resize(cameraManager.camera));

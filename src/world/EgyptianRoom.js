@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Sarcophagus } from "../exhibits/Sarcophagus.js";
+import { addWallSconce } from "./wallSconces.js";
 
 export class EgyptianRoom {
   constructor(factory, lightingSystem) {
@@ -20,20 +21,14 @@ export class EgyptianRoom {
     this.group.add(factory.createSign("EGYPTIAN WING", [0, 3.15, -22.76], 0, 4.2));
     this.addObelisks(factory);
     this.group.add(factory.createCeilingLight([0, 4.95, -14.5], 1.35));
-    const torchPositions = [
-      [-6.7, 2.2, -10],
-      [6.7, 2.2, -10],
-      [-6.7, 2.2, -19],
-      [6.7, 2.2, -19]
-    ];
-    torchPositions.forEach(position => {
-      const holder = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 0.8, 12), factory.materials.gold);
-      holder.position.set(position[0], 1.6, position[2]);
-      holder.rotation.z = position[0] < 0 ? -0.55 : 0.55;
-      holder.castShadow = true;
-      this.group.add(holder);
-      lightingSystem.createTorch(position);
-    });
+    this.addWallSconces(factory, lightingSystem);
+  }
+
+  addWallSconces(factory, lightingSystem) {
+    addWallSconce(this.group, factory, lightingSystem, [-7.76, 2.45, -10.4], Math.PI * 0.5);
+    addWallSconce(this.group, factory, lightingSystem, [-7.76, 2.45, -18.6], Math.PI * 0.5);
+    addWallSconce(this.group, factory, lightingSystem, [7.76, 2.45, -10.4], -Math.PI * 0.5);
+    addWallSconce(this.group, factory, lightingSystem, [7.76, 2.45, -18.6], -Math.PI * 0.5);
   }
 
   addObelisks(factory) {

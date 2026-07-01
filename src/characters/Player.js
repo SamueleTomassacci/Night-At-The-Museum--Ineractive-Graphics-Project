@@ -11,6 +11,7 @@ export class Player {
     this.group = new THREE.Group();
     this.group.position.set(0, 0, 3.8);
     this.createModel();
+    this.createFlashlight();
   }
 
   createModel() {
@@ -31,11 +32,69 @@ export class Player {
     this.leftArm.rotation.z = 0.2;
     this.rightArm.rotation.z = -0.2;
     this.group.add(this.body, this.head, this.hat, this.leftArm, this.rightArm, this.leftLeg, this.rightLeg);
+    this.modelParts = [this.body, this.head, this.hat, this.leftArm, this.rightArm, this.leftLeg, this.rightLeg];
     this.group.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true;
         child.receiveShadow = true;
       }
+    });
+  }
+
+  createFlashlight() {
+    this.flashlightGroup = new THREE.Group();
+    this.flashlightGroup.name = "Player Flashlight";
+    this.flashlightGroup.position.set(0.36, 1.18, 0.28);
+    this.flashlightGroup.rotation.x = -0.08;
+
+    const bodyMaterial = new THREE.MeshStandardMaterial({
+      color: 0x151923,
+      roughness: 0.35,
+      metalness: 0.55
+    });
+    this.flashlightLensMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffe0a4,
+      roughness: 0.2,
+      metalness: 0,
+      emissive: 0xffc36d,
+      emissiveIntensity: 0
+    });
+
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 0.42, 16), bodyMaterial);
+    handle.rotation.x = Math.PI * 0.5;
+    handle.castShadow = true;
+    handle.receiveShadow = true;
+
+    const head = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.075, 0.16, 20), bodyMaterial);
+    head.rotation.x = Math.PI * 0.5;
+    head.position.z = 0.24;
+    head.castShadow = true;
+    head.receiveShadow = true;
+
+    const lens = new THREE.Mesh(new THREE.CircleGeometry(0.083, 20), this.flashlightLensMaterial);
+    lens.position.z = 0.325;
+    lens.rotation.y = Math.PI;
+
+    this.flashlight = new THREE.SpotLight(0xffe2b2, 0, 13, Math.PI / 8, 0.55, 1.25);
+    this.flashlight.position.set(0, 0, 0.34);
+    this.flashlight.castShadow = true;
+    this.flashlight.shadow.mapSize.set(1024, 1024);
+    this.flashlight.shadow.bias = -0.00025;
+    this.flashlight.shadow.normalBias = 0.04;
+    this.flashlight.userData.baseIntensity = 3.6;
+    this.flashlight.userData.emissiveMaterial = this.flashlightLensMaterial;
+
+    this.flashlightTarget = new THREE.Object3D();
+    this.flashlightTarget.position.set(0, -1.15, 7);
+    this.flashlight.target = this.flashlightTarget;
+
+    this.flashlightGroup.add(handle, head, lens, this.flashlight, this.flashlightTarget);
+    this.group.add(this.flashlightGroup);
+  }
+
+  setModelVisible(visible) {
+    this.modelParts.forEach(part => {
+      part.visible = visible;
     });
   }
 

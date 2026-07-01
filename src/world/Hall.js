@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { addWallSconce } from "./wallSconces.js";
 
 const WALL_HEIGHT = 5.0;
 const DOOR_HEADER_BOTTOM = 3.35;
@@ -6,7 +7,7 @@ const DOOR_HEADER_HEIGHT = WALL_HEIGHT - DOOR_HEADER_BOTTOM;
 const DOOR_HEADER_CENTER_Y = DOOR_HEADER_BOTTOM + DOOR_HEADER_HEIGHT / 2;
 
 export class Hall {
-  constructor(factory, clock) {
+  constructor(factory, lightingSystem) {
     this.group = new THREE.Group();
     this.group.name = "Central Atrium";
     this.group.add(factory.createFloor(16, 12, [0, 0, 0]));
@@ -32,7 +33,14 @@ export class Hall {
     this.group.add(factory.createBench([-2.8, 0, 2.8], Math.PI * 0.5));
     this.group.add(factory.createBench([2.8, 0, 2.8], -Math.PI * 0.5));
     this.group.add(factory.createCeilingLight([0, 4.95, 0], 1.35));
-    this.group.add(clock.group);
+    this.addWallSconces(factory, lightingSystem);
+  }
+
+  addWallSconces(factory, lightingSystem) {
+    addWallSconce(this.group, factory, lightingSystem, [-7.76, 2.45, -3.35], Math.PI * 0.5);
+    addWallSconce(this.group, factory, lightingSystem, [-7.76, 2.45, 3.35], Math.PI * 0.5);
+    addWallSconce(this.group, factory, lightingSystem, [7.76, 2.45, -3.35], -Math.PI * 0.5);
+    addWallSconce(this.group, factory, lightingSystem, [7.76, 2.45, 3.35], -Math.PI * 0.5);
   }
 
   getDoors() {

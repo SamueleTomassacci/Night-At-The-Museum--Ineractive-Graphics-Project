@@ -8,6 +8,19 @@ const MOAI_LOCAL_FACE_ANGLE = -THREE.MathUtils.degToRad(40);
 const MOAI_FACE_ENTRANCE_ROTATION = -Math.PI / 2 - MOAI_LOCAL_FACE_ANGLE;
 const PEDESTAL_HEIGHT = 0.55;
 const MOUTH_INTERIOR_DARKNESS = 0.08;
+const HOP_FLOOR_Y = 0;
+const HOP_HEIGHT = 0.5;
+const HOP_DURATION = 620;
+const HOP_PAUSE = 90;
+const HOP_TILT = 0.12;
+const HOP_WAYPOINTS = [
+  { x: 2.45, z: -1.7 },
+  { x: 4.45, z: -0.9 },
+  { x: 3.75, z: 1.55 },
+  { x: 1.9, z: 2.25 },
+  { x: 2.7, z: -2.25 },
+  { x: 4.85, z: 0.95 }
+];
 const TALK_PHRASE = [
   { open: 0.52, openMs: 260, closeMs: 220, pauseMs: 90 },
   { open: 0.28, openMs: 180, closeMs: 170, pauseMs: 55 },
@@ -30,7 +43,11 @@ export class Statue {
     this.mouthState = { open: 0 };
     this.mouthDeformations = [];
     this.mouthTween = null;
+    this.mouthCloseTween = null;
     this.talkIndex = 0;
+    this.hopping = false;
+    this.hopTween = null;
+    this.hopIndex = 0;
     this.awake = false;
     this.faceSpotlights = this.createFaceSpotlights();
     this.group.add(this.faceSpotlights);
@@ -69,6 +86,7 @@ export class Statue {
     const target = new THREE.Object3D();
     target.name = "Statue Face Spotlight Target";
     target.position.set(0, PEDESTAL_HEIGHT + 1.75, 0);
+    this.faceSpotlightTarget = target;
     group.add(target);
 
     [
@@ -370,12 +388,31 @@ export class Statue {
       .delay(syllable.pauseMs)
       .easing(TWEEN.Easing.Sinusoidal.InOut)
       .onUpdate(() => this.applyMouthDeformation())
-      .onComplete(() => this.playNextMouthSyllable());
+      .onComplete(() => {
+        if (!this.hopping) {
+          this.playNextMouthSyllable();
+        }
+      });
 
     openTween.chain(closeTween);
     this.mouthTween = openTween;
+    this.mouthCloseTween = closeTween;
     TWEEN.add(openTween, closeTween);
     openTween.start();
+  }
+
+  stopMouthAnimation() {
+    if (this.mouthTween) {
+      TWEEN.remove(this.mouthTween);
+      this.mouthTween = null;
+    }
+    if (this.mouthCloseTween) {
+      TWEEN.remove(this.mouthCloseTween);
+      this.mouthCloseTween = null;
+    }
+
+    this.mouthState.open = 0;
+    this.applyMouthDeformation();
   }
 
   applyMouthDeformation() {
@@ -397,6 +434,74 @@ export class Statue {
       deformation.color.needsUpdate = true;
       deformation.geometry.computeVertexNormals();
     });
+  }
+
+  startHopping() {
+    if (this.hopping) {
+      return;
+    }
+
+    this.hopping = true;
+    this.stopMouthAnimation();
+    this.hopIndex = 0;
+    this.startNextHop(0);
+  }
+
+  startNextHop(delay = HOP_PAUSE) {
+    const destination = HOP_WAYPOINTS[this.hopIndex];
+    this.hopIndex = (this.hopIndex + 1) % HOP_WAYPOINTS.length;
+
+    const start = {
+      x: this.modelRoot.position.x,
+      y: this.modelRoot.position.y,
+      z: this.modelRoot.position.z
+    };
+    const end = { x: destination.x, y: HOP_FLOOR_Y, z: destination.z };
+    const direction = new THREE.Vector2(end.x - start.x, end.z - start.z);
+    if (direction.lengthSq() > 0) {
+      direction.normalize();
+    }
+
+    const state = { t: 0 };
+    this.hopTween = new TWEEN.Tween(state)
+      .to({ t: 1 }, HOP_DURATION)
+      .delay(delay)
+      .easing(TWEEN.Easing.Quadratic.InOut)
+      .onUpdate(() => {
+        const arc = Math.sin(Math.PI * state.t);
+        this.modelRoot.position.set(
+          THREE.MathUtils.lerp(start.x, end.x, state.t),
+          THREE.MathUtils.lerp(start.y, end.y, state.t) + arc * HOP_HEIGHT,
+          THREE.MathUtils.lerp(start.z, end.z, state.t)
+        );
+        this.modelRoot.rotation.set(
+          -direction.y * arc * HOP_TILT,
+          MOAI_FACE_ENTRANCE_ROTATION + direction.x * arc * 0.08,
+          direction.x * arc * HOP_TILT
+        );
+        this.updateFaceSpotlightTarget();
+      })
+      .onComplete(() => {
+        this.modelRoot.position.set(end.x, end.y, end.z);
+        this.modelRoot.rotation.set(0, MOAI_FACE_ENTRANCE_ROTATION, 0);
+        this.updateFaceSpotlightTarget();
+        this.startNextHop();
+      });
+
+    TWEEN.add(this.hopTween);
+    this.hopTween.start();
+  }
+
+  updateFaceSpotlightTarget() {
+    if (!this.faceSpotlightTarget) {
+      return;
+    }
+
+    this.faceSpotlightTarget.position.set(
+      this.modelRoot.position.x,
+      this.modelRoot.position.y + 1.75,
+      this.modelRoot.position.z
+    );
   }
 
   getGroundAnchor(model) {
@@ -431,13 +536,21 @@ export class Statue {
   }
 
   awaken() {
+    if (this.awake) {
+      return;
+    }
+
     this.awake = true;
     this.modelRoot.rotation.y = MOAI_FACE_ENTRANCE_ROTATION;
+    this.startHopping();
   }
 
   update() {
-    this.modelRoot.position.y = PEDESTAL_HEIGHT;
+    if (!this.hopping) {
+      this.modelRoot.position.set(0, PEDESTAL_HEIGHT, 0);
+      this.modelRoot.rotation.set(0, MOAI_FACE_ENTRANCE_ROTATION, 0);
+    }
     this.modelRoot.scale.setScalar(1);
-    this.modelRoot.rotation.y = MOAI_FACE_ENTRANCE_ROTATION;
+    this.updateFaceSpotlightTarget();
   }
 }

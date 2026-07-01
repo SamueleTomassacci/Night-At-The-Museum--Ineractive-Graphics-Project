@@ -1,10 +1,10 @@
 export const CAMERA_MODES = ["thirdPerson", "firstPerson", "topDown", "panorama"];
 
 export const CAMERA_LABELS = {
-  thirdPerson: "Terza persona",
-  firstPerson: "Prima persona",
-  topDown: "Dall'alto",
-  panorama: "Panoramica"
+  thirdPerson: "Third Person",
+  firstPerson: "First Person",
+  topDown: "Top-Down",
+  panorama: "Panorama"
 };
 
 export const MUSEUM_STATE = {

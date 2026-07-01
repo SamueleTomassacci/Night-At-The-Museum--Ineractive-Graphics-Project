@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { ROOM_RECTS } from "../utils/constants.js";
 import { withinRect, distance2D } from "../utils/math.js";
-import { Clock } from "../exhibits/Clock.js";
 import { Hall } from "./Hall.js";
 import { DinosaurRoom } from "./DinosaurRoom.js";
 import { StatueRoom } from "./StatueRoom.js";
@@ -14,12 +13,11 @@ export class Museum {
     this.factory = factory;
     this.lightingSystem = lightingSystem;
     this.sceneManager = sceneManager;
-    this.clock = new Clock(factory.materials, () => this.sceneManager.setAwakening());
-    this.hall = new Hall(factory, this.clock);
-    this.dinosaurRoom = new DinosaurRoom(factory);
-    this.statueRoom = new StatueRoom(factory);
+    this.hall = new Hall(factory, lightingSystem);
+    this.dinosaurRoom = new DinosaurRoom(factory, lightingSystem);
+    this.statueRoom = new StatueRoom(factory, lightingSystem);
     this.egyptianRoom = new EgyptianRoom(factory, lightingSystem);
-    this.galleryRoom = new GalleryRoom(factory);
+    this.galleryRoom = new GalleryRoom(factory, lightingSystem);
     this.rooms = [this.hall, this.dinosaurRoom, this.statueRoom, this.egyptianRoom, this.galleryRoom];
     this.rooms.forEach(room => this.group.add(room.group));
     this.ceilings = this.createCeilings(factory);
@@ -64,7 +62,6 @@ export class Museum {
 
   getAnimatables() {
     return [
-      this.clock,
       this.dinosaurRoom.dinosaur,
       this.statueRoom.statue,
       this.egyptianRoom.sarcophagus,
@@ -93,6 +90,5 @@ export class Museum {
       this.statueRoom.statue.awaken(position);
     }
     this.galleryRoom.paintings.updateReactions(position);
-    this.lightingSystem.boostEgyptianTorches(withinRect(position, ROOM_RECTS.egyptian));
   }
 }
