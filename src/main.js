@@ -52,6 +52,10 @@ inputManager.addEventListener("wheel", event => {
   cameraManager.zoom(event.detail);
 });
 
+inputManager.addEventListener("cameraDragged", event => {
+  cameraManager.orbit(event.detail.deltaX, event.detail.deltaY);
+});
+
 ui.addEventListener("lightModeChanged", event => {
   ui.setLightMode(lightingSystem.setMode(event.detail));
 });
