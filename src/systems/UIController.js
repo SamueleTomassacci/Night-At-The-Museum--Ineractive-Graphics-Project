@@ -24,6 +24,8 @@ export class UIController extends EventTarget {
         <div class="museum-row"><span class="museum-key">W / S</span><span class="museum-value">Forward / Backward</span></div>
         <div class="museum-row"><span class="museum-key">A / D</span><span class="museum-value">Turn</span></div>
         <div class="museum-row"><span class="museum-key">C</span><span class="museum-value">Change Viewpoint</span></div>
+        <div class="museum-row"><span class="museum-key">M</span><span class="museum-value">Make the dinosaur walk</span></div>
+        <div class="museum-row"><span class="museum-key">Mouse wheel</span><span class="museum-value">Zoom in / out</span></div>
         <div class="museum-row museum-section-row"><span class="museum-key">Status</span><span class="museum-value"></span></div>
         <div class="museum-row"><span class="museum-key">Camera</span><span data-field="camera" class="museum-value"></span></div>
         <div class="museum-row"><span class="museum-key">Lights</span><span data-field="lights" class="museum-value"></span></div>
