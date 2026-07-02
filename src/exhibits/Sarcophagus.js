@@ -14,6 +14,7 @@ const COFFIN_UPRIGHT_ORIENTATION = new THREE.Matrix4().makeBasis(
 const COFFIN_TOP_SLIDE_DISTANCE = 0.95;
 const COFFIN_TOP_SLIDE_LOCAL_AXIS = new THREE.Vector3(0, 0, -1);
 const COFFIN_OPEN_HOLD_DURATION = 5000;
+const PEDESTAL_HEIGHT = 0.55;
 
 export class Sarcophagus {
   constructor(materials) {
@@ -22,12 +23,39 @@ export class Sarcophagus {
     this.group.position.set(0, 0, -15);
     this.open = false;
     this.modelRoot = new THREE.Group();
+    this.modelRoot.position.y = PEDESTAL_HEIGHT;
+    this.pedestal = this.createPedestal();
     this.model = null;
     this.mummy = null;
     this.topParts = [];
     this.topSlideState = { distance: 0 };
     this.animationRunning = false;
     this.createModel();
+  }
+
+  createPedestal() {
+    const group = new THREE.Group();
+    const base = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.15, 1.25, 0.18, 36),
+      this.materials.trim
+    );
+    base.position.y = 0.09;
+
+    const plinth = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.95, 1.05, PEDESTAL_HEIGHT - 0.18, 36),
+      this.materials.statue
+    );
+    plinth.position.y = 0.18 + (PEDESTAL_HEIGHT - 0.18) / 2;
+
+    group.add(base, plinth);
+    group.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    return group;
   }
 
   createModel() {
@@ -42,9 +70,9 @@ export class Sarcophagus {
       })
     );
     hitbox.name = "Coffin Click Hitbox";
-    hitbox.position.y = COFFIN_TARGET_HEIGHT * 0.5;
+    hitbox.position.y = PEDESTAL_HEIGHT + COFFIN_TARGET_HEIGHT * 0.5;
 
-    this.group.add(this.modelRoot, hitbox);
+    this.group.add(this.pedestal, this.modelRoot, hitbox);
     this.loadModel();
   }
 

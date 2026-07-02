@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { COLORS } from "./constants.js";
-import { createFloorTexture, createNormalTexture, createSarcophagusTexture, createWallTexture, createWoodTexture } from "./proceduralTextures.js";
+import { createFloorTexture, createNormalTexture, createObeliskTexture, createSarcophagusTexture, createWallTexture, createWoodTexture } from "./proceduralTextures.js";
 
 const USE_EXTERNAL_FLOOR_TEXTURES = true;
 const FLOOR_TEXTURE_REPEAT = { x: 8, y: 8 };
@@ -162,6 +162,7 @@ export function createMaterials({ useExternalFloorTextures = USE_EXTERNAL_FLOOR_
   const wallFallbackTexture = createWallTexture();
   const woodTexture = createWoodTexture();
   const sarcophagusTexture = createSarcophagusTexture();
+  const obeliskTexture = createObeliskTexture();
   const floorMaterial = useExternalFloorTextures
     ? createExternalFloorMaterial(floorFallbackTexture, floorFallbackNormal)
     : createProceduralFloorMaterial(floorFallbackTexture, floorFallbackNormal);
@@ -180,6 +181,7 @@ export function createMaterials({ useExternalFloorTextures = USE_EXTERNAL_FLOOR_
     statue: new THREE.MeshStandardMaterial({ color: COLORS.statue, roughness: 0.38, metalness: 0.05 }),
     gold: new THREE.MeshStandardMaterial({ color: COLORS.gold, roughness: 0.28, metalness: 0.28 }),
     sarcophagus: new THREE.MeshStandardMaterial({ map: sarcophagusTexture, roughness: 0.32, metalness: 0.14 }),
+    obelisk: new THREE.MeshStandardMaterial({ map: obeliskTexture, roughness: 0.54, metalness: 0.05 }),
     glass: new THREE.MeshPhysicalMaterial({ color: 0xbfd8ff, roughness: 0.04, metalness: 0, transmission: 0.18, transparent: true, opacity: 0.34, side: THREE.DoubleSide }),
     playerCoat: new THREE.MeshStandardMaterial({ color: 0x253153, roughness: 0.64 }),
     playerSkin: new THREE.MeshStandardMaterial({ color: 0xe2b58b, roughness: 0.56 }),

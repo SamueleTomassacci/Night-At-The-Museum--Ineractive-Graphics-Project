@@ -3,6 +3,10 @@ import { CAMERA_LABELS, CAMERA_MODES } from "../utils/constants.js";
 import { damp } from "../utils/math.js";
 
 const FIRST_PERSON_MAX_YAW = THREE.MathUtils.degToRad(75);
+const DEFAULT_CAMERA_UP = new THREE.Vector3(0, 1, 0);
+const TOP_DOWN_CAMERA_UP = new THREE.Vector3(0, 0, -1);
+const TOP_DOWN_CAMERA_POSITION = new THREE.Vector3(0, 52, 0);
+const TOP_DOWN_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 
 export class CameraManager {
   constructor() {
@@ -37,6 +41,8 @@ export class CameraManager {
   }
 
   orbit(deltaX, deltaY) {
+    if (this.mode === "topDown") return;
+
     this.cameraYaw -= deltaX * this.cameraSensitivity;
     this.clampFirstPersonYaw();
     this.cameraPitch = THREE.MathUtils.clamp(
@@ -110,6 +116,7 @@ export class CameraManager {
     this.forward.set(Math.sin(player.group.rotation.y), 0, Math.cos(player.group.rotation.y));
 
     if (this.mode === "thirdPerson") {
+      this.camera.up.copy(DEFAULT_CAMERA_UP);
       const horizontalDistance = Math.cos(this.cameraPitch) * this.cameraDistance;
       const desired = this.target.clone().add(new THREE.Vector3(
         -Math.sin(this.cameraYaw) * horizontalDistance,
@@ -123,18 +130,20 @@ export class CameraManager {
     }
 
     if (this.mode === "firstPerson") {
+      this.camera.up.copy(DEFAULT_CAMERA_UP);
       const desired = playerPosition.clone().add(this.firstPersonOffset).addScaledVector(this.forward, 0.18);
       this.camera.position.copy(desired);
       this.camera.lookAt(desired.clone().addScaledVector(this.getAimDirection(), 10));
     }
 
     if (this.mode === "topDown") {
-      const desired = new THREE.Vector3(playerPosition.x, 30, playerPosition.z + 0.01);
-      this.camera.position.lerp(desired, 1 - Math.exp(-5 * deltaTime));
-      this.camera.lookAt(playerPosition.x, 0, playerPosition.z);
+      this.camera.up.copy(TOP_DOWN_CAMERA_UP);
+      this.camera.position.copy(TOP_DOWN_CAMERA_POSITION);
+      this.camera.lookAt(TOP_DOWN_CAMERA_TARGET);
     }
 
     if (this.mode === "panorama") {
+      this.camera.up.copy(DEFAULT_CAMERA_UP);
       this.panoramaAngle += deltaTime * 0.22;
       const radius = 31;
       this.camera.position.set(Math.cos(this.panoramaAngle) * radius, 17 + Math.sin(elapsedTime * 0.25) * 2, Math.sin(this.panoramaAngle) * radius);

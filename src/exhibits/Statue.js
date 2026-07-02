@@ -38,12 +38,14 @@ export class Statue {
     this.modelRoot = new THREE.Group();
     this.modelRoot.position.y = PEDESTAL_HEIGHT;
     this.modelRoot.rotation.y = MOAI_FACE_ENTRANCE_ROTATION;
+    this.modelRoot.add(this.createClickHitbox());
     this.group.add(this.pedestal, this.modelRoot);
     this.model = null;
     this.mouthState = { open: 0 };
     this.mouthDeformations = [];
     this.mouthTween = null;
     this.mouthCloseTween = null;
+    this.mouthPlaying = false;
     this.talkIndex = 0;
     this.hopping = false;
     this.hopTween = null;
@@ -77,6 +79,20 @@ export class Statue {
     });
 
     return group;
+  }
+
+  createClickHitbox() {
+    const hitbox = new THREE.Mesh(
+      new THREE.BoxGeometry(2.5, 3.2, 2.5),
+      new THREE.MeshBasicMaterial({
+        transparent: true,
+        opacity: 0,
+        depthWrite: false
+      })
+    );
+    hitbox.name = "Statue Click Hitbox";
+    hitbox.position.y = 1.45;
+    return hitbox;
   }
 
   createFaceSpotlights() {
@@ -131,7 +147,6 @@ export class Statue {
         this.model = model;
         this.modelRoot.add(model);
         this.setupMouthDeformation(model);
-        this.startMouthAnimation();
       },
       undefined,
       error => {
@@ -367,16 +382,18 @@ export class Statue {
   }
 
   startMouthAnimation() {
-    if (this.mouthDeformations.length === 0) {
+    if (this.mouthDeformations.length === 0 || this.mouthPlaying) {
       return;
     }
 
+    this.mouthPlaying = true;
+    this.talkIndex = 0;
     this.playNextMouthSyllable();
   }
 
   playNextMouthSyllable() {
     const syllable = TALK_PHRASE[this.talkIndex];
-    this.talkIndex = (this.talkIndex + 1) % TALK_PHRASE.length;
+    this.talkIndex += 1;
 
     const openTween = new TWEEN.Tween(this.mouthState)
       .to({ open: syllable.open }, syllable.openMs)
@@ -389,9 +406,15 @@ export class Statue {
       .easing(TWEEN.Easing.Sinusoidal.InOut)
       .onUpdate(() => this.applyMouthDeformation())
       .onComplete(() => {
-        if (!this.hopping) {
+        if (this.talkIndex < TALK_PHRASE.length) {
           this.playNextMouthSyllable();
+          return;
         }
+        this.mouthPlaying = false;
+        this.mouthTween = null;
+        this.mouthCloseTween = null;
+        this.mouthState.open = 0;
+        this.applyMouthDeformation();
       });
 
     openTween.chain(closeTween);
@@ -411,6 +434,7 @@ export class Statue {
       this.mouthCloseTween = null;
     }
 
+    this.mouthPlaying = false;
     this.mouthState.open = 0;
     this.applyMouthDeformation();
   }
@@ -543,6 +567,10 @@ export class Statue {
     this.awake = true;
     this.modelRoot.rotation.y = MOAI_FACE_ENTRANCE_ROTATION;
     this.startHopping();
+  }
+
+  onClick() {
+    this.startMouthAnimation();
   }
 
   update() {

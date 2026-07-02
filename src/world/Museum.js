@@ -70,6 +70,7 @@ export class Museum {
   getClickables() {
     return [
       this.dinosaurRoom.dinosaur,
+      this.statueRoom.statue,
       this.egyptianRoom.sarcophagus,
       ...this.galleryRoom.paintings.getClickables()
     ];

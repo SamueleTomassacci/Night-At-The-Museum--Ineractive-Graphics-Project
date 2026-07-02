@@ -13,6 +13,7 @@ import { LightingSystem } from "./systems/LightingSystem.js";
 import { CollisionSystem } from "./systems/CollisionSystem.js";
 import { UIController } from "./systems/UIController.js";
 import { DoorInteractionSystem } from "./systems/DoorInteractionSystem.js";
+import { ExhibitPromptSystem } from "./systems/ExhibitPromptSystem.js";
 
 const renderer = new Renderer();
 const sceneManager = new SceneManager();
@@ -28,10 +29,24 @@ const player = new Player(materials, inputManager, collisionSystem, factory);
 lightingSystem.registerFlashlight(player.flashlight);
 const interactionManager = new InteractionManager(cameraManager.camera, inputManager);
 const doorInteractionSystem = new DoorInteractionSystem(player, museum.getDoors());
+const exhibitPromptSystem = new ExhibitPromptSystem(player, [
+  {
+    object: museum.dinosaurRoom.dinosaur,
+    message: () => "Click the T-Rex to wake it up"
+  },
+  {
+    object: museum.statueRoom.statue,
+    message: () => "Click the statue to make it talk"
+  },
+  {
+    object: museum.egyptianRoom.sarcophagus,
+    message: () => "Click the sarcophagus to open it"
+  }
+]);
 const ui = new UIController(document.getElementById("ui-root"));
 
 sceneManager.scene.add(museum.group, player.group);
-animationSystem.addMany([lightingSystem, doorInteractionSystem, ...museum.getAnimatables()]);
+animationSystem.addMany([lightingSystem, doorInteractionSystem, exhibitPromptSystem, ...museum.getAnimatables()]);
 museum.getClickables().forEach(clickable => interactionManager.register(clickable.group, clickable));
 
 let shadowsEnabled = true;
