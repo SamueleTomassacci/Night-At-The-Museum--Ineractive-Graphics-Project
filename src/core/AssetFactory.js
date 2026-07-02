@@ -1,9 +1,12 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { clone as cloneSkinnedModel } from "three/addons/utils/SkeletonUtils.js";
+import policemanModelUrl from "../characters/policeman.glb?url";
 
 const COLUMN_MODEL_URL = "/models/Column/ionic_column.glb";
 const BENCH_MODEL_URL = "/models/bench/modern_bench_1.glb";
 const CEILING_LIGHT_MODEL_URL = "/models/Ceiling%20light/ceiling_light.glb";
+const POLICEMAN_MODEL_URL = policemanModelUrl;
 const CEILING_HEIGHT = 5.0;
 const CORNICE_HEIGHT = 0.28;
 const CORNICE_PROJECTION = 0.22;
@@ -21,6 +24,7 @@ export class AssetFactory {
     this.columnModelPromise = null;
     this.benchModelPromise = null;
     this.ceilingLightModelPromise = null;
+    this.policemanModelPromise = null;
   }
 
   mesh(geometry, material, position = [0, 0, 0], castShadow = true, receiveShadow = true) {
@@ -371,6 +375,169 @@ export class AssetFactory {
       });
 
     return group;
+  }
+
+  createPoliceman(position, rotationY = 0, height = 2.05) {
+    const group = new THREE.Group();
+    group.name = "Policeman";
+    group.position.set(...position);
+    group.rotation.y = rotationY;
+
+    this.loadPolicemanModel()
+      .then(model => {
+        group.add(this.createPolicemanModelInstance(model, height));
+      })
+      .catch(error => {
+        console.error("Impossibile caricare il modello del policeman:", error);
+      });
+
+    return group;
+  }
+
+  loadPolicemanModel() {
+    if (!this.policemanModelPromise) {
+      const loader = new GLTFLoader();
+      this.policemanModelPromise = loader.loadAsync(POLICEMAN_MODEL_URL).then(async gltf => {
+        const model = gltf.scene;
+        gltf.animations.length = 0;
+        await this.applyPolicemanSpecGlossMaterials(gltf);
+        model.traverse(child => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        return model;
+      });
+    }
+
+    return this.policemanModelPromise;
+  }
+
+  async applyPolicemanSpecGlossMaterials(gltf) {
+    const parser = gltf.parser;
+    const materialDefs = parser?.json?.materials ?? [];
+    const patchedMaterials = new Set();
+    const textureAssignments = [];
+
+    gltf.scene.traverse(child => {
+      if (!child.isMesh) {
+        return;
+      }
+
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      materials.forEach(material => {
+        if (!material || patchedMaterials.has(material)) {
+          return;
+        }
+
+        patchedMaterials.add(material);
+        const materialIndex = parser.associations.get(material)?.materials;
+        const materialDef = materialDefs[materialIndex];
+        const specGloss = materialDef?.extensions?.KHR_materials_pbrSpecularGlossiness;
+
+        if (!specGloss) {
+          return;
+        }
+
+        if (specGloss.diffuseFactor) {
+          material.color.setRGB(
+            specGloss.diffuseFactor[0],
+            specGloss.diffuseFactor[1],
+            specGloss.diffuseFactor[2],
+            THREE.LinearSRGBColorSpace
+          );
+          material.opacity = specGloss.diffuseFactor[3] ?? 1;
+          material.transparent = material.opacity < 1;
+        }
+
+        if (specGloss.diffuseTexture) {
+          textureAssignments.push(parser.assignTexture(material, "map", specGloss.diffuseTexture, THREE.SRGBColorSpace));
+        }
+
+        material.metalness = 0;
+        material.roughness = THREE.MathUtils.clamp(1 - (specGloss.glossinessFactor ?? 1), 0.04, 1);
+        material.needsUpdate = true;
+      });
+    });
+
+    await Promise.all(textureAssignments);
+    patchedMaterials.forEach(material => {
+      material.needsUpdate = true;
+    });
+  }
+
+  createPolicemanModelInstance(model, height) {
+    const instance = cloneSkinnedModel(model);
+    this.posePolicemanArmsAtSides(instance);
+
+    const box = new THREE.Box3().setFromObject(instance);
+    const size = box.getSize(new THREE.Vector3());
+    const scale = height / Math.max(size.y, 0.001);
+
+    instance.scale.setScalar(scale);
+    instance.updateMatrixWorld(true);
+
+    const scaledBox = new THREE.Box3().setFromObject(instance);
+    const center = scaledBox.getCenter(new THREE.Vector3());
+    instance.position.set(-center.x, -scaledBox.min.y, -center.z);
+
+    return instance;
+  }
+
+  posePolicemanArmsAtSides(model) {
+    model.updateMatrixWorld(true);
+    this.posePolicemanArm(model, {
+      upperArm: "mixamorig:LeftArm_09",
+      foreArm: "mixamorig:LeftForeArm_010",
+      hand: "mixamorig:LeftHand_011",
+      sideSign: 1
+    });
+    this.posePolicemanArm(model, {
+      upperArm: "mixamorig:RightArm_033",
+      foreArm: "mixamorig:RightForeArm_034",
+      hand: "mixamorig:RightHand_035",
+      sideSign: -1
+    });
+  }
+
+  posePolicemanArm(model, config) {
+    const upperArm = this.getModelObjectByOriginalName(model, config.upperArm);
+    const foreArm = this.getModelObjectByOriginalName(model, config.foreArm);
+    const hand = this.getModelObjectByOriginalName(model, config.hand);
+
+    if (!upperArm || !foreArm || !hand) {
+      console.warn("Ossa del braccio del policeman non trovate:", config);
+      return;
+    }
+
+    const upperTarget = new THREE.Vector3(config.sideSign * 0.16, -0.98, 0.04).normalize();
+    const foreTarget = new THREE.Vector3(config.sideSign * 0.05, -0.99, 0.03).normalize();
+
+    this.rotateBoneTowardChild(upperArm, foreArm, upperTarget);
+    model.updateMatrixWorld(true);
+    this.rotateBoneTowardChild(foreArm, hand, foreTarget);
+    model.updateMatrixWorld(true);
+  }
+
+  getModelObjectByOriginalName(model, name) {
+    return model.getObjectByName(name) ?? model.getObjectByName(name.replaceAll(":", ""));
+  }
+
+  rotateBoneTowardChild(bone, childBone, targetWorldDirection) {
+    const bonePosition = bone.getWorldPosition(new THREE.Vector3());
+    const childPosition = childBone.getWorldPosition(new THREE.Vector3());
+    const currentDirection = childPosition.sub(bonePosition).normalize();
+
+    if (currentDirection.lengthSq() === 0 || targetWorldDirection.lengthSq() === 0) {
+      return;
+    }
+
+    const parentWorldQuaternion = bone.parent.getWorldQuaternion(new THREE.Quaternion());
+    const boneWorldQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
+    const correction = new THREE.Quaternion().setFromUnitVectors(currentDirection, targetWorldDirection.clone().normalize());
+
+    bone.quaternion.copy(parentWorldQuaternion.invert().multiply(correction.multiply(boneWorldQuaternion)));
   }
 
   loadBenchModel() {

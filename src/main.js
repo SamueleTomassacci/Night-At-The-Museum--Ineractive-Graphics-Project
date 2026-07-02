@@ -24,7 +24,7 @@ const lightingSystem = new LightingSystem(sceneManager.scene);
 const collisionSystem = new CollisionSystem();
 const animationSystem = new AnimationSystem();
 const museum = new Museum(factory, lightingSystem, sceneManager);
-const player = new Player(materials, inputManager, collisionSystem);
+const player = new Player(materials, inputManager, collisionSystem, factory);
 lightingSystem.registerFlashlight(player.flashlight);
 const interactionManager = new InteractionManager(cameraManager.camera, inputManager);
 const doorInteractionSystem = new DoorInteractionSystem(player, museum.getDoors());
