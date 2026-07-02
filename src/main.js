@@ -92,6 +92,11 @@ function loop(time) {
   const elapsedTime = time / 1000;
   lastTime = time;
   TWEEN.update(time);
+  if (cameraManager.isFirstPerson()) {
+    player.setAimDirection(cameraManager.getAimDirection());
+  } else {
+    player.aimForward();
+  }
   player.update(deltaTime, elapsedTime);
   museum.updateTriggers(player);
   animationSystem.update(deltaTime, elapsedTime);
