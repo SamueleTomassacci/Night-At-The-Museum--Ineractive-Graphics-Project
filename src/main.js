@@ -45,6 +45,7 @@ inputManager.addEventListener("keyPressed", event => {
   }
   if (event.detail === "m") {
     museum.dinosaurRoom.dinosaur.startWalking();
+    museum.statueRoom.statue.awaken();
   }
 });
 

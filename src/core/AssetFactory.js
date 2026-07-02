@@ -7,6 +7,7 @@ const COLUMN_MODEL_URL = "/models/Column/ionic_column.glb";
 const BENCH_MODEL_URL = "/models/bench/modern_bench_1.glb";
 const CEILING_LIGHT_MODEL_URL = "/models/Ceiling%20light/ceiling_light.glb";
 const POLICEMAN_MODEL_URL = policemanModelUrl;
+const BENCH_LENGTH = 2.45;
 const CEILING_HEIGHT = 5.0;
 const CORNICE_HEIGHT = 0.28;
 const CORNICE_PROJECTION = 0.22;
@@ -368,7 +369,7 @@ export class AssetFactory {
 
     this.loadBenchModel()
       .then(model => {
-        group.add(this.createBenchModelInstance(model, 3.4));
+        group.add(this.createBenchModelInstance(model, BENCH_LENGTH));
       })
       .catch(error => {
         console.error("Impossibile caricare il modello della panchina:", error);

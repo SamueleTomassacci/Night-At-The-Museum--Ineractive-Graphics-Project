@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { ROOM_RECTS } from "../utils/constants.js";
-import { distance2D } from "../utils/math.js";
 import { Hall } from "./Hall.js";
 import { DinosaurRoom } from "./DinosaurRoom.js";
 import { StatueRoom } from "./StatueRoom.js";
@@ -82,10 +81,6 @@ export class Museum {
 
   updateTriggers(player) {
     const position = player.group.position;
-    const statueDistance = distance2D(position, this.statueRoom.statue.group.position);
-    if (statueDistance < 5.2) {
-      this.statueRoom.statue.awaken(position);
-    }
     this.galleryRoom.paintings.updateReactions(position);
   }
 }
