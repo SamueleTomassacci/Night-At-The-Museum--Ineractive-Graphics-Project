@@ -91,6 +91,16 @@ const LEFT_STEP_FORWARD2 = 1.7;
 const LEFT_STEP_SIDE2 = 0.0;
 const LEFT_STEP_FIRST_DURATION = STEP_DURATION * 0.5;
 const LEFT_STEP_SECOND_DURATION = LEFT_STEP_FIRST_DURATION;
+const WALK_STEP_LIFT = 0.80;
+const WALK_STEP_FORWARD = 1.5;
+const WALK_STEP_SIDE = 0.0;
+const WALK_STEP_LIFT2 = 0.0;
+const WALK_STEP_FORWARD2 = 3.0;
+const WALK_STEP_SIDE2 = 0.0;
+const WALK_BODY_FORWARD = 1.5;
+const WALK_BODY_LIFT = 0.12;
+const WALK_BODY_DROP = -0.12;
+const WALK_STEP_DURATION = STEP_DURATION;
 
 function cosineEase(progress) {
   const clampedProgress = THREE.MathUtils.clamp(progress, 0, 1);
@@ -176,6 +186,13 @@ export class Dinosaur {
     this.armOffset = new THREE.Quaternion();
     this.leftStepRoot = null;
     this.leftStepBasePosition = new THREE.Vector3();
+    this.walkFeet = [];
+    this.walkingTween = null;
+    this.walkingRequested = false;
+    this.nextWalkingFoot = 0;
+    this.lastWalkingLandingY = null;
+    this.walkingStanceInitialized = false;
+    this.walkingBodyBaseZ = null;
     this.tweenGroup = new TWEEN.Group();
     this.createClickHitbox();
     this.loadModel();
@@ -221,6 +238,13 @@ export class Dinosaur {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
+
+            // Il corpo cammina tramite le ossa, mentre il bounding volume della
+            // SkinnedMesh rimane vicino alla posa iniziale. Evita che le camere
+            // la scartino quando lo scheletro si è spostato in un'altra stanza.
+            if (child.isSkinnedMesh) {
+              child.frustumCulled = false;
+            }
           }
         });
 
@@ -232,6 +256,7 @@ export class Dinosaur {
         this.setupLegCompensation(model);
         this.setupArmAnimation(model);
         this.setupLeftStep(model);
+        this.setupWalking(model);
       },
       undefined,
       error => {
@@ -401,6 +426,106 @@ export class Dinosaur {
 
     this.leftStepBasePosition.copy(this.leftStepRoot.position);
 
+  }
+
+  setupWalking(model) {
+    this.walkFeet = ["PiernaIKL_ArmatureRexy", "PiernaIKR_ArmatureRexy"]
+      .map(name => {
+        const bone = model.getObjectByName(name);
+
+        if (!bone) {
+          console.warn(`Controllo della zampa non trovato: ${name}`);
+          return null;
+        }
+
+        return {
+          bone,
+          basePosition: bone.position.clone()
+        };
+      })
+      .filter(Boolean);
+
+    if (this.walkingRequested) {
+      this.startWalkingStep();
+    }
+  }
+
+  applyWalkingStep(foot, bodyStart, landingForward, progress) {
+    const firstHalf = progress < 0.5;
+    const phaseProgress = cosineEase(firstHalf ? progress * 2 : (progress - 0.5) * 2);
+    const lift = firstHalf
+      ? THREE.MathUtils.lerp(0, WALK_STEP_LIFT, phaseProgress)
+      : THREE.MathUtils.lerp(WALK_STEP_LIFT, WALK_STEP_LIFT2, phaseProgress);
+    const forward = firstHalf
+      ? THREE.MathUtils.lerp(0, WALK_STEP_FORWARD, phaseProgress)
+      : THREE.MathUtils.lerp(WALK_STEP_FORWARD, landingForward, phaseProgress);
+    const side = firstHalf
+      ? THREE.MathUtils.lerp(0, WALK_STEP_SIDE, phaseProgress)
+      : THREE.MathUtils.lerp(WALK_STEP_SIDE, WALK_STEP_SIDE2, phaseProgress);
+
+    foot.bone.position.copy(foot.basePosition);
+    foot.bone.position.x += side;
+    foot.bone.position.z += lift;
+    foot.bone.position.y -= forward;
+
+    this.bodyBone.position.copy(bodyStart);
+    this.bodyBone.position.y -= WALK_BODY_FORWARD * cosineEase(progress);
+    this.bodyBone.position.z = firstHalf
+      ? THREE.MathUtils.lerp(
+        bodyStart.z,
+        this.walkingBodyBaseZ + WALK_BODY_LIFT,
+        phaseProgress
+      )
+      : THREE.MathUtils.lerp(
+        this.walkingBodyBaseZ + WALK_BODY_LIFT,
+        this.walkingBodyBaseZ + WALK_BODY_DROP,
+        phaseProgress
+      );
+    this.solveLegCompensation();
+  }
+
+  startWalkingStep() {
+    if (this.walkingTween || this.jawTween || !this.bodyBone || this.walkFeet.length < 2) {
+      return;
+    }
+
+    if (!this.walkingStanceInitialized) {
+      const rightFoot = this.walkFeet[1];
+      rightFoot.basePosition.y -= WALK_BODY_FORWARD;
+      rightFoot.bone.position.copy(rightFoot.basePosition);
+      this.walkingBodyBaseZ = this.bodyBone.position.z;
+      this.walkingStanceInitialized = true;
+      this.solveLegCompensation();
+    }
+
+    const foot = this.walkFeet[this.nextWalkingFoot];
+    const bodyStart = this.bodyBone.position.clone();
+    const landingY = this.lastWalkingLandingY === null
+      ? foot.basePosition.y - WALK_STEP_FORWARD2
+      : this.lastWalkingLandingY - WALK_BODY_FORWARD;
+    const landingForward = foot.basePosition.y - landingY;
+    const state = { progress: 0 };
+
+    this.walkingTween = new TWEEN.Tween(state, this.tweenGroup)
+      .to({ progress: 1 }, WALK_STEP_DURATION)
+      .easing(TWEEN.Easing.Linear.None)
+      .onUpdate(() => {
+        this.applyWalkingStep(foot, bodyStart, landingForward, state.progress);
+      })
+      .onComplete(() => {
+        foot.basePosition.copy(foot.bone.position);
+        this.lastWalkingLandingY = foot.basePosition.y;
+        this.bodyBasePosition.copy(this.bodyBone.position);
+        this.nextWalkingFoot = (this.nextWalkingFoot + 1) % this.walkFeet.length;
+        this.walkingTween = null;
+        this.startWalkingStep();
+      })
+      .start();
+  }
+
+  startWalking() {
+    this.walkingRequested = true;
+    this.startWalkingStep();
   }
 
   applyLeftStep(elapsed) {
@@ -622,13 +747,18 @@ export class Dinosaur {
       })
       .onComplete(() => {
         this.jawTween = null;
+        if (this.walkingRequested) {
+          this.startWalkingStep();
+        }
       })
       .start();
   }
 
   awaken() {
     this.startTailAnimation();
-    this.startJawAnimation();
+    if (!this.walkingRequested) {
+      this.startJawAnimation();
+    }
   }
 
   onClick() {

@@ -43,6 +43,9 @@ inputManager.addEventListener("keyPressed", event => {
     ui.setCamera(cameraManager.getLabel());
     museum.setCeilingVisible(!cameraManager.isOverheadView());
   }
+  if (event.detail === "m") {
+    museum.dinosaurRoom.dinosaur.startWalking();
+  }
 });
 
 inputManager.addEventListener("wheel", event => {
