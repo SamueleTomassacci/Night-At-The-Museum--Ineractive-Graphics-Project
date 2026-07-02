@@ -117,6 +117,8 @@ export class Player {
     this.rightHandGripChains = [];
     this.spineBaseQuaternion = new THREE.Quaternion();
     this.offsetQuaternion = new THREE.Quaternion();
+    this.aimDirection = new THREE.Vector3(0, 0, 1);
+    this.targetAimDirection = new THREE.Vector3(0, 0, 1);
 
     this.createFlashlight();
     this.loadModel();
@@ -282,6 +284,18 @@ export class Player {
     });
   }
 
+  setAimDirection(direction) {
+    this.targetAimDirection.copy(direction).normalize();
+  }
+
+  aimForward() {
+    this.targetAimDirection.set(
+      Math.sin(this.group.rotation.y),
+      0,
+      Math.cos(this.group.rotation.y)
+    );
+  }
+
   attachFlashlightToHand(model) {
     const hand = this.rightHand ?? this.getModelObjectByOriginalName(model, RIGHT_HAND_BONE_NAME);
 
@@ -322,6 +336,10 @@ export class Player {
     this.collisionSystem.constrain(this.group.position, 0.48);
     this.setWalking(moving);
     this.tweenGroup.update(elapsedTime * 1000);
+    this.aimDirection
+      .lerp(this.targetAimDirection, 1 - Math.exp(-12 * deltaTime))
+      .normalize();
+    this.applyWalkPose();
   }
 
   setWalking(walking) {
@@ -437,15 +455,20 @@ export class Player {
     }
 
     const walkingBob = Math.sin(phase * 2) * 0.035 * strength;
+    const modelWorldQuaternion = this.modelRoot.getWorldQuaternion(new THREE.Quaternion());
+    const localAim = this.aimDirection
+      .clone()
+      .applyQuaternion(modelWorldQuaternion.invert())
+      .normalize();
     const upperTarget = new THREE.Vector3(
-      chain.sideSign * 0.28,
-      -0.32 + walkingBob,
-      0.9
+      localAim.x + chain.sideSign * 0.16,
+      localAim.y - 0.18 + walkingBob,
+      localAim.z
     ).normalize();
     const foreTarget = new THREE.Vector3(
-      chain.sideSign * 0.08,
-      -0.12 + walkingBob,
-      0.99
+      localAim.x - chain.sideSign * 0.04,
+      localAim.y - 0.04 + walkingBob,
+      localAim.z
     ).normalize();
 
     this.applyChainTarget(chain, upperTarget, foreTarget);
@@ -490,8 +513,8 @@ export class Player {
 
     this.modelRoot.updateMatrixWorld(true);
 
-    const forward = this.modelDirectionToWorld(new THREE.Vector3(0, 0, 1));
-    const up = this.modelDirectionToWorld(new THREE.Vector3(0, 1, 0));
+    const forward = this.aimDirection.clone().normalize();
+    const up = new THREE.Vector3(0, 1, 0);
     const right = new THREE.Vector3().crossVectors(up, forward).normalize();
     const correctedUp = new THREE.Vector3().crossVectors(forward, right).normalize();
     const worldMatrix = new THREE.Matrix4().makeBasis(right, correctedUp, forward);

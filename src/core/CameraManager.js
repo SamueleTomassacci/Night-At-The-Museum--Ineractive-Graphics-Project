@@ -2,6 +2,8 @@ import * as THREE from "three";
 import { CAMERA_LABELS, CAMERA_MODES } from "../utils/constants.js";
 import { damp } from "../utils/math.js";
 
+const FIRST_PERSON_MAX_YAW = THREE.MathUtils.degToRad(75);
+
 export class CameraManager {
   constructor() {
     this.camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 160);
@@ -36,6 +38,7 @@ export class CameraManager {
 
   orbit(deltaX, deltaY) {
     this.cameraYaw -= deltaX * this.cameraSensitivity;
+    this.clampFirstPersonYaw();
     this.cameraPitch = THREE.MathUtils.clamp(
       this.cameraPitch - deltaY * this.cameraSensitivity,
       -0.25,
@@ -43,9 +46,34 @@ export class CameraManager {
     );
   }
 
+  clampFirstPersonYaw() {
+    if (this.mode !== "firstPerson") return;
+
+    const playerYaw = this.lastPlayerYaw ?? 0;
+    const yawOffset = Math.atan2(
+      Math.sin(this.cameraYaw - playerYaw),
+      Math.cos(this.cameraYaw - playerYaw)
+    );
+    this.cameraYaw = playerYaw + THREE.MathUtils.clamp(
+      yawOffset,
+      -FIRST_PERSON_MAX_YAW,
+      FIRST_PERSON_MAX_YAW
+    );
+  }
+
+  getAimDirection() {
+    const horizontal = Math.cos(this.cameraPitch);
+    return new THREE.Vector3(
+      Math.sin(this.cameraYaw) * horizontal,
+      -Math.sin(this.cameraPitch),
+      Math.cos(this.cameraYaw) * horizontal
+    ).normalize();
+  }
+
   cycleMode() {
     this.modeIndex = (this.modeIndex + 1) % CAMERA_MODES.length;
     this.mode = CAMERA_MODES[this.modeIndex];
+    this.clampFirstPersonYaw();
     return this.mode;
   }
 
@@ -55,6 +83,10 @@ export class CameraManager {
 
   isOverheadView() {
     return this.mode === "topDown" || this.mode === "panorama";
+  }
+
+  isFirstPerson() {
+    return this.mode === "firstPerson";
   }
 
   update(player, deltaTime, elapsedTime) {
@@ -73,7 +105,7 @@ export class CameraManager {
     }
 
     player.group.visible = true;
-    player.setModelVisible(this.mode !== "firstPerson");
+    player.setModelVisible(true);
     this.target.set(playerPosition.x, playerPosition.y + 1.3, playerPosition.z);
     this.forward.set(Math.sin(player.group.rotation.y), 0, Math.cos(player.group.rotation.y));
 
@@ -93,7 +125,7 @@ export class CameraManager {
     if (this.mode === "firstPerson") {
       const desired = playerPosition.clone().add(this.firstPersonOffset).addScaledVector(this.forward, 0.18);
       this.camera.position.copy(desired);
-      this.camera.lookAt(desired.clone().addScaledVector(this.forward, 10));
+      this.camera.lookAt(desired.clone().addScaledVector(this.getAimDirection(), 10));
     }
 
     if (this.mode === "topDown") {
