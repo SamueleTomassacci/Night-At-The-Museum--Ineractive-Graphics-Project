@@ -45,8 +45,9 @@ export class CameraManager {
 
     this.cameraYaw -= deltaX * this.cameraSensitivity;
     this.clampFirstPersonYaw();
+    const verticalDelta = deltaY * this.cameraSensitivity;
     this.cameraPitch = THREE.MathUtils.clamp(
-      this.cameraPitch - deltaY * this.cameraSensitivity,
+      this.cameraPitch + (this.mode === "firstPerson" ? verticalDelta : -verticalDelta),
       -0.25,
       0.6
     );

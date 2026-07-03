@@ -319,6 +319,7 @@ export class Player {
   }
 
   update(deltaTime, elapsedTime) {
+    const previousPosition = this.group.position.clone();
     const turnInput = (this.inputManager.isDown("d") ? 1 : 0) - (this.inputManager.isDown("a") ? 1 : 0);
     const moveInput = (this.inputManager.isDown("w") ? 1 : 0) - (this.inputManager.isDown("s") ? 1 : 0);
     const moving = moveInput !== 0;
@@ -333,7 +334,7 @@ export class Player {
       this.group.position.addScaledVector(forward, moveInput * this.speed * deltaTime);
     }
 
-    this.collisionSystem.constrain(this.group.position, 0.48);
+    this.collisionSystem.constrain(this.group.position, 0.48, previousPosition);
     this.setWalking(moving);
     this.tweenGroup.update(elapsedTime * 1000);
     this.aimDirection
