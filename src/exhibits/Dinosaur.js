@@ -3,6 +3,7 @@ import * as TWEEN from "@tweenjs/tween.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const MODEL_URL = new URL("../characters/trex.glb", import.meta.url).href;
+const MODEL_TARGET_HEIGHT = 2.7;
 const TAIL_BONES = [
   { name: "Cola1_ArmatureRexy", amplitude: 0.15 },
   { name: "Cola2_ArmatureRexy", amplitude: 0.2 },
@@ -101,6 +102,9 @@ const WALK_BODY_FORWARD = 1.5;
 const WALK_BODY_LIFT = 0.12;
 const WALK_BODY_DROP = -0.12;
 const WALK_STEP_DURATION = STEP_DURATION;
+const PLATFORM_DESCENT_DELAY_STEPS = 3;
+const PLATFORM_DESCENT_STEPS = 1;
+const ATRIUM_WALK_STEP_COUNT = 23;
 
 function cosineEase(progress) {
   const clampedProgress = THREE.MathUtils.clamp(progress, 0, 1);
@@ -163,8 +167,11 @@ export class Dinosaur {
     this.group = new THREE.Group();
     this.group.position.set(-16.5, 0.05, 0);
     this.group.rotation.y = Math.PI * 0.5;
+    this.mobileRoot = new THREE.Group();
+    this.group.add(this.mobileRoot);
     this.tailBones = [];
     this.tailTween = null;
+    this.tailLoopRequested = false;
     this.tailState = { phase: 0, strength: 0 };
     this.tailOffset = new THREE.Quaternion();
     this.jawBone = null;
@@ -189,6 +196,16 @@ export class Dinosaur {
     this.walkFeet = [];
     this.walkingTween = null;
     this.walkingRequested = false;
+    this.roarLoopRequested = false;
+    this.walkingStepsRemaining = null;
+    this.walkingCompleteCallback = null;
+    this.platformDropDistance = 0;
+    this.platformDescentActive = false;
+    this.platformDescentDone = false;
+    this.platformDescentStep = 0;
+    this.platformDescentDelayStep = 0;
+    this.platformDescentStartY = 0;
+    this.platformDescentTargetY = 0;
     this.nextWalkingFoot = 0;
     this.lastWalkingLandingY = null;
     this.walkingStanceInitialized = false;
@@ -209,7 +226,7 @@ export class Dinosaur {
     );
     hitbox.name = "T-Rex Click Hitbox";
     hitbox.position.y = 1.7;
-    this.group.add(hitbox);
+    this.mobileRoot.add(hitbox);
   }
 
   loadModel() {
@@ -226,7 +243,7 @@ export class Dinosaur {
         // on the floor
         const initialBox = new THREE.Box3().setFromObject(model);
         const initialSize = initialBox.getSize(new THREE.Vector3());
-        const scale = 3.2 / initialSize.y;
+        const scale = MODEL_TARGET_HEIGHT / initialSize.y;
         model.scale.setScalar(scale);
         model.updateMatrixWorld(true);
 
@@ -248,7 +265,8 @@ export class Dinosaur {
           }
         });
 
-        this.group.add(model);
+        this.mobileRoot.add(model);
+        this.keepPlatformOnDisplayBase(model);
         this.setupTailAnimation(model);
         this.setupJawAnimation(model);
         this.setupHeadNeckAnimation(model);
@@ -263,6 +281,28 @@ export class Dinosaur {
         console.error("Impossibile caricare il modello del T-Rex:", error);
       }
     );
+  }
+
+  keepPlatformOnDisplayBase(model) {
+    const platform = model.getObjectByName("platform");
+
+    if (!platform) {
+      return;
+    }
+
+    model.updateMatrixWorld(true);
+    this.group.updateMatrixWorld(true);
+    this.group.attach(platform);
+    this.updatePlatformDropDistance(platform);
+  }
+
+  updatePlatformDropDistance(platform) {
+    this.group.updateMatrixWorld(true);
+    platform.updateMatrixWorld(true);
+
+    const platformBox = new THREE.Box3().setFromObject(platform);
+    const groupWorldY = this.group.getWorldPosition(new THREE.Vector3()).y;
+    this.platformDropDistance = Math.max(0, platformBox.max.y - groupWorldY);
   }
 
   setupTailAnimation(model) {
@@ -283,13 +323,17 @@ export class Dinosaur {
     }).filter(Boolean);
   }
 
-  startTailAnimation() {
+  startTailAnimation(loop = false) {
+    if (loop) {
+      this.tailLoopRequested = true;
+    }
+
     if (this.tailTween || this.tailBones.length === 0) {
       return;
     }
 
     this.tailState.phase = 0;
-    this.tailState.strength = 0;
+    this.tailState.strength = this.tailLoopRequested ? 1 : 0;
     this.tailTween = new TWEEN.Tween(this.tailState, this.tweenGroup)
       .to({ phase: Math.PI * 2 }, 2600)
       .easing(TWEEN.Easing.Linear.None)
@@ -304,17 +348,24 @@ export class Dinosaur {
         });
       })
       .onComplete(() => {
+        this.tailTween = null;
+        if (this.tailLoopRequested) {
+          this.startTailAnimation(true);
+          return;
+        }
+
         this.tailBones.forEach(tailBone => {
           tailBone.bone.quaternion.copy(tailBone.baseQuaternion);
         });
-        this.tailTween = null;
       })
       .start();
 
-    new TWEEN.Tween(this.tailState, this.tweenGroup)
-      .to({ strength: 1 }, 700)
-      .easing(TWEEN.Easing.Sinusoidal.Out)
-      .start();
+    if (!this.tailLoopRequested) {
+      new TWEEN.Tween(this.tailState, this.tweenGroup)
+        .to({ strength: 1 }, 700)
+        .easing(TWEEN.Easing.Sinusoidal.Out)
+        .start();
+    }
   }
 
   setupJawAnimation(model) {
@@ -484,6 +535,41 @@ export class Dinosaur {
     this.solveLegCompensation();
   }
 
+  startPlatformDescentIfNeeded() {
+    if (this.platformDescentDone || this.platformDescentActive || this.platformDropDistance <= 0) {
+      return;
+    }
+
+    if (this.platformDescentDelayStep < PLATFORM_DESCENT_DELAY_STEPS) {
+      return;
+    }
+
+    this.platformDescentActive = true;
+    this.platformDescentStep = 0;
+    this.platformDescentStartY = this.mobileRoot.position.y;
+    this.platformDescentTargetY = -this.platformDropDistance;
+  }
+
+  applyPlatformDescent(stepProgress) {
+    if (!this.platformDescentActive) {
+      return;
+    }
+
+    const progress = THREE.MathUtils.clamp(stepProgress / PLATFORM_DESCENT_STEPS, 0, 1);
+    const easedProgress = cosineEase(progress);
+    this.mobileRoot.position.y = THREE.MathUtils.lerp(
+      this.platformDescentStartY,
+      this.platformDescentTargetY,
+      easedProgress
+    );
+
+    if (progress >= 1) {
+      this.platformDescentActive = false;
+      this.platformDescentDone = true;
+      this.mobileRoot.position.y = this.platformDescentTargetY;
+    }
+  }
+
   startWalkingStep() {
     if (this.walkingTween || this.jawTween || !this.bodyBone || this.walkFeet.length < 2) {
       return;
@@ -498,6 +584,8 @@ export class Dinosaur {
       this.solveLegCompensation();
     }
 
+    this.startPlatformDescentIfNeeded();
+
     const foot = this.walkFeet[this.nextWalkingFoot];
     const bodyStart = this.bodyBone.position.clone();
     const landingY = this.lastWalkingLandingY === null
@@ -511,21 +599,87 @@ export class Dinosaur {
       .easing(TWEEN.Easing.Linear.None)
       .onUpdate(() => {
         this.applyWalkingStep(foot, bodyStart, landingForward, state.progress);
+        this.applyPlatformDescent(this.platformDescentStep + state.progress);
       })
       .onComplete(() => {
         foot.basePosition.copy(foot.bone.position);
         this.lastWalkingLandingY = foot.basePosition.y;
         this.bodyBasePosition.copy(this.bodyBone.position);
         this.nextWalkingFoot = (this.nextWalkingFoot + 1) % this.walkFeet.length;
+        if (this.platformDescentActive) {
+          this.platformDescentStep += 1;
+          this.applyPlatformDescent(this.platformDescentStep);
+        } else if (!this.platformDescentDone) {
+          this.platformDescentDelayStep += 1;
+        }
         this.walkingTween = null;
-        this.startWalkingStep();
+
+        if (this.walkingStepsRemaining !== null) {
+          this.walkingStepsRemaining -= 1;
+
+          if (this.walkingStepsRemaining <= 0) {
+            const walkingCompleteCallback = this.walkingCompleteCallback;
+            this.walkingRequested = false;
+            this.walkingStepsRemaining = null;
+            this.walkingCompleteCallback = null;
+
+            if (walkingCompleteCallback) {
+              walkingCompleteCallback();
+            }
+            return;
+          }
+        }
+
+        if (this.walkingRequested) {
+          this.startWalkingStep();
+        }
       })
       .start();
   }
 
-  startWalking() {
+  startWalking(stepCount = null, onComplete = null) {
+    this.roarLoopRequested = false;
     this.walkingRequested = true;
+    this.walkingStepsRemaining = stepCount;
+    this.walkingCompleteCallback = onComplete;
     this.startWalkingStep();
+  }
+
+  stopWalking() {
+    this.walkingRequested = false;
+    this.walkingStepsRemaining = null;
+    this.walkingCompleteCallback = null;
+
+    if (this.walkingTween) {
+      this.walkingTween.stop();
+      this.walkingTween = null;
+    }
+  }
+
+  walkToAtriumAndRoar() {
+    if (this.walkingStepsRemaining !== null || this.roarLoopRequested) {
+      return;
+    }
+
+    this.roarLoopRequested = false;
+    this.startWalking(ATRIUM_WALK_STEP_COUNT, () => this.startRoarLoop());
+  }
+
+  prepareRoarFromWalkingPose() {
+    if (this.bodyBone) {
+      this.bodyBasePosition.copy(this.bodyBone.position);
+      this.walkingBodyBaseZ = this.bodyBone.position.z;
+    }
+
+    if (this.leftStepRoot) {
+      this.leftStepBasePosition.copy(this.leftStepRoot.position);
+    }
+
+    this.walkFeet.forEach(foot => {
+      foot.basePosition.copy(foot.bone.position);
+    });
+
+    this.solveLegCompensation();
   }
 
   applyLeftStep(elapsed) {
@@ -747,11 +901,21 @@ export class Dinosaur {
       })
       .onComplete(() => {
         this.jawTween = null;
-        if (this.walkingRequested) {
+        if (this.roarLoopRequested) {
+          this.startJawAnimation();
+        } else if (this.walkingRequested) {
           this.startWalkingStep();
         }
       })
       .start();
+  }
+
+  startRoarLoop() {
+    this.stopWalking();
+    this.roarLoopRequested = true;
+    this.prepareRoarFromWalkingPose();
+    this.startTailAnimation(true);
+    this.startJawAnimation();
   }
 
   awaken() {

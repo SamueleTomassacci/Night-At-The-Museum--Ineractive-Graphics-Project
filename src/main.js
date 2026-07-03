@@ -62,6 +62,12 @@ inputManager.addEventListener("keyPressed", event => {
     museum.dinosaurRoom.dinosaur.startWalking();
     museum.statueRoom.statue.awaken();
   }
+  if (event.detail === "t") {
+    sceneManager.setAwakening();
+    doorInteractionSystem.openAllDoors({ autoClose: false });
+    museum.dinosaurRoom.dinosaur.walkToAtriumAndRoar();
+    museum.statueRoom.statue.awakenIntoAtrium();
+  }
 });
 
 inputManager.addEventListener("wheel", event => {

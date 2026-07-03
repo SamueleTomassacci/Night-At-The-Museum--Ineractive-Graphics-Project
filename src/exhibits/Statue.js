@@ -3,7 +3,7 @@ import * as TWEEN from "@tweenjs/tween.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 const MOAI_MODEL_URL = "/models/moai%20statue/animal_crossing_new_horizons_moai_statue.glb";
-const MOAI_TARGET_HEIGHT = 2.85;
+const MOAI_TARGET_HEIGHT = 2.45;
 const MOAI_LOCAL_FACE_ANGLE = -THREE.MathUtils.degToRad(40);
 const MOAI_FACE_ENTRANCE_ROTATION = -Math.PI / 2 - MOAI_LOCAL_FACE_ANGLE;
 const PEDESTAL_HEIGHT = 0.55;
@@ -20,6 +20,20 @@ const HOP_WAYPOINTS = [
   { x: 1.9, z: 2.25 },
   { x: 2.7, z: -2.25 },
   { x: 4.85, z: 0.95 }
+];
+const ATRIUM_APPROACH_WAYPOINTS = [
+  { x: 12.2, z: 0 },
+  { x: 8.8, z: 0 },
+  { x: 6.1, z: -0.35 },
+  { x: 4.45, z: -1.1 }
+];
+const ATRIUM_LOOP_WAYPOINTS = [
+  { x: 4.45, z: -1.1 },
+  { x: 3.65, z: -2.25 },
+  { x: 2.35, z: -2.05 },
+  { x: 1.85, z: -0.85 },
+  { x: 2.75, z: 0.2 },
+  { x: 4.05, z: 0.05 }
 ];
 const TALK_PHRASE = [
   { open: 0.52, openMs: 260, closeMs: 220, pauseMs: 90 },
@@ -51,6 +65,9 @@ export class Statue {
     this.hopping = false;
     this.hopTween = null;
     this.hopIndex = 0;
+    this.hopWaypoints = HOP_WAYPOINTS;
+    this.hopLoopWaypoints = null;
+    this.hopLoops = true;
     this.awake = false;
     this.faceSpotlights = this.createFaceSpotlights();
     this.group.add(this.faceSpotlights);
@@ -119,6 +136,19 @@ export class Statue {
     });
 
     return group;
+  }
+
+  setFaceSpotlightsEnabled(enabled) {
+    if (!this.faceSpotlights) {
+      return;
+    }
+
+    this.faceSpotlights.visible = enabled;
+    this.faceSpotlights.traverse(child => {
+      if (child.isLight) {
+        child.intensity = enabled ? 3.4 : 0;
+      }
+    });
   }
 
   createModel() {
@@ -477,20 +507,63 @@ export class Statue {
     this.mouthOpenUniform.value = this.mouthState.open;
   }
 
-  startHopping() {
-    if (this.hopping) {
+  toLocalHopWaypoint(waypoint) {
+    return {
+      x: waypoint.x - this.group.position.x,
+      z: waypoint.z - this.group.position.z
+    };
+  }
+
+  stopHopping() {
+    if (this.hopTween) {
+      this.hopTween.stop();
+      TWEEN.remove(this.hopTween);
+      this.hopTween = null;
+    }
+
+    this.hopping = false;
+  }
+
+  startHopping(waypoints = HOP_WAYPOINTS, options = {}) {
+    const {
+      restart = false,
+      loop = true,
+      loopWaypoints = null
+    } = options;
+
+    if (this.hopping && !restart) {
       return;
+    }
+
+    if (restart) {
+      this.stopHopping();
     }
 
     this.hopping = true;
     this.stopMouthAnimation();
+    this.hopWaypoints = waypoints;
+    this.hopLoopWaypoints = loopWaypoints;
+    this.hopLoops = loop;
     this.hopIndex = 0;
     this.startNextHop(0);
   }
 
   startNextHop(delay = HOP_PAUSE) {
-    const destination = HOP_WAYPOINTS[this.hopIndex];
-    this.hopIndex = (this.hopIndex + 1) % HOP_WAYPOINTS.length;
+    if (this.hopIndex >= this.hopWaypoints.length) {
+      if (this.hopLoopWaypoints) {
+        this.hopWaypoints = this.hopLoopWaypoints;
+        this.hopLoopWaypoints = null;
+        this.hopIndex = 0;
+      } else if (this.hopLoops) {
+        this.hopIndex = 0;
+      } else {
+        this.hopping = false;
+        return;
+      }
+    }
+
+    const destination = this.hopWaypoints[this.hopIndex];
+    this.hopIndex += 1;
 
     const start = {
       x: this.modelRoot.position.x,
@@ -526,6 +599,9 @@ export class Statue {
         this.modelRoot.position.set(end.x, end.y, end.z);
         this.modelRoot.rotation.set(0, MOAI_FACE_ENTRANCE_ROTATION, 0);
         this.updateFaceSpotlightTarget();
+        if (!this.hopping) {
+          return;
+        }
         this.startNextHop();
       });
 
@@ -584,6 +660,20 @@ export class Statue {
     this.awake = true;
     this.modelRoot.rotation.y = MOAI_FACE_ENTRANCE_ROTATION;
     this.startHopping();
+  }
+
+  awakenIntoAtrium() {
+    const approachWaypoints = ATRIUM_APPROACH_WAYPOINTS.map(waypoint => this.toLocalHopWaypoint(waypoint));
+    const loopWaypoints = ATRIUM_LOOP_WAYPOINTS.map(waypoint => this.toLocalHopWaypoint(waypoint));
+
+    this.awake = true;
+    this.setFaceSpotlightsEnabled(false);
+    this.modelRoot.rotation.y = MOAI_FACE_ENTRANCE_ROTATION;
+    this.startHopping(approachWaypoints, {
+      restart: true,
+      loop: true,
+      loopWaypoints
+    });
   }
 
   onClick() {

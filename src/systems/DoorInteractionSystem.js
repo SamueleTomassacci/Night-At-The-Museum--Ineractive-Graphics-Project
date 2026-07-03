@@ -101,18 +101,29 @@ export class DoorInteractionSystem {
     return door?.userData.ready && !door.userData.isOpen && !door.userData.isAnimating;
   }
 
-  openDoor(door) {
+  openDoor(door, options = {}) {
+    const { autoClose = true } = options;
     const data = door.userData;
-    if (!data.ready || data.isOpen || data.isAnimating) {
+    if (!data.ready || data.isAnimating) {
       return;
     }
 
     this.clearAutoClose(door);
+    if (data.isOpen) {
+      return;
+    }
+
     this.animateDoor(door, data.openPositions, () => {
       data.isOpen = true;
       data.isAnimating = false;
-      data.autoCloseTimeout = window.setTimeout(() => this.closeDoor(door), AUTO_CLOSE_DELAY_MS);
+      if (autoClose) {
+        data.autoCloseTimeout = window.setTimeout(() => this.closeDoor(door), AUTO_CLOSE_DELAY_MS);
+      }
     });
+  }
+
+  openAllDoors(options = {}) {
+    this.doors.forEach(door => this.openDoor(door, options));
   }
 
   closeDoor(door) {

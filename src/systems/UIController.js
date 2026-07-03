@@ -60,6 +60,13 @@ export class UIController extends EventTarget {
       </div>
     `;
     this.root.appendChild(this.panel);
+    this.wakePanel = document.createElement("section");
+    this.wakePanel.className = "museum-wake-panel";
+    this.wakePanel.innerHTML = `
+      <span class="museum-key">T</span>
+      <span>Press T to wake the museum</span>
+    `;
+    this.root.appendChild(this.wakePanel);
     this.panel.querySelector('[data-action="lightMode"]').addEventListener("change", event => this.dispatchEvent(new CustomEvent("lightModeChanged", { detail: event.target.value })));
     this.panel.querySelector('[data-action="shadows"]').addEventListener("click", () => this.dispatchEvent(new CustomEvent("toggleShadows")));
     this.panel.querySelector('[data-action="quality"]').addEventListener("change", event => this.dispatchEvent(new CustomEvent("qualityChanged", { detail: event.target.value })));
