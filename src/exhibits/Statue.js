@@ -42,6 +42,7 @@ export class Statue {
     this.group.add(this.pedestal, this.modelRoot);
     this.model = null;
     this.mouthState = { open: 0 };
+    this.mouthOpenUniform = { value: 0 };
     this.mouthDeformations = [];
     this.mouthTween = null;
     this.mouthCloseTween = null;
@@ -186,12 +187,9 @@ export class Statue {
 
       child.geometry = child.geometry.clone();
       const position = child.geometry.attributes.position;
-      position.setUsage(THREE.DynamicDrawUsage);
-      const color = this.createVertexColorAttribute(child.geometry);
-      const original = position.array.slice();
-      const originalColor = color.array.slice();
-      const targets = [];
-      this.enableVertexColors(child);
+      const mouthOffsets = new Float32Array(position.count * 3);
+      const mouthDarkness = new Float32Array(position.count);
+      let targetCount = 0;
 
       for (let i = 0; i < position.count; i += 1) {
         localVertex.fromBufferAttribute(position, i);
@@ -231,24 +229,31 @@ export class Statue {
         this.modelRoot.localToWorld(targetLocalVertex);
         child.worldToLocal(targetLocalVertex);
 
-        targets.push({
-          index: i,
-          x: targetLocalVertex.x - localVertex.x,
-          y: targetLocalVertex.y - localVertex.y,
-          z: targetLocalVertex.z - localVertex.z,
-          darkness: darknessWeight
-        });
+        const offset = i * 3;
+        mouthOffsets[offset] = targetLocalVertex.x - localVertex.x;
+        mouthOffsets[offset + 1] = targetLocalVertex.y - localVertex.y;
+        mouthOffsets[offset + 2] = targetLocalVertex.z - localVertex.z;
+        mouthDarkness[i] = darknessWeight;
+        targetCount += 1;
       }
 
-      if (targets.length > 0) {
-        this.mouthDeformations.push({
-          geometry: child.geometry,
-          position,
-          color,
-          original,
-          originalColor,
-          targets
-        });
+      child.geometry.setAttribute(
+        "aMouthOffset",
+        new THREE.BufferAttribute(mouthOffsets, 3)
+      );
+      child.geometry.setAttribute(
+        "aMouthDarkness",
+        new THREE.BufferAttribute(mouthDarkness, 1)
+      );
+
+      if (!child.geometry.attributes.normal) {
+        child.geometry.computeVertexNormals();
+      }
+
+      this.applyMouthShaderMaterial(child);
+
+      if (targetCount > 0) {
+        this.mouthDeformations.push(child);
       }
     });
 
@@ -257,34 +262,63 @@ export class Statue {
     }
   }
 
-  createVertexColorAttribute(geometry) {
-    const position = geometry.attributes.position;
-    const existingColor = geometry.attributes.color;
-    const colors = existingColor
-      ? new Float32Array(existingColor.array)
-      : new Float32Array(position.count * 3);
+  applyMouthShaderMaterial(mesh) {
+    const enhance = material => {
+      const shaderMaterial = material.clone();
 
-    if (!existingColor) {
-      colors.fill(1);
-    }
+      shaderMaterial.onBeforeCompile = shader => {
+        shader.uniforms.uMouthOpen = this.mouthOpenUniform;
 
-    const attribute = new THREE.BufferAttribute(colors, 3);
-    attribute.setUsage(THREE.DynamicDrawUsage);
-    geometry.setAttribute("color", attribute);
-    return attribute;
-  }
+        shader.vertexShader = shader.vertexShader
+          .replace(
+            "#include <common>",
+            `
+            #include <common>
+            attribute vec3 aMouthOffset;
+            attribute float aMouthDarkness;
+            uniform float uMouthOpen;
+            varying float vMouthDarkness;
+            `
+          )
+          .replace(
+            "#include <begin_vertex>",
+            `
+            vec3 transformed = vec3(position);
+            transformed += aMouthOffset * uMouthOpen;
+            vMouthDarkness = aMouthDarkness * uMouthOpen;
+            `
+          );
 
-  enableVertexColors(mesh) {
-    const enable = material => {
-      const clone = material.clone();
-      clone.vertexColors = true;
-      clone.needsUpdate = true;
-      return clone;
+        shader.fragmentShader = shader.fragmentShader
+          .replace(
+            "#include <common>",
+            `
+            #include <common>
+            varying float vMouthDarkness;
+            `
+          )
+          .replace(
+            "#include <dithering_fragment>",
+            `
+            float mouthShade = clamp(vMouthDarkness, 0.0, 1.0);
+            diffuseColor.rgb = mix(
+              diffuseColor.rgb,
+              diffuseColor.rgb * ${MOUTH_INTERIOR_DARKNESS.toFixed(2)},
+              mouthShade
+            );
+            #include <dithering_fragment>
+            `
+          );
+      };
+
+      shaderMaterial.customProgramCacheKey = () => "moai-mouth-shader-v1";
+      shaderMaterial.needsUpdate = true;
+      return shaderMaterial;
     };
 
     mesh.material = Array.isArray(mesh.material)
-      ? mesh.material.map(material => enable(material))
-      : enable(mesh.material);
+      ? mesh.material.map(material => enhance(material))
+      : enhance(mesh.material);
   }
 
   getMouthBand(model, mouthY, mouthRadiusY, frontStart, forward, lateral) {
@@ -440,24 +474,7 @@ export class Statue {
   }
 
   applyMouthDeformation() {
-    this.mouthDeformations.forEach(deformation => {
-      const array = deformation.position.array;
-      deformation.targets.forEach(target => {
-        const offset = target.index * 3;
-        array[offset] = deformation.original[offset] + target.x * this.mouthState.open;
-        array[offset + 1] = deformation.original[offset + 1] + target.y * this.mouthState.open;
-        array[offset + 2] = deformation.original[offset + 2] + target.z * this.mouthState.open;
-
-        const darken = this.mouthState.open * target.darkness;
-        const colorFactor = THREE.MathUtils.lerp(1, MOUTH_INTERIOR_DARKNESS, darken);
-        deformation.color.array[offset] = deformation.originalColor[offset] * colorFactor;
-        deformation.color.array[offset + 1] = deformation.originalColor[offset + 1] * colorFactor;
-        deformation.color.array[offset + 2] = deformation.originalColor[offset + 2] * colorFactor;
-      });
-      deformation.position.needsUpdate = true;
-      deformation.color.needsUpdate = true;
-      deformation.geometry.computeVertexNormals();
-    });
+    this.mouthOpenUniform.value = this.mouthState.open;
   }
 
   startHopping() {
