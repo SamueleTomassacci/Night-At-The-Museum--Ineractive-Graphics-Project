@@ -52,12 +52,12 @@ npm run build
 src/
   main.js
   core/
-    Renderer.js
+    renderer.js
     SceneManager.js
     CameraManager.js
     InputManager.js
     InteractionManager.js
-    AssetFactory.js
+    factory.js
   world/
     Museum.js
     Hall.js

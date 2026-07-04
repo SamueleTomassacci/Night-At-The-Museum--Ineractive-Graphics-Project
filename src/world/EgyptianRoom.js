@@ -15,35 +15,35 @@ export class EgyptianRoom {
   constructor(factory, lightingSystem) {
     this.group = new THREE.Group();
     this.group.name = "Egyptian Room";
-    this.sarcophagus = new Sarcophagus(factory.materials);
-    this.createRoom(factory, lightingSystem);
+    this.sarcophagus=new Sarcophagus(factory.materials);
+    this.createRoom(factory,lightingSystem);
     this.group.add(this.sarcophagus.group);
   }
 
   createRoom(factory, lightingSystem) {
-    this.group.add(factory.createFloor(16, 17, [0, 0, -14.5]));
-    this.group.add(factory.createWall(16, 5.0, 0.35, [0, 2.5, -23]));
-    this.group.add(factory.createWall(0.35, 5.0, 17, [-8, 2.5, -14.5]));
-    this.group.add(factory.createWall(0.35, 5.0, 17, [8, 2.5, -14.5]));
-    this.group.add(factory.createWall(5.8, 5.0, 0.35, [-5.1, 2.5, -6]));
-    this.group.add(factory.createWall(5.8, 5.0, 0.35, [5.1, 2.5, -6]));
-    this.group.add(factory.createSign("EGYPTIAN WING", [0, 3.15, -22.76], 0, 4.2));
+    this.group.add(factory.createFloor(16,17,[0,0, -14.5]));
+    this.group.add(factory.createWall(16,5.0,0.35, [0,2.5, -23]));
+    this.group.add(factory.createWall(0.35,5.0,17, [-8,2.5, -14.5]));
+    this.group.add(factory.createWall(0.35, 5.0,17, [8,2.5, -14.5]));
+    this.group.add(factory.createWall(5.8,5.0,0.35, [-5.1,2.5, -6]));
+    this.group.add(factory.createWall(5.8, 5.0,0.35, [5.1,2.5, -6]));
+    this.group.add(factory.createSign("EGYPTIAN WING",[0,3.15, -22.76],0,4.2));
     this.addObelisks(factory);
-    this.group.add(factory.createCeilingLight([0, 4.95, -14.5], 1.35));
-    this.addWallSconces(factory, lightingSystem);
+    this.group.add(factory.createCeilingLight([0,4.95,-14.5], 1.35));
+    this.addWallSconces(factory,lightingSystem);
   }
 
   addWallSconces(factory, lightingSystem) {
-    addWallSconce(this.group, factory, lightingSystem, [-7.76, 2.45, -10.4], Math.PI * 0.5);
-    addWallSconce(this.group, factory, lightingSystem, [-7.76, 2.45, -18.6], Math.PI * 0.5);
-    addWallSconce(this.group, factory, lightingSystem, [7.76, 2.45, -10.4], -Math.PI * 0.5);
-    addWallSconce(this.group, factory, lightingSystem, [7.76, 2.45, -18.6], -Math.PI * 0.5);
+    addWallSconce(this.group,factory, lightingSystem, [-7.76,2.45, -10.4], Math.PI * 0.5);
+    addWallSconce(this.group, factory,lightingSystem, [-7.76,2.45,-18.6],Math.PI * 0.5);
+    addWallSconce(this.group,factory, lightingSystem, [7.76,2.45, -10.4], -Math.PI * 0.5);
+    addWallSconce(this.group, factory,lightingSystem, [7.76,2.45,-18.6], -Math.PI * 0.5);
   }
 
   addObelisks(factory) {
     OBELISK_POSITIONS.forEach(position => {
       const obelisk = this.createObelisk(factory);
-      obelisk.position.set(position[0], position[1], position[2]);
+      obelisk.position.set(position[0],position[1], position[2]);
       this.group.add(obelisk);
     });
   }
@@ -115,18 +115,18 @@ export class EgyptianRoom {
       OBELISK_SHAFT_TOP_RADIUS,
       progress
     );
-    const faceDistance = radius * Math.SQRT1_2;
-    const faceWidth = radius * 1.32;
+    const faceDistance=radius * Math.SQRT1_2;
+    const faceWidth =radius*1.32;
     const stoneDepth = 0.075;
     const goldDepth = 0.026;
     const stoneHeight = 0.13;
     const goldHeight = 0.055;
     const stoneDistance = faceDistance + stoneDepth * 0.5;
-    const goldDistance = faceDistance + stoneDepth + goldDepth * 0.5 + 0.004;
+    const goldDistance = faceDistance+stoneDepth + goldDepth * 0.5 + 0.004;
     const parts = [];
 
     const addBandFace = (axis, sign) => {
-      const stoneGeometry = axis === "z"
+      const stoneGeometry = axis==="z"
         ? new THREE.BoxGeometry(faceWidth, stoneHeight, stoneDepth)
         : new THREE.BoxGeometry(stoneDepth, stoneHeight, faceWidth);
       const goldGeometry = axis === "z"
@@ -135,21 +135,21 @@ export class EgyptianRoom {
       const stone = new THREE.Mesh(stoneGeometry, factory.materials.obelisk);
       const gold = new THREE.Mesh(goldGeometry, factory.materials.gold);
 
-      if (axis === "z") {
-        stone.position.set(0, y, sign * stoneDistance);
-        gold.position.set(0, y, sign * goldDistance);
+      if(axis === "z") {
+        stone.position.set(0,y, sign * stoneDistance);
+        gold.position.set(0,y, sign * goldDistance);
       } else {
-        stone.position.set(sign * stoneDistance, y, 0);
-        gold.position.set(sign * goldDistance, y, 0);
+        stone.position.set(sign * stoneDistance,y,0);
+        gold.position.set(sign * goldDistance,y, 0);
       }
 
-      parts.push(stone, gold);
+      parts.push(stone,gold);
     };
 
-    addBandFace("z", 1);
-    addBandFace("z", -1);
+    addBandFace("z",1);
+    addBandFace("z",-1);
     addBandFace("x", 1);
-    addBandFace("x", -1);
+    addBandFace("x",-1);
 
     return parts;
   }

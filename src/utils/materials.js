@@ -1,25 +1,20 @@
 import * as THREE from "three";
 import { COLORS } from "./constants.js";
 import {
-  createFloorTexture,
-  createNormalTexture,
   createObeliskTexture,
   createSarcophagusTexture,
-  createWallTexture,
   createWoodTexture
 } from "./proceduralTextures.js";
 
-const USE_EXTERNAL_FLOOR_TEXTURES = true;
 const FLOOR_TEXTURE_REPEAT ={ x: 8, y: 8 };
 const FLOOR_TEXTURE_PATHS = {
   color: new URL("../texture/floor/WoodFloor064_2K-JPG_Color.jpg", import.meta.url).href,
-  normal: new URL("../texture/floor/WoodFloor064_2K-JPG_NormalGL.jpg", import.meta.url).href,
+  normal: new URL("../texture/floor/WoodFloor064_2K-JPG_NormalGL.jpg",import.meta.url).href,
   roughness: new URL("../texture/floor/WoodFloor064_2K-JPG_Roughness.jpg", import.meta.url).href
 };
-const USE_EXTERNAL_WALL_TEXTURES = true;
 const WALL_TEXTURE_REPEAT = { x: 3, y: 2 };
 const WALL_TEXTURE_PATHS = {
-  color: new URL("../texture/wall/Concrete030_2K-JPG_Color.jpg", import.meta.url).href,
+  color: new URL("../texture/wall/Concrete030_2K-JPG_Color.jpg",import.meta.url).href,
   normal: new URL("../texture/wall/Concrete030_2K-JPG_NormalGL.jpg", import.meta.url).href,
   roughness: new URL("../texture/wall/Concrete030_2K-JPG_Roughness.jpg", import.meta.url).href
 };
@@ -39,37 +34,18 @@ function configureFloorTexture(texture) {
 function configureWallTexture(texture) {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(WALL_TEXTURE_REPEAT.x, WALL_TEXTURE_REPEAT.y);
+  texture.repeat.set(WALL_TEXTURE_REPEAT.x,WALL_TEXTURE_REPEAT.y);
   return texture;
 }
 
 function configureCeilingTexture(texture) {
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(CEILING_TEXTURE_REPEAT.x, CEILING_TEXTURE_REPEAT.y);
+  texture.repeat.set(CEILING_TEXTURE_REPEAT.x,CEILING_TEXTURE_REPEAT.y);
   return texture;
 }
 
-function createProceduralFloorMaterial(floorTexture = createFloorTexture(),floorNormal = createNormalTexture()) {
-  return new THREE.MeshStandardMaterial({
-    map: floorTexture,
-    normalMap: floorNormal,
-    roughness: 0.28,
-    metalness: 0.18,
-    color: 0xdce5ff
-  });
-}
-
-function createProceduralWallMaterial(wallTexture = createWallTexture()) {
-  return new THREE.MeshStandardMaterial({
-    map: wallTexture,
-    roughness: 0.72,
-    metalness: 0.02,
-    color: COLORS.wall
-  });
-}
-
-function createExternalFloorMaterial(fallbackTexture, fallbackNormal) {
+function createExternalFloorMaterial() {
   const textureLoader = new THREE.TextureLoader();
   const material = new THREE.MeshStandardMaterial({
     map: null,
@@ -79,36 +55,20 @@ function createExternalFloorMaterial(fallbackTexture, fallbackNormal) {
     metalness: 0.0
   });
 
-  let fallbackApplied = false;
-  const applyFallback = () => {
-    if (fallbackApplied) {
-      return;
-    }
-
-    fallbackApplied = true;
-    material.map = fallbackTexture;
-    material.normalMap = fallbackNormal;
-    material.roughnessMap = null;
-    material.roughness = 0.28;
-    material.metalness = 0.18;
-    material.color.setHex(0xdce5ff);
-    material.needsUpdate = true;
-  };
-
-  const colorTexture = configureFloorTexture(textureLoader.load(FLOOR_TEXTURE_PATHS.color,undefined, undefined, applyFallback));
+  const colorTexture=configureFloorTexture(textureLoader.load(FLOOR_TEXTURE_PATHS.color));
   colorTexture.colorSpace = THREE.SRGBColorSpace;
 
-  const normalTexture = configureFloorTexture(textureLoader.load(FLOOR_TEXTURE_PATHS.normal, undefined,undefined, applyFallback));
-  const roughnessTexture = configureFloorTexture(textureLoader.load(FLOOR_TEXTURE_PATHS.roughness, undefined, undefined, applyFallback));
+  const normalTexture = configureFloorTexture(textureLoader.load(FLOOR_TEXTURE_PATHS.normal));
+  const roughnessTexture = configureFloorTexture(textureLoader.load(FLOOR_TEXTURE_PATHS.roughness));
 
-  material.map = colorTexture;
+  material.map=colorTexture;
   material.normalMap = normalTexture;
   material.roughnessMap = roughnessTexture;
 
   return material;
 }
 
-function createExternalWallMaterial(fallbackTexture) {
+function createExternalWallMaterial() {
   const textureLoader = new THREE.TextureLoader();
   const material = new THREE.MeshStandardMaterial({
     map: null,
@@ -118,29 +78,13 @@ function createExternalWallMaterial(fallbackTexture) {
     metalness: 0.0
   });
 
-  let fallbackApplied = false;
-  const applyFallback = () => {
-    if (fallbackApplied) {
-      return;
-    }
-
-    fallbackApplied = true;
-    material.map = fallbackTexture;
-    material.normalMap = null;
-    material.roughnessMap = null;
-    material.roughness = 0.72;
-    material.metalness = 0.02;
-    material.color.setHex(COLORS.wall);
-    material.needsUpdate = true;
-  };
-
-  const colorTexture = configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.color, undefined, undefined, applyFallback));
+  const colorTexture=configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.color));
   colorTexture.colorSpace = THREE.SRGBColorSpace;
 
-  const normalTexture = configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.normal, undefined, undefined, applyFallback));
-  const roughnessTexture = configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.roughness, undefined, undefined, applyFallback));
+  const normalTexture = configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.normal));
+  const roughnessTexture = configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.roughness));
 
-  material.map = colorTexture;
+  material.map=colorTexture;
   material.normalMap = normalTexture;
   material.roughnessMap = roughnessTexture;
 
@@ -148,13 +92,13 @@ function createExternalWallMaterial(fallbackTexture) {
 }
 
 function createCeilingMaterial() {
-  const textureLoader = new THREE.TextureLoader();
+  const textureLoader=new THREE.TextureLoader();
   const colorTexture = configureCeilingTexture(textureLoader.load(CEILING_TEXTURE_PATHS.color));
   const bumpTexture = configureCeilingTexture(textureLoader.load(CEILING_TEXTURE_PATHS.bump));
   colorTexture.colorSpace = THREE.SRGBColorSpace;
 
   return new THREE.MeshStandardMaterial({
-    map: colorTexture,
+    map:colorTexture,
     bumpMap: bumpTexture,
     bumpScale: 0.035,
     roughness: 0.64,
@@ -163,22 +107,12 @@ function createCeilingMaterial() {
   });
 }
 
-export function createMaterials({
-  useExternalFloorTextures = USE_EXTERNAL_FLOOR_TEXTURES,
-  useExternalWallTextures = USE_EXTERNAL_WALL_TEXTURES
-} = {}) {
-  const floorFallbackTexture = createFloorTexture();
-  const floorFallbackNormal = createNormalTexture();
-  const wallFallbackTexture = createWallTexture();
+export function createMaterials() {
   const woodTexture = createWoodTexture();
   const sarcophagusTexture = createSarcophagusTexture();
   const obeliskTexture = createObeliskTexture();
-  const floorMaterial = useExternalFloorTextures
-    ? createExternalFloorMaterial(floorFallbackTexture,floorFallbackNormal)
-    : createProceduralFloorMaterial(floorFallbackTexture, floorFallbackNormal);
-  const wallMaterial = useExternalWallTextures
-    ? createExternalWallMaterial(wallFallbackTexture)
-    : createProceduralWallMaterial(wallFallbackTexture);
+  const floorMaterial = createExternalFloorMaterial();
+  const wallMaterial = createExternalWallMaterial();
 
   return {
     floor: floorMaterial,

@@ -7,7 +7,7 @@ export function lerp(a, b, t) {
 }
 
 export function damp(current, target, lambda, deltaTime) {
-  return lerp(current,target, 1 - Math.exp(-lambda * deltaTime));
+  return lerp(current,target, 1 - Math.exp(-lambda *deltaTime));
 }
 
 export function distance2D(a, b) {

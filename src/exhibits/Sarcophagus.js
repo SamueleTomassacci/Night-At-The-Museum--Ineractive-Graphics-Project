@@ -165,10 +165,6 @@ export class Sarcophagus {
       });
     });
 
-    if (this.topParts.length === 0) {
-      console.warn("Nessuna parte superiore trovata nel modello del sarcofago.");
-    }
-
     this.topSlideState.distance = this.open ? COFFIN_TOP_SLIDE_DISTANCE : 0;
   }
 

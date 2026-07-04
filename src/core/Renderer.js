@@ -1,14 +1,14 @@
 import * as THREE from "three";
 import { QUALITY_SETTINGS } from "../utils/constants.js";
 
-export class Renderer {
+export class renderer {
   constructor() {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, QUALITY_SETTINGS.medium.pixelRatio));
+    this.renderer.setSize(window.innerWidth,window.innerHeight);
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,QUALITY_SETTINGS.medium.pixelRatio));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure=1.05;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(this.renderer.domElement);
@@ -16,21 +16,21 @@ export class Renderer {
 
   setQuality(quality) {
     const setting = QUALITY_SETTINGS[quality] ?? QUALITY_SETTINGS.medium;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, setting.pixelRatio));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,setting.pixelRatio));
     this.setShadows(setting.shadows);
   }
 
   setShadows(enabled) {
-    this.renderer.shadowMap.enabled = enabled;
+    this.renderer.shadowMap.enabled=enabled;
   }
 
   resize(camera) {
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
+    this.renderer.setSize(window.innerWidth,window.innerHeight);
+    camera.aspect=window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
   }
 
   render(scene, camera) {
-    this.renderer.render(scene, camera);
+    this.renderer.render(scene,camera);
   }
 }

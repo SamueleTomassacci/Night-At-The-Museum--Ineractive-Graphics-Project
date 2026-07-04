@@ -5,7 +5,7 @@ import policemanModelUrl from "../characters/policeman.glb?url";
 
 const COLUMN_MODEL_URL = new URL("../models/Column/ionic_column.glb",import.meta.url).href;
 const BENCH_MODEL_URL = new URL("../models/bench/modern_bench_1.glb", import.meta.url).href;
-const CEILING_LIGHT_MODEL_URL = new URL("../models/Ceiling light/ceiling_light.glb", import.meta.url).href;
+const CEILING_LIGHT_MODEL_URL = new URL("../models/Ceiling light/ceiling_light.glb",import.meta.url).href;
 const POLICEMAN_MODEL_URL = policemanModelUrl;
 const BENCH_LENGTH = 2.45;
 const CEILING_HEIGHT = 5.0;
@@ -19,19 +19,19 @@ const DOOR_PANEL_OVERLAP = 0.025;
 const DOOR_RAIL_THICKNESS = 0.1;
 const DOOR_STILE_THICKNESS = 0.09;
 
-export class AssetFactory {
+export class Factory {
   constructor(materials) {
-    this.materials = materials;
+    this.materials=materials;
     this.columnModelPromise = null;
-    this.benchModelPromise = null;
+    this.benchModelPromise=null;
     this.ceilingLightModelPromise = null;
     this.policemanModelPromise = null;
   }
 
   mesh(geometry, material, position = [0, 0, 0], castShadow = true,receiveShadow = true) {
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(position[0], position[1], position[2]);
-    mesh.castShadow = castShadow;
+    mesh.position.set(position[0],position[1], position[2]);
+    mesh.castShadow=castShadow;
     mesh.receiveShadow = receiveShadow;
     return mesh;
   }
@@ -40,7 +40,7 @@ export class AssetFactory {
     const mesh = this.mesh(
       new THREE.BoxGeometry(width,0.16, depth),
       this.materials.floor,
-      [position[0], -0.08, position[2]],
+      [position[0],-0.08, position[2]],
       false,
       true
     );
@@ -48,11 +48,11 @@ export class AssetFactory {
   }
 
   createWall(width, height, depth, position) {
-    return this.mesh(new THREE.BoxGeometry(width,height, depth), this.materials.wall, position, true, true);
+    return this.mesh(new THREE.BoxGeometry(width,height,depth), this.materials.wall, position,true, true);
   }
 
   createCeiling(width, depth, position, height = CEILING_HEIGHT) {
-    const mesh = this.mesh(new THREE.PlaneGeometry(width, depth), this.materials.ceiling, [position[0], height, position[2]], false, true);
+    const mesh = this.mesh(new THREE.PlaneGeometry(width,depth), this.materials.ceiling, [position[0],height, position[2]], false,true);
     mesh.rotation.x = Math.PI*0.5;
     return mesh;
   }
@@ -61,40 +61,40 @@ export class AssetFactory {
     const group = new THREE.Group();
     group.name = "Ceiling Cornice";
 
-    const y = height- CORNICE_HEIGHT / 2;
-    const accentY = height - CORNICE_HEIGHT + CORNICE_ACCENT_HEIGHT / 2;
-    const halfWidth = width / 2;
-    const halfDepth = depth/2;
+    const y=height- CORNICE_HEIGHT / 2;
+    const accentY = height-CORNICE_HEIGHT + CORNICE_ACCENT_HEIGHT / 2;
+    const halfWidth =width / 2;
+    const halfDepth=depth/2;
     const addBand = (geometry, bandPosition) => {
-      const band = this.mesh(geometry,this.materials.wood, bandPosition, true, true);
+      const band = this.mesh(geometry,this.materials.wood,bandPosition,true, true);
       group.add(band);
     };
 
     const addAccent = (geometry, accentPosition) => {
-      const accent = this.mesh(geometry, this.materials.gold, accentPosition, true, true);
+      const accent = this.mesh(geometry,this.materials.gold, accentPosition,true, true);
       group.add(accent);
     };
 
-    addBand(new THREE.BoxGeometry(width, CORNICE_HEIGHT, CORNICE_PROJECTION), [position[0], y, position[2] - halfDepth + CORNICE_PROJECTION / 2]);
-    addBand(new THREE.BoxGeometry(width, CORNICE_HEIGHT, CORNICE_PROJECTION), [position[0], y, position[2] + halfDepth - CORNICE_PROJECTION / 2]);
-    addBand(new THREE.BoxGeometry(CORNICE_PROJECTION, CORNICE_HEIGHT, depth), [position[0] - halfWidth + CORNICE_PROJECTION / 2, y, position[2]]);
-    addBand(new THREE.BoxGeometry(CORNICE_PROJECTION, CORNICE_HEIGHT, depth), [position[0] + halfWidth - CORNICE_PROJECTION / 2, y, position[2]]);
+    addBand(new THREE.BoxGeometry(width,CORNICE_HEIGHT, CORNICE_PROJECTION), [position[0],y, position[2] - halfDepth + CORNICE_PROJECTION / 2]);
+    addBand(new THREE.BoxGeometry(width, CORNICE_HEIGHT,CORNICE_PROJECTION), [position[0],y, position[2]+halfDepth - CORNICE_PROJECTION / 2]);
+    addBand(new THREE.BoxGeometry(CORNICE_PROJECTION,CORNICE_HEIGHT, depth), [position[0]-halfWidth + CORNICE_PROJECTION / 2,y, position[2]]);
+    addBand(new THREE.BoxGeometry(CORNICE_PROJECTION, CORNICE_HEIGHT,depth), [position[0]+halfWidth - CORNICE_PROJECTION / 2,y, position[2]]);
 
-    addAccent(new THREE.BoxGeometry(width, CORNICE_ACCENT_HEIGHT, CORNICE_PROJECTION * 1.08), [position[0], accentY, position[2] - halfDepth + CORNICE_PROJECTION / 2]);
-    addAccent(new THREE.BoxGeometry(width, CORNICE_ACCENT_HEIGHT, CORNICE_PROJECTION * 1.08), [position[0], accentY, position[2] + halfDepth - CORNICE_PROJECTION / 2]);
-    addAccent(new THREE.BoxGeometry(CORNICE_PROJECTION * 1.08, CORNICE_ACCENT_HEIGHT, depth), [position[0] - halfWidth + CORNICE_PROJECTION / 2, accentY, position[2]]);
-    addAccent(new THREE.BoxGeometry(CORNICE_PROJECTION * 1.08, CORNICE_ACCENT_HEIGHT, depth), [position[0] + halfWidth - CORNICE_PROJECTION / 2, accentY, position[2]]);
+    addAccent(new THREE.BoxGeometry(width,CORNICE_ACCENT_HEIGHT,CORNICE_PROJECTION * 1.08), [position[0],accentY, position[2] - halfDepth + CORNICE_PROJECTION / 2]);
+    addAccent(new THREE.BoxGeometry(width, CORNICE_ACCENT_HEIGHT,CORNICE_PROJECTION * 1.08), [position[0],accentY, position[2]+halfDepth - CORNICE_PROJECTION / 2]);
+    addAccent(new THREE.BoxGeometry(CORNICE_PROJECTION * 1.08,CORNICE_ACCENT_HEIGHT, depth), [position[0] - halfWidth + CORNICE_PROJECTION / 2,accentY, position[2]]);
+    addAccent(new THREE.BoxGeometry(CORNICE_PROJECTION * 1.08, CORNICE_ACCENT_HEIGHT,depth), [position[0] + halfWidth - CORNICE_PROJECTION / 2,accentY, position[2]]);
 
     return group;
   }
 
   createCeilingLight(position, diameter = 1.25) {
     const group = new THREE.Group();
-    group.position.set(position[0], position[1], position[2]);
+    group.position.set(position[0],position[1], position[2]);
 
     this.loadCeilingLightModel()
       .then(model => {
-        group.add(this.createCeilingLightModelInstance(model, diameter));
+        group.add(this.createCeilingLightModelInstance(model,diameter));
       })
       .catch(error => {
         console.error("Impossibile caricare il modello del lampadario:", error);
@@ -131,9 +131,9 @@ export class AssetFactory {
     });
 
     const box = new THREE.Box3().setFromObject(instance);
-    const size = box.getSize(new THREE.Vector3());
+    const size=box.getSize(new THREE.Vector3());
     const horizontalSize = Math.max(size.x,size.z, 0.001);
-    const scale = diameter/ horizontalSize;
+    const scale=diameter/ horizontalSize;
 
     instance.scale.setScalar(scale);
     instance.updateMatrixWorld(true);
@@ -148,40 +148,40 @@ export class AssetFactory {
   createWallSconce(position, rotationY = 0) {
     const group = new THREE.Group();
     group.name = "Wall Sconce";
-    group.position.set(position[0], position[1], position[2]);
-    group.rotation.y = rotationY;
+    group.position.set(position[0],position[1], position[2]);
+    group.rotation.y=rotationY;
 
     const metal = new THREE.MeshStandardMaterial({
       color: 0x10131a,
-      roughness: 0.34,
+      roughness:0.34,
       metalness: 0.72
     });
     const warmGlass = new THREE.MeshPhysicalMaterial({
       color: 0xffd7a0,
       roughness: 0.18,
       metalness: 0,
-      transmission: 0.25,
+      transmission:0.25,
       transparent: true,
       opacity: 0.72,
       emissive: 0xffa64c,
       emissiveIntensity: 0
     });
 
-    const backplate = this.mesh(new THREE.BoxGeometry(0.48,0.72, 0.08), metal, [0, 0, 0], true, true);
-    const topCap = this.mesh(new THREE.BoxGeometry(0.58, 0.08, 0.1), this.materials.gold, [0, 0.4, 0.01], true, true);
-    const bottomCap = this.mesh(new THREE.BoxGeometry(0.58, 0.08, 0.1), this.materials.gold, [0, -0.4, 0.01], true, true);
+    const backplate = this.mesh(new THREE.BoxGeometry(0.48,0.72,0.08), metal, [0,0,0], true,true);
+    const topCap = this.mesh(new THREE.BoxGeometry(0.58,0.08, 0.1), this.materials.gold, [0,0.4,0.01], true, true);
+    const bottomCap = this.mesh(new THREE.BoxGeometry(0.58, 0.08,0.1), this.materials.gold, [0,-0.4,0.01], true,true);
 
-    const arm = this.mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.36, 16), this.materials.gold, [0, 0.02, 0.2], true, true);
-    arm.rotation.x = Math.PI * 0.5;
+    const arm = this.mesh(new THREE.CylinderGeometry(0.035,0.045,0.36, 16), this.materials.gold, [0,0.02,0.2], true,true);
+    arm.rotation.x=Math.PI * 0.5;
 
-    const shade = this.mesh(new THREE.CylinderGeometry(0.16, 0.19, 0.52, 28), warmGlass, [0, 0.02, 0.39], true, false);
-    const shadeTop = this.mesh(new THREE.TorusGeometry(0.16, 0.018, 8, 28), this.materials.gold, [0, 0.29, 0.39], true, true);
-    const shadeBottom = this.mesh(new THREE.TorusGeometry(0.19, 0.018, 8, 28), this.materials.gold, [0, -0.25, 0.39], true, true);
+    const shade = this.mesh(new THREE.CylinderGeometry(0.16,0.19,0.52, 28), warmGlass, [0,0.02,0.39], true,false);
+    const shadeTop = this.mesh(new THREE.TorusGeometry(0.16,0.018,8, 28), this.materials.gold, [0,0.29,0.39], true,true);
+    const shadeBottom = this.mesh(new THREE.TorusGeometry(0.19, 0.018,8, 28), this.materials.gold, [0,-0.25,0.39], true,true);
     shadeTop.rotation.x = Math.PI * 0.5;
     shadeBottom.rotation.x = Math.PI * 0.5;
 
-    group.add(backplate, topCap, bottomCap, arm, shade, shadeTop, shadeBottom);
-    group.userData.emissiveMaterial = warmGlass;
+    group.add(backplate,topCap, bottomCap,arm, shade,shadeTop, shadeBottom);
+    group.userData.emissiveMaterial=warmGlass;
     return group;
   }
 
@@ -507,7 +507,6 @@ export class AssetFactory {
     const hand = this.getModelObjectByOriginalName(model, config.hand);
 
     if (!upperArm || !foreArm || !hand) {
-      console.warn("Ossa del braccio del policeman non trovate:", config);
       return;
     }
 

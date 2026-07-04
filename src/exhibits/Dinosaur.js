@@ -305,7 +305,6 @@ export class Dinosaur {
       const bone = model.getObjectByName(config.name);
 
       if(!bone) {
-        console.warn(`Osso della coda non trovato: ${config.name}`);
         return null;
       }
 
@@ -367,7 +366,6 @@ export class Dinosaur {
     this.jawBone = model.getObjectByName(JAW_BONE_NAME);
 
     if(!this.jawBone) {
-      console.warn(`Osso della bocca non trovato: ${JAW_BONE_NAME}`);
       return;
     }
 
@@ -379,7 +377,6 @@ export class Dinosaur {
       const bone = model.getObjectByName(config.name);
 
       if (!bone) {
-        console.warn(`Osso del collo o della testa non trovato: ${config.name}`);
         return null;
       }
 
@@ -394,7 +391,6 @@ export class Dinosaur {
     const headIkBone = model.getObjectByName(HEAD_IK_BONE_NAME);
 
     if(!headBone || !headIkBone) {
-      console.warn(`Impossibile collegare ${HEAD_IK_BONE_NAME} al cranio`);
       return;
     }
 
@@ -406,7 +402,6 @@ export class Dinosaur {
     this.bodyBone = model.getObjectByName(BODY_BONE_NAME);
 
     if (!this.bodyBone) {
-      console.warn(`Controllo del corpo non trovato: ${BODY_BONE_NAME}`);
       return;
     }
 
@@ -423,7 +418,6 @@ export class Dinosaur {
       const footTargetBone = model.getObjectByName(config.footTarget);
 
       if(!upperBone || !lowerBone || !footTargetBone) {
-        console.warn(`Catena della zampa incompleta: ${config.upper}`);
         return null;
       }
 
@@ -449,7 +443,6 @@ export class Dinosaur {
       const bone = model.getObjectByName(config.name);
 
       if (!bone) {
-        console.warn(`Osso del braccio non trovato: ${config.name}`);
         return null;
       }
 
@@ -466,7 +459,6 @@ export class Dinosaur {
     this.leftStepRoot = model.getObjectByName(LEFT_STEP_ROOT_NAME);
 
     if(!this.leftStepRoot) {
-      console.warn(`Controllo della zampa sinistra non trovato: ${LEFT_STEP_ROOT_NAME}`);
       return;
     }
 
@@ -480,7 +472,6 @@ export class Dinosaur {
         const bone = model.getObjectByName(name);
 
         if (!bone) {
-          console.warn(`Controllo della zampa non trovato: ${name}`);
           return null;
         }
 

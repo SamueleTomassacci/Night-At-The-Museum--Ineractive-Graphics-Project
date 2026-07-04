@@ -1,10 +1,10 @@
 import * as TWEEN from "@tweenjs/tween.js";
-import { Renderer } from "./core/Renderer.js";
+import { renderer as rendererClass } from "./core/renderer.js";
 import { SceneManager } from "./core/SceneManager.js";
 import { CameraManager } from "./core/CameraManager.js";
 import { InputManager } from "./core/InputManager.js";
 import { InteractionManager } from "./core/InteractionManager.js";
-import { AssetFactory } from "./core/AssetFactory.js";
+import { Factory } from "./core/factory.js";
 import { createMaterials } from "./utils/materials.js";
 import { Player } from "./characters/Player.js";
 import { Museum } from "./world/Museum.js";
@@ -15,12 +15,12 @@ import { UIController } from "./systems/UIController.js";
 import { DoorInteractionSystem } from "./systems/DoorInteractionSystem.js";
 import { ExhibitPromptSystem } from "./systems/ExhibitPromptSystem.js";
 
-const renderer =new Renderer();
+const renderer =new rendererClass();
 const sceneManager =new SceneManager();
 const cameraManager =new CameraManager();
 const inputManager =new InputManager(renderer.renderer.domElement);
 const materials = createMaterials();
-const factory =new AssetFactory(materials);
+const factory =new Factory(materials);
 const lightingSystem = new LightingSystem(sceneManager.scene);
 const collisionSystem =new CollisionSystem();
 const animationSystem = new AnimationSystem();

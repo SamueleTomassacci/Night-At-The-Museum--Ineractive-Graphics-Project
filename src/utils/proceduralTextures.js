@@ -7,58 +7,14 @@ function createCanvas(size = 256) {
   return { canvas, context: canvas.getContext("2d") };
 }
 
-function textureFromCanvas(canvas, repeatX = 1, repeatY = 1) {
+function textureFromCanvas(canvas, repeatX =1, repeatY = 1) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(repeatX, repeatY);
+  texture.repeat.set(repeatX,  repeatY);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.needsUpdate = true;
   return texture;
-}
-
-export function createFloorTexture() {
-  const { canvas, context } = createCanvas(512);
-  context.fillStyle = "#596174";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  for (let y = 0; y < 8; y += 1) {
-    for (let x = 0; x < 8; x += 1) {
-      const shade = 78 + ((x + y) % 2) * 12 + Math.floor(Math.random() * 8);
-      context.fillStyle = `rgb(${shade}, ${shade + 7}, ${shade + 20})`;
-      context.fillRect(x * 64, y * 64, 64, 64);
-      context.strokeStyle = "rgba(230, 235, 255, 0.2)";
-      context.strokeRect(x * 64, y * 64, 64, 64);
-    }
-  }
-  for (let i = 0; i < 180; i += 1) {
-    context.strokeStyle = `rgba(255,255,255,${Math.random() * 0.09})`;
-    context.beginPath();
-    context.moveTo(Math.random() * 512, Math.random() * 512);
-    context.lineTo(Math.random() * 512, Math.random() * 512);
-    context.stroke();
-  }
-  return textureFromCanvas(canvas, 8, 8);
-}
-
-export function createWallTexture() {
-  const { canvas, context } = createCanvas(512);
-  const gradient = context.createLinearGradient(0, 0, 0, 512);
-  gradient.addColorStop(0, "#aeb6c8");
-  gradient.addColorStop(1, "#7d879d");
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, 512, 512);
-  for (let i = 0; i < 36; i += 1) {
-    context.fillStyle = `rgba(255,255,255,${0.03 + Math.random() * 0.05})`;
-    context.fillRect(Math.random() * 512, Math.random() * 512, 80 + Math.random() * 180, 2);
-  }
-  for (let y = 64; y < 512; y += 64) {
-    context.strokeStyle = "rgba(35, 43, 62, 0.18)";
-    context.beginPath();
-    context.moveTo(0, y);
-    context.lineTo(512, y + Math.sin(y) * 4);
-    context.stroke();
-  }
-  return textureFromCanvas(canvas, 3, 2);
 }
 
 export function createWoodTexture() {
@@ -74,18 +30,6 @@ export function createWoodTexture() {
     context.stroke();
   }
   return textureFromCanvas(canvas, 2, 1);
-}
-
-export function createNormalTexture() {
-  const { canvas, context } = createCanvas(256);
-  context.fillStyle = "#8080ff";
-  context.fillRect(0, 0, 256, 256);
-  for (let i = 0; i < 900; i += 1) {
-    const v = 110 + Math.floor(Math.random() * 50);
-    context.fillStyle = `rgb(${v}, ${v}, 255)`;
-    context.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 3, 1 + Math.random() * 3);
-  }
-  return textureFromCanvas(canvas, 8, 8);
 }
 
 export function createSarcophagusTexture() {

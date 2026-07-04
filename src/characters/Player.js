@@ -154,8 +154,6 @@ export class Player {
 
     if (this.spine) {
       this.spineBaseQuaternion.copy(this.spine.quaternion);
-    } else {
-      console.warn(`Osso della colonna del player non trovato: ${SPINE_BONE_NAME}`);
     }
   }
 
@@ -175,7 +173,6 @@ export class Player {
     const toe = config.toe ? this.getModelObjectByOriginalName(model, config.toe) : null;
 
     if (!upper || !lower || !end) {
-      console.warn("Catena gerarchica del player incompleta:", config);
       return null;
     }
 
@@ -195,7 +192,6 @@ export class Player {
     const end = this.getModelObjectByOriginalName(model, config.end);
 
     if (!base || !mid || !tip || !end) {
-      console.warn("Catena della presa della mano destra incompleta:", config);
       return null;
     }
 
@@ -300,7 +296,6 @@ export class Player {
     const hand = this.rightHand ?? this.getModelObjectByOriginalName(model, RIGHT_HAND_BONE_NAME);
 
     if (!hand) {
-      console.warn(`Mano destra del player non trovata: ${RIGHT_HAND_BONE_NAME}`);
       return;
     }
 

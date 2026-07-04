@@ -287,9 +287,6 @@ export class Statue {
       }
     });
 
-    if (this.mouthDeformations.length === 0) {
-      console.warn("Nessun vertice trovato per la deformazione della bocca del Moai.");
-    }
   }
 
   applyMouthShaderMaterial(mesh) {
