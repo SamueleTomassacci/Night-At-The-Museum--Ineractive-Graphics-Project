@@ -273,7 +273,7 @@ export class Dinosaur {
       },
       undefined,
       error => {
-        console.error("Impossibile caricare il modello del T-Rex:", error);
+        console.error("Failed to load the T-Rex model:", error);
       }
     );
   }

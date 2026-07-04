@@ -140,7 +140,7 @@ export class Player {
         this.applyWalkPose();
       })
       .catch(error => {
-        console.error("Impossibile caricare il modello player policeman:", error);
+        console.error("Failed to load the policeman player model:", error);
       });
   }
 

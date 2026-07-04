@@ -97,7 +97,7 @@ export class Factory {
         group.add(this.createCeilingLightModelInstance(model,diameter));
       })
       .catch(error => {
-        console.error("Impossibile caricare il modello del lampadario:", error);
+        console.error("Failed to load the chandelier model:", error);
       });
 
     return group;
@@ -194,7 +194,7 @@ export class Factory {
         group.add(this.createColumnModelInstance(model, height + 0.8));
       })
       .catch(error => {
-        console.error("Impossibile caricare il modello della colonna:", error);
+        console.error("Failed to load the column model:", error);
       });
 
     return group;
@@ -388,7 +388,7 @@ export class Factory {
         group.add(this.createBenchModelInstance(model, BENCH_LENGTH));
       })
       .catch(error => {
-        console.error("Impossibile caricare il modello della panchina:", error);
+        console.error("Failed to load the bench model:", error);
       });
 
     return group;

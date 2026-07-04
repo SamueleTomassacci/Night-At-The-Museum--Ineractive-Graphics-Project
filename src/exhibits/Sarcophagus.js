@@ -110,7 +110,7 @@ export class Sarcophagus {
       },
       undefined,
       error => {
-        console.error("Impossibile caricare il modello del sarcofago:", error);
+        console.error("Failed to load the sarcophagus model:", error);
       }
     );
   }
@@ -146,7 +146,7 @@ export class Sarcophagus {
       },
       undefined,
       error => {
-        console.error("Impossibile caricare il modello della mummia:", error);
+        console.error("Failed to load the mummy model:", error);
       }
     );
   }

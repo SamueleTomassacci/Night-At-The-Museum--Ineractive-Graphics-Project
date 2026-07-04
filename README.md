@@ -1,10 +1,10 @@
 # Midnight Museum: The Awakening
 
-Progetto base di Interactive Graphics in JavaScript con Three.js, tween.js e Vite.
+Base Interactive Graphics project in JavaScript with Three.js, tween.js and Vite.
 
-La scena rappresenta un museo notturno diviso in atrio centrale, sala dinosauro, sala statue, sala egizia e galleria quadri. Il player controlla un piccolo guardiano e puo esplorare il museo mentre i reperti iniziano a reagire alla mezzanotte.
+The scene is a night museum divided into a central atrium, dinosaur room, statue room, Egyptian room and painting gallery. The player controls a small guard and can explore the museum while the exhibits begin to react at midnight.
 
-## Avvio
+## Run
 
 ```bash
 npm install
@@ -12,41 +12,41 @@ npm run dev
 npm run build
 ```
 
-## Controlli
+## Controls
 
-- W / S: avanti e indietro rispetto alla direzione del player
-- A / D: rotazione del player anche da fermo
-- C: cambio camera tra terza persona, prima persona, dall'alto e panoramica
-- L: accensione e spegnimento luci
-- Click mouse: interazione con sarcofago e quadri
-- Pannello UI: luci, ombre e qualita
+- W / S: move forward and backward relative to the player's direction
+- A / D: rotate the player even while standing still
+- C: switch camera between third person, first person, top-down and panorama
+- L: turn lights on and off
+- Mouse click: interact with the sarcophagus and paintings
+- UI panel: lights, shadows and quality
 
-## Requisiti coperti
+## Covered Requirements
 
-- JavaScript moderno con ES modules
-- Three.js per rendering, camera, luci, geometrie e materiali
-- @tweenjs/tween.js per animazioni temporizzate
-- Vite come dev server e build tool
-- Modello T-Rex GLTF riggato con la sua animazione incorporata
-- Modello colonna GLB usato per le colonne dell'atrio
-- Modello panchina GLB usato per le panchine del museo
-- Porte procedurali dell'atrio create con primitive Three.js e animate con tween.js
-- Texture procedurali create con CanvasTexture, con mappe PBR statiche ambientCG WoodFloor064 per il pavimento e Concrete030 per le pareti
-- Player gerarchico con camminata, rotazione e limiti di movimento
-- Quattro modalita camera
-- T-Rex scheletrico riggato e animato tramite AnimationMixer
-- Statua gerarchica con testa e braccio animati
-- Sarcofago cliccabile con coperchio animato e luce interna
-- Galleria con quattro quadri procedurali reattivi
-- Orologio che avvia lo stato globale museumAwakens
-- Sistema luci con ambiente notturno, spotlight, point light, torce e flickering
-- Raycasting mouse per oggetti cliccabili
-- Trigger di prossimita per sale e reperti
-- UI HTML sovrapposta
-- AnimationSystem con oggetti animabili tramite update(deltaTime, elapsedTime)
-- CollisionSystem semplice basato sui confini del museo
+- Modern JavaScript with ES modules
+- Three.js for rendering, cameras, lights, geometries and materials
+- @tweenjs/tween.js for timed animations
+- Vite as dev server and build tool
+- Rigged GLTF T-Rex model with its embedded animation
+- GLB column model used for the atrium columns
+- GLB bench model used for the museum benches
+- Procedural atrium doors built with Three.js primitives and animated with tween.js
+- Procedural textures created with CanvasTexture, plus static ambientCG WoodFloor064 PBR maps for the floor and Concrete030 maps for the walls
+- Hierarchical player with walking, rotation and movement limits
+- Four camera modes
+- Rigged skeletal T-Rex animated through AnimationMixer
+- Hierarchical statue with animated head and arm
+- Clickable sarcophagus with animated lid and internal light
+- Gallery with four reactive procedural paintings
+- Clock that starts the global museumAwakens state
+- Lighting system with night ambience, spotlights, point lights, flashlights and flickering
+- Mouse raycasting for clickable objects
+- Proximity triggers for rooms and exhibits
+- Overlay HTML UI
+- AnimationSystem with animatable objects through update(deltaTime, elapsedTime)
+- Simple CollisionSystem based on museum boundaries
 
-## Struttura
+## Structure
 
 ```text
 src/
@@ -84,8 +84,8 @@ src/
     math.js
 ```
 
-## Note
+## Notes
 
-Gli elementi del museo, esclusi il T-Rex importato e i modelli GLB di colonne, panchine e lampadari, sono composizioni di primitive Three.js. Le animazioni sono gestite tramite render loop, tween.js e AnimationMixer; i modelli GLB aggiunti non introducono animazioni esterne. Le texture di legno e sarcofago sono generate proceduralmente via canvas, mentre i quadri usano immagini in `src/images`. Il pavimento usa mappe PBR statiche ambientCG WoodFloor064 in `src/texture/floor/`; le pareti usano mappe PBR statiche ambientCG Concrete030 in `src/texture/wall/`. Entrambi usano `Color`, `NormalGL` e `Roughness`, con le precedenti texture procedurali mantenute come fallback.
+The museum elements, except for the imported T-Rex and the GLB models for columns, benches and chandeliers, are compositions of Three.js primitives. Animations are handled through the render loop, tween.js and AnimationMixer; the added GLB models do not introduce external animations. Wood and sarcophagus textures are generated procedurally through canvas, while the paintings use images in `src/images`. The floor uses static ambientCG WoodFloor064 PBR maps in `src/texture/floor/`; the walls use static ambientCG Concrete030 PBR maps in `src/texture/wall/`. Both use `Color`, `NormalGL` and `Roughness` maps directly.
 
-Il modello del T-Rex e basato su ["T-rex-skeleton-rigged-and-animated"](https://sketchfab.com/3d-models/t-rex-skeleton-rigged-and-animated-cca5cf48215142db91f657053bd74057) di [felixjoshua10251025](https://sketchfab.com/felixjoshua10251025), distribuito con licenza [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).
+The T-Rex model is based on ["T-rex-skeleton-rigged-and-animated"](https://sketchfab.com/3d-models/t-rex-skeleton-rigged-and-animated-cca5cf48215142db91f657053bd74057) by [felixjoshua10251025](https://sketchfab.com/felixjoshua10251025), distributed under the [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) license.

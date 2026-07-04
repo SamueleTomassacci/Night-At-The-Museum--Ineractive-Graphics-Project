@@ -181,7 +181,7 @@ export class Statue {
       },
       undefined,
       error => {
-        console.error("Impossibile caricare il modello Moai:", error);
+        console.error("Failed to load the Moai model:", error);
       }
     );
   }
