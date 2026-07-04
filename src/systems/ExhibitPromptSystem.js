@@ -43,6 +43,12 @@ export class ExhibitPromptSystem {
     this.prompt.style.display = "block";
   }
 
+  removeExhibits(...objects) {
+    const removedObjects = new Set(objects);
+    this.exhibits = this.exhibits.filter(exhibit => !removedObjects.has(exhibit.object));
+    this.prompt.style.display = "none";
+  }
+
   findNearestExhibit() {
     this.player.group.getWorldPosition(this.playerPosition);
 

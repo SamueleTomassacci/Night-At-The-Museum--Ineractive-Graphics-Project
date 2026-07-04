@@ -48,7 +48,7 @@ export class CameraManager {
     const verticalDelta = deltaY * this.cameraSensitivity;
     this.cameraPitch = THREE.MathUtils.clamp(
       this.cameraPitch + (this.mode === "firstPerson" ? verticalDelta : -verticalDelta),
-      -0.25,
+      this.mode === "firstPerson" ? -0.8 : -0.25,
       0.6
     );
   }

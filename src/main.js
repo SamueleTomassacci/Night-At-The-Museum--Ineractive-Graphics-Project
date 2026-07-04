@@ -66,6 +66,10 @@ inputManager.addEventListener("keyPressed", event => {
   if (event.detail === "t") {
     sceneManager.setAwakening();
     doorInteractionSystem.openAllDoors({ autoClose: false });
+    exhibitPromptSystem.removeExhibits(
+      museum.dinosaurRoom.dinosaur,
+      museum.statueRoom.statue
+    );
     museum.dinosaurRoom.dinosaur.walkToAtriumAndRoar();
     museum.statueRoom.statue.awakenIntoAtrium();
   }
