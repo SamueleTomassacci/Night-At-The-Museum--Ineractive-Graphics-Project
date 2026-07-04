@@ -5,7 +5,7 @@ const PLAYER_MODEL_HEIGHT = 2.05;
 const WALK_CYCLE_DURATION = 760;
 const WALK_START_DURATION = 160;
 const WALK_STOP_DURATION = 220;
-const TAU = Math.PI * 2;
+const TAU =Math.PI * 2;
 const FOOT_LIFT_ANGLE = THREE.MathUtils.degToRad(22);
 const FOOT_PUSH_ANGLE = THREE.MathUtils.degToRad(-8);
 const HELD_FLASHLIGHT_WORLD_SCALE = 0.44;
@@ -98,7 +98,7 @@ export class Player {
     this.speed = 5.4;
     this.turnSpeed = 2.8;
     this.group = new THREE.Group();
-    this.group.position.set(0, 0, 3.8);
+    this.group.position.set(0,0, 3.8);
 
     this.modelRoot = null;
     this.modelBasePosition = new THREE.Vector3();
@@ -146,7 +146,7 @@ export class Player {
 
   setupHierarchicalWalk(model) {
     this.animatedBones = [];
-    this.armChains = ARM_CHAINS.map(config => this.createAnimatedChain(model, config)).filter(Boolean);
+    this.armChains = ARM_CHAINS.map(config => this.createAnimatedChain(model,config)).filter(Boolean);
     this.legChains = LEG_CHAINS.map(config => this.createAnimatedChain(model, config)).filter(Boolean);
     this.spine = this.getModelObjectByOriginalName(model, SPINE_BONE_NAME);
     this.rightHand = this.getModelObjectByOriginalName(model, RIGHT_HAND_BONE_NAME);
@@ -225,7 +225,7 @@ export class Player {
   }
 
   getModelObjectByOriginalName(model, name) {
-    return model.getObjectByName(name) ?? model.getObjectByName(name.replaceAll(":", ""));
+    return model.getObjectByName(name)?? model.getObjectByName(name.replaceAll(":", ""));
   }
 
   createFlashlight() {
@@ -271,7 +271,7 @@ export class Player {
     this.flashlight.userData.emissiveMaterial = this.flashlightLensMaterial;
 
     this.flashlightTarget = new THREE.Object3D();
-    this.flashlightTarget.position.set(0, -1.15, 7);
+    this.flashlightTarget.position.set(0,-1.15, 7);
     this.flashlight.target = this.flashlightTarget;
 
     this.flashlightGroup.add(handle, head, lens, this.flashlight, this.flashlightTarget);
@@ -304,13 +304,13 @@ export class Player {
       return;
     }
 
-    this.rightHand = hand;
+    this.rightHand=hand;
     this.modelRoot.updateMatrixWorld(true);
     hand.add(this.flashlightGroup);
 
-    const handWorldScale = hand.getWorldScale(new THREE.Vector3());
-    const parentScale = Math.max(handWorldScale.x, handWorldScale.y, handWorldScale.z, 0.0001);
-    const localScale = HELD_FLASHLIGHT_WORLD_SCALE / parentScale;
+    const handWorldScale =hand.getWorldScale(new THREE.Vector3());
+    const parentScale = Math.max(handWorldScale.x,handWorldScale.y, handWorldScale.z, 0.0001);
+    const localScale = HELD_FLASHLIGHT_WORLD_SCALE/parentScale;
 
     this.flashlightGroup.visible = true;
     this.flashlightGroup.scale.setScalar(localScale);
@@ -319,46 +319,46 @@ export class Player {
   }
 
   update(deltaTime, elapsedTime) {
-    const previousPosition = this.group.position.clone();
-    const turnInput = (this.inputManager.isDown("d") ? 1 : 0) - (this.inputManager.isDown("a") ? 1 : 0);
-    const moveInput = (this.inputManager.isDown("w") ? 1 : 0) - (this.inputManager.isDown("s") ? 1 : 0);
-    const moving = moveInput !== 0;
+    const previousPosition =this.group.position.clone();
+    const turnInput = (this.inputManager.isDown("d") ? 1 :0) - (this.inputManager.isDown("a") ? 1 : 0);
+    const moveInput = (this.inputManager.isDown("w") ? 1 : 0) -(this.inputManager.isDown("s") ? 1 : 0);
+    const moving = moveInput!==0;
 
-    if (turnInput !== 0) {
-      this.group.rotation.y -= turnInput * this.turnSpeed * deltaTime;
+    if(turnInput !== 0) {
+      this.group.rotation.y -= turnInput*this.turnSpeed * deltaTime;
     }
 
-    if (moving) {
+    if(moving) {
       this.walkDirection = moveInput > 0 ? 1 : -1;
-      const forward = new THREE.Vector3(Math.sin(this.group.rotation.y), 0, Math.cos(this.group.rotation.y));
-      this.group.position.addScaledVector(forward, moveInput * this.speed * deltaTime);
+      const forward = new THREE.Vector3(Math.sin(this.group.rotation.y),0, Math.cos(this.group.rotation.y));
+      this.group.position.addScaledVector(forward,moveInput * this.speed * deltaTime);
     }
 
-    this.collisionSystem.constrain(this.group.position, 0.48, previousPosition);
+    this.collisionSystem.constrain(this.group.position,0.48, previousPosition);
     this.setWalking(moving);
-    this.tweenGroup.update(elapsedTime * 1000);
+    this.tweenGroup.update(elapsedTime*1000);
     this.aimDirection
-      .lerp(this.targetAimDirection, 1 - Math.exp(-12 * deltaTime))
+      .lerp(this.targetAimDirection,1 - Math.exp(-12 * deltaTime))
       .normalize();
     this.applyWalkPose();
   }
 
   setWalking(walking) {
-    if (walking === this.isWalking) {
+    if(walking === this.isWalking) {
       return;
     }
 
-    this.isWalking = walking;
+    this.isWalking=walking;
 
-    if (this.walkStrengthTween) {
+    if(this.walkStrengthTween) {
       this.walkStrengthTween.stop();
-      this.walkStrengthTween = null;
+      this.walkStrengthTween=null;
     }
 
-    if (walking) {
+    if(walking) {
       this.startWalkCycle();
       this.walkStrengthTween = new TWEEN.Tween(this.walkState, this.tweenGroup)
-        .to({ strength: 1 }, WALK_START_DURATION)
+        .to({ strength: 1 },WALK_START_DURATION)
         .easing(TWEEN.Easing.Sinusoidal.Out)
         .onUpdate(() => this.applyWalkPose())
         .start();
@@ -366,25 +366,25 @@ export class Player {
     }
 
     this.walkStrengthTween = new TWEEN.Tween(this.walkState, this.tweenGroup)
-      .to({ strength: 0 }, WALK_STOP_DURATION)
+      .to({ strength: 0 },WALK_STOP_DURATION)
       .easing(TWEEN.Easing.Sinusoidal.Out)
       .onUpdate(() => this.applyWalkPose())
       .onComplete(() => {
         this.stopWalkCycle();
-        this.walkState.phase = 0;
+        this.walkState.phase=0;
         this.applyWalkPose();
       })
       .start();
   }
 
   startWalkCycle() {
-    if (this.walkTween) {
+    if(this.walkTween) {
       return;
     }
 
-    this.walkState.phase = this.walkState.phase % TAU;
+    this.walkState.phase =this.walkState.phase % TAU;
     this.walkTween = new TWEEN.Tween(this.walkState, this.tweenGroup)
-      .to({ phase: this.walkState.phase + TAU }, WALK_CYCLE_DURATION)
+      .to({ phase: this.walkState.phase + TAU },WALK_CYCLE_DURATION)
       .easing(TWEEN.Easing.Linear.None)
       .repeat(Infinity)
       .onUpdate(() => this.applyWalkPose())
@@ -392,44 +392,44 @@ export class Player {
   }
 
   stopWalkCycle() {
-    if (!this.walkTween) {
+    if(!this.walkTween) {
       return;
     }
 
     this.walkTween.stop();
-    this.walkTween = null;
+    this.walkTween=null;
   }
 
   applyWalkPose() {
-    if (!this.modelRoot) {
+    if(!this.modelRoot) {
       return;
     }
 
-    const strength = this.walkState.strength;
-    const phase = this.walkState.phase;
-    const leftStep = Math.sin(phase) * strength * this.walkDirection;
-    const rightStep = -leftStep;
-    const bounce = Math.abs(Math.sin(phase * 2)) * 0.035 * strength;
+    const strength =this.walkState.strength;
+    const phase =this.walkState.phase;
+    const leftStep = Math.sin(phase)*strength * this.walkDirection;
+    const rightStep =-leftStep;
+    const bounce = Math.abs(Math.sin(phase* 2)) * 0.035 * strength;
 
     this.resetAnimatedBones();
     this.modelRoot.position.copy(this.modelBasePosition);
-    this.modelRoot.position.y += bounce;
+    this.modelRoot.position.y+= bounce;
 
-    if (this.spine) {
+    if(this.spine) {
       this.offsetQuaternion.setFromAxisAngle(
-        new THREE.Vector3(0, 0, 1),
-        Math.sin(phase) * 0.035 * strength
+        new THREE.Vector3(0,0, 1),
+        Math.sin(phase)*0.035 * strength
       );
       this.spine.quaternion.copy(this.spineBaseQuaternion).multiply(this.offsetQuaternion);
     }
 
     this.modelRoot.updateMatrixWorld(true);
 
-    this.applyArmSwing(this.armChains[0], -leftStep);
-    this.applyTorchArmPose(this.armChains[1], phase, strength);
+    this.applyArmSwing(this.armChains[0],-leftStep);
+    this.applyTorchArmPose(this.armChains[1],phase, strength);
     this.applyRightHandGrip();
-    this.applyLegSwing(this.legChains[0], leftStep);
-    this.applyLegSwing(this.legChains[1], rightStep);
+    this.applyLegSwing(this.legChains[0],leftStep);
+    this.applyLegSwing(this.legChains[1],rightStep);
     this.updateHeldFlashlightTransform();
   }
 
@@ -440,14 +440,14 @@ export class Player {
   }
 
   applyArmSwing(chain, swing) {
-    if (!chain) {
+    if(!chain) {
       return;
     }
 
-    const upperTarget = new THREE.Vector3(chain.sideSign * 0.14, -0.96, 0.3 * swing).normalize();
-    const foreTarget = new THREE.Vector3(chain.sideSign * 0.05, -0.98, 0.18 * swing).normalize();
+    const upperTarget = new THREE.Vector3(chain.sideSign*0.14, -0.96, 0.3 * swing).normalize();
+    const foreTarget = new THREE.Vector3(chain.sideSign * 0.05,-0.98, 0.18 * swing).normalize();
 
-    this.applyChainTarget(chain, upperTarget, foreTarget);
+    this.applyChainTarget(chain,upperTarget, foreTarget);
   }
 
   applyTorchArmPose(chain, phase, strength) {

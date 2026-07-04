@@ -72,7 +72,6 @@ src/
     Statue.js
     Sarcophagus.js
     Paintings.js
-    Clock.js
   systems/
     AnimationSystem.js
     LightingSystem.js
@@ -87,6 +86,6 @@ src/
 
 ## Note
 
-Gli elementi del museo, esclusi il T-Rex importato e i modelli GLB di colonne, panchine e porte, sono composizioni di primitive Three.js. Le animazioni sono gestite tramite render loop, tween.js e AnimationMixer; i modelli GLB aggiunti non introducono animazioni esterne. Le texture di legno, quadri e sarcofago sono generate proceduralmente via canvas. Il pavimento usa mappe PBR statiche ambientCG WoodFloor064 caricate da `/texture/floor/`; le pareti usano mappe PBR statiche ambientCG Concrete030 caricate da `/texture/wall/`. Entrambi usano `Color`, `NormalGL` e `Roughness`, con le precedenti texture procedurali mantenute come fallback.
+Gli elementi del museo, esclusi il T-Rex importato e i modelli GLB di colonne, panchine e lampadari, sono composizioni di primitive Three.js. Le animazioni sono gestite tramite render loop, tween.js e AnimationMixer; i modelli GLB aggiunti non introducono animazioni esterne. Le texture di legno e sarcofago sono generate proceduralmente via canvas, mentre i quadri usano immagini in `src/images`. Il pavimento usa mappe PBR statiche ambientCG WoodFloor064 in `src/texture/floor/`; le pareti usano mappe PBR statiche ambientCG Concrete030 in `src/texture/wall/`. Entrambi usano `Color`, `NormalGL` e `Roughness`, con le precedenti texture procedurali mantenute come fallback.
 
 Il modello del T-Rex e basato su ["T-rex-skeleton-rigged-and-animated"](https://sketchfab.com/3d-models/t-rex-skeleton-rigged-and-animated-cca5cf48215142db91f657053bd74057) di [felixjoshua10251025](https://sketchfab.com/felixjoshua10251025), distribuito con licenza [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/).

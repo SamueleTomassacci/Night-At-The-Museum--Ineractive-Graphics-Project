@@ -26,7 +26,6 @@ export class Sarcophagus {
     this.modelRoot.position.y = PEDESTAL_HEIGHT;
     this.pedestal = this.createPedestal();
     this.model = null;
-    this.mummy = null;
     this.topParts = [];
     this.topSlideState = { distance: 0 };
     this.animationRunning = false;
@@ -143,7 +142,6 @@ export class Sarcophagus {
         });
 
         mummy.name = "Mummy Inside Coffin";
-        this.mummy = mummy;
         this.modelRoot.add(mummy);
       },
       undefined,

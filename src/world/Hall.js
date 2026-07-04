@@ -21,7 +21,9 @@ export class Hall {
       factory.createDoorFrame([0, 0, -6], 0, 4.4),
       factory.createDoorFrame([0, 0, 6], Math.PI, 4.4)
     ];
-    this.doors.forEach(door => this.group.add(door));
+    this.doors.forEach(door => {
+      this.group.add(door);
+    });
     this.group.add(factory.createSign("DINOSAUR", [-7.76, 3.9, 0], Math.PI * 0.5, 3));
     this.group.add(factory.createSign("STATUE", [7.76, 3.9, 0], -Math.PI * 0.5, 2.6));
     this.group.add(factory.createSign("EGYPT", [0, 3.9, -5.76], 0, 2.4));

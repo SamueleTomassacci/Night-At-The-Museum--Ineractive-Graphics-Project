@@ -15,7 +15,7 @@ export class UIController extends EventTarget {
 
   render() {
     this.root.innerHTML = "";
-    this.panel = document.createElement("section");
+    this.panel =document.createElement("section");
     this.panel.className = "museum-panel";
     this.panel.innerHTML = `
       <h1>Midnight Museum: The Awakening</h1>
@@ -67,14 +67,25 @@ export class UIController extends EventTarget {
       <span>Press T to wake the museum</span>
     `;
     this.root.appendChild(this.wakePanel);
-    this.panel.querySelector('[data-action="lightMode"]').addEventListener("change", event => this.dispatchEvent(new CustomEvent("lightModeChanged", { detail: event.target.value })));
-    this.panel.querySelector('[data-action="shadows"]').addEventListener("click", () => this.dispatchEvent(new CustomEvent("toggleShadows")));
-    this.panel.querySelector('[data-action="quality"]').addEventListener("change", event => this.dispatchEvent(new CustomEvent("qualityChanged", { detail: event.target.value })));
+    const lightModeSelect = this.panel.querySelector('[data-action="lightMode"]');
+    const shadowButton = this.panel.querySelector('[data-action="shadows"]');
+    const qualitySelect = this.panel.querySelector('[data-action="quality"]');
+
+    lightModeSelect.addEventListener("change",event => {
+      this.dispatchEvent(new CustomEvent("lightModeChanged",{ detail: event.target.value }));
+    });
+    shadowButton.addEventListener("click", () => {
+      this.dispatchEvent(new CustomEvent("toggleShadows"));
+    });
+    qualitySelect.addEventListener("change", event => {
+      this.dispatchEvent(new CustomEvent("qualityChanged", { detail: event.target.value }));
+    });
+
     const secondaryIntensity = this.panel.querySelector("#secondary-intensity");
     secondaryIntensity.addEventListener("input", event => {
-      const percentage = Number(event.target.value);
+      const percentage =Number(event.target.value);
       this.panel.querySelector('[data-control="secondaryIntensity"] output').value = `${percentage}%`;
-      this.dispatchEvent(new CustomEvent("secondaryIntensityChanged", { detail: percentage / 100 }));
+      this.dispatchEvent(new CustomEvent("secondaryIntensityChanged", { detail: percentage/100 }));
     });
     const flashlightIntensity = this.panel.querySelector("#flashlight-intensity");
     flashlightIntensity.addEventListener("input", event => {
@@ -103,14 +114,14 @@ export class UIController extends EventTarget {
     };
     this.values.lights = labels[mode] ?? labels.day;
     this.panel.querySelector('[data-action="lightMode"]').value = mode;
-    this.panel.querySelector('[data-control="secondaryIntensity"]').hidden = mode !== "off";
+    this.panel.querySelector('[data-control="secondaryIntensity"]').hidden = mode!=="off";
     this.panel.querySelector('[data-control="flashlightIntensity"]').hidden = mode !== "off";
     this.panel.querySelector('[data-control="flashlightRange"]').hidden = mode !== "off";
     this.refresh();
   }
 
   setShadows(enabled) {
-    this.values.shadows = enabled ? "on" : "off";
+    this.values.shadows = enabled ? "on": "off";
     this.panel.querySelector('[data-action="shadows"]').textContent = `Shadows ${this.values.shadows}`;
   }
 

@@ -7,18 +7,26 @@ import { EgyptianRoom } from "./EgyptianRoom.js";
 import { GalleryRoom } from "./GalleryRoom.js";
 
 export class Museum {
-  constructor(factory, lightingSystem, sceneManager) {
+  constructor(factory,lightingSystem, sceneManager) {
     this.group = new THREE.Group();
     this.factory = factory;
     this.lightingSystem = lightingSystem;
     this.sceneManager = sceneManager;
-    this.hall = new Hall(factory, lightingSystem);
+    this.hall = new Hall(factory,lightingSystem);
     this.dinosaurRoom = new DinosaurRoom(factory, lightingSystem);
     this.statueRoom = new StatueRoom(factory, lightingSystem);
     this.egyptianRoom = new EgyptianRoom(factory, lightingSystem);
     this.galleryRoom = new GalleryRoom(factory, lightingSystem);
-    this.rooms = [this.hall, this.dinosaurRoom, this.statueRoom, this.egyptianRoom, this.galleryRoom];
-    this.rooms.forEach(room => this.group.add(room.group));
+    this.rooms = [
+      this.hall,
+      this.dinosaurRoom,
+      this.statueRoom,
+      this.egyptianRoom,
+      this.galleryRoom
+    ];
+    this.rooms.forEach(room => {
+      this.group.add(room.group);
+    });
     this.ceilings = this.createCeilings(factory);
     this.cornices = this.createCornices(factory);
     this.group.add(this.ceilings, this.cornices);
@@ -32,9 +40,9 @@ export class Museum {
     group.name = "Museum Ceilings";
 
     Object.values(ROOM_RECTS).forEach(rect => {
-      const width = rect.maxX - rect.minX;
+      const width = rect.maxX- rect.minX;
       const depth = rect.maxZ - rect.minZ;
-      group.add(factory.createCeiling(width, depth, [rect.center[0], 0, rect.center[1]]));
+      group.add(factory.createCeiling(width,depth, [rect.center[0], 0, rect.center[1]]));
     });
 
     return group;
@@ -46,7 +54,7 @@ export class Museum {
 
     Object.values(ROOM_RECTS).forEach(rect => {
       const width = rect.maxX - rect.minX;
-      const depth = rect.maxZ - rect.minZ;
+      const depth = rect.maxZ- rect.minZ;
       group.add(factory.createCornice(width, depth, [rect.center[0], 0, rect.center[1]]));
     });
 
@@ -68,12 +76,15 @@ export class Museum {
   }
 
   getClickables() {
-    return [
+    const clickables = [
       this.dinosaurRoom.dinosaur,
       this.statueRoom.statue,
-      this.egyptianRoom.sarcophagus,
-      ...this.galleryRoom.paintings.getClickables()
+      this.egyptianRoom.sarcophagus
     ];
+    this.galleryRoom.paintings.getClickables().forEach(function(clickable) {
+      clickables.push(clickable);
+    });
+    return clickables;
   }
 
   getDoors() {

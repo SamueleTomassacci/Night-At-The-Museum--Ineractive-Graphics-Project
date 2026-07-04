@@ -18,7 +18,7 @@ export class DoorInteractionSystem {
     this.prompt = this.createPrompt();
     this.handleKeyDown = this.handleKeyDown.bind(this);
 
-    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener("keydown",this.handleKeyDown);
   }
 
   createPrompt() {
@@ -43,7 +43,7 @@ export class DoorInteractionSystem {
   }
 
   handleKeyDown(event) {
-    if (event.repeat || event.key.toLowerCase() !== "o") {
+    if(event.repeat || event.key.toLowerCase() !== "o") {
       return;
     }
 
@@ -63,7 +63,7 @@ export class DoorInteractionSystem {
     this.playerForward.y = 0;
 
     if (this.playerForward.lengthSq() === 0) {
-      this.playerForward.set(Math.sin(this.player.group.rotation.y), 0, Math.cos(this.player.group.rotation.y));
+      this.playerForward.set(Math.sin(this.player.group.rotation.y),0, Math.cos(this.player.group.rotation.y));
     } else {
       this.playerForward.normalize();
     }
@@ -81,7 +81,7 @@ export class DoorInteractionSystem {
       this.toDoor.y = 0;
 
       const distance = this.toDoor.length();
-      if (distance > nearestDistance || distance === 0) {
+      if(distance > nearestDistance || distance === 0) {
         return;
       }
 
@@ -98,32 +98,34 @@ export class DoorInteractionSystem {
   }
 
   canShowPromptForDoor(door) {
-    return door?.userData.ready && !door.userData.isOpen && !door.userData.isAnimating;
+    return door?.userData.ready && !door.userData.isOpen&& !door.userData.isAnimating;
   }
 
   openDoor(door, options = {}) {
     const { autoClose = true } = options;
     const data = door.userData;
+
     if (!data.ready || data.isAnimating) {
       return;
     }
 
     this.clearAutoClose(door);
+
     if (data.isOpen) {
       return;
     }
 
-    this.animateDoor(door, data.openPositions, () => {
+    this.animateDoor(door,data.openPositions, () => {
       data.isOpen = true;
       data.isAnimating = false;
       if (autoClose) {
-        data.autoCloseTimeout = window.setTimeout(() => this.closeDoor(door), AUTO_CLOSE_DELAY_MS);
+        data.autoCloseTimeout = window.setTimeout(() => this.closeDoor(door),AUTO_CLOSE_DELAY_MS);
       }
     });
   }
 
   openAllDoors(options = {}) {
-    this.doors.forEach(door => this.openDoor(door, options));
+    this.doors.forEach(door => this.openDoor(door,options));
   }
 
   closeDoor(door) {
@@ -142,6 +144,7 @@ export class DoorInteractionSystem {
   animateDoor(door, targetPositions, onComplete) {
     const data = door.userData;
     const panels = data.slidingPanels?.length ? data.slidingPanels : [data.doorVisual].filter(Boolean);
+
     if (panels.length === 0) {
       return;
     }
@@ -151,7 +154,7 @@ export class DoorInteractionSystem {
 
     panels.forEach((panel, index) => {
       const targetPosition = targetPositions[index] ?? panel.position;
-      const start = { x: panel.position.x };
+      const start ={ x: panel.position.x };
       const tween = new TWEEN.Tween(start)
         .to({ x: targetPosition.x }, DOOR_ANIMATION_DURATION_MS)
         .easing(TWEEN.Easing.Quadratic.InOut)

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import * as TWEEN from "@tweenjs/tween.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const MODEL_URL = new URL("../characters/trex.glb", import.meta.url).href;
+const MODEL_URL =new URL("../characters/trex.glb", import.meta.url).href;
 const MODEL_TARGET_HEIGHT = 2.7;
 const TAIL_BONES = [
   { name: "Cola1_ArmatureRexy", amplitude: 0.15 },
@@ -12,7 +12,7 @@ const TAIL_BONES = [
   { name: "Cola5_ArmatureRexy", amplitude: 0.7 },
   { name: "Cola6_ArmatureRexy", amplitude: 0.9 }
 ];
-const TAIL_SWING_AXIS = new THREE.Vector3(0, 0, 1);
+const TAIL_SWING_AXIS = new THREE.Vector3(0,0, 1);
 const JAW_BONE_NAME = "Boca_ArmatureRexy";
 const JAW_OPEN_AXIS = new THREE.Vector3(-1, 0, -0.022).normalize();
 const JAW_OPEN_ANGLE_FIRST = THREE.MathUtils.degToRad(15);
@@ -22,7 +22,7 @@ const JAW_SECOND_OPEN_DURATION = 150;
 const JAW_OPEN_DURATION = STEP_DURATION + JAW_SECOND_OPEN_DURATION;
 const JAW_CLOSE_DURATION = 450;
 const JAW_OPEN_PAUSE = 2000;
-const JAW_CYCLE_DURATION = JAW_OPEN_DURATION + JAW_OPEN_PAUSE + JAW_CLOSE_DURATION;
+const JAW_CYCLE_DURATION = JAW_OPEN_DURATION+ JAW_OPEN_PAUSE + JAW_CLOSE_DURATION;
 const HEAD_BONE_NAME = "Cabeza_ArmatureRexy";
 const HEAD_IK_BONE_NAME = "CabezaIK_ArmatureRexy";
 const HEAD_NECK_BONES = [
@@ -84,13 +84,12 @@ const ARM_BONES = [
 ];
 const LEFT_STEP_ROOT_NAME = "PiernaIKL_ArmatureRexy";
 const LEFT_STEP_LIFT = 0.80;
-const LEFT_STEP_FORWARD = 1.;
 const LEFT_STEP_SIDE = 0.0;
 
 const LEFT_STEP_LIFT2 = 0.0;
 const LEFT_STEP_FORWARD2 = 1.7;
 const LEFT_STEP_SIDE2 = 0.0;
-const LEFT_STEP_FIRST_DURATION = STEP_DURATION * 0.5;
+const LEFT_STEP_FIRST_DURATION = STEP_DURATION*0.5;
 const LEFT_STEP_SECOND_DURATION = LEFT_STEP_FIRST_DURATION;
 const WALK_STEP_LIFT = 0.80;
 const WALK_STEP_FORWARD = 1.5;
@@ -107,13 +106,13 @@ const PLATFORM_DESCENT_STEPS = 1;
 const ATRIUM_WALK_STEP_COUNT = 23;
 
 function cosineEase(progress) {
-  const clampedProgress = THREE.MathUtils.clamp(progress, 0, 1);
-  return (1 - Math.cos(Math.PI * clampedProgress)) * 0.5;
+  const safeProgress = THREE.MathUtils.clamp(progress,0, 1);
+  return (1 - Math.cos(Math.PI * safeProgress)) * 0.5;
 }
 
 function hermiteInterpolate(start, end, startVelocity, endVelocity, elapsed, duration) {
-  const progress = THREE.MathUtils.clamp(elapsed / duration, 0, 1);
-  const progress2 = progress * progress;
+  const progress = THREE.MathUtils.clamp(elapsed / duration,0, 1);
+  const progress2 = progress*progress;
   const progress3 = progress2 * progress;
   const startWeight = 2 * progress3 - 3 * progress2 + 1;
   const startVelocityWeight = progress3 - 2 * progress2 + progress;
@@ -145,7 +144,7 @@ function bodyVibrationAt(elapsed) {
   );
   const envelope = Math.min(fadeIn, fadeOut);
 
-  return Math.sin((pauseElapsed / BODY_VIBRATION_PERIOD) * Math.PI * 2) * envelope;
+  return Math.sin((pauseElapsed / BODY_VIBRATION_PERIOD) * Math.PI*2) * envelope;
 }
 
 function bodyMovementProgressAt(elapsed) {
@@ -165,14 +164,14 @@ function bodyMovementProgressAt(elapsed) {
 export class Dinosaur {
   constructor() {
     this.group = new THREE.Group();
-    this.group.position.set(-16.5, 0.05, 0);
+    this.group.position.set(-16.5,0.05, 0);
     this.group.rotation.y = Math.PI * 0.5;
     this.mobileRoot = new THREE.Group();
     this.group.add(this.mobileRoot);
     this.tailBones = [];
     this.tailTween = null;
     this.tailLoopRequested = false;
-    this.tailState = { phase: 0, strength: 0 };
+    this.tailState ={ phase: 0, strength: 0 };
     this.tailOffset = new THREE.Quaternion();
     this.jawBone = null;
     this.jawBaseQuaternion = new THREE.Quaternion();
@@ -240,7 +239,6 @@ export class Dinosaur {
         model.rotation.x = 0;
         model.updateMatrixWorld(true);
 
-        // on the floor
         const initialBox = new THREE.Box3().setFromObject(model);
         const initialSize = initialBox.getSize(new THREE.Vector3());
         const scale = MODEL_TARGET_HEIGHT / initialSize.y;
@@ -256,9 +254,6 @@ export class Dinosaur {
             child.castShadow = true;
             child.receiveShadow = true;
 
-            // Il corpo cammina tramite le ossa, mentre il bounding volume della
-            // SkinnedMesh rimane vicino alla posa iniziale. Evita che le camere
-            // la scartino quando lo scheletro si è spostato in un'altra stanza.
             if (child.isSkinnedMesh) {
               child.frustumCulled = false;
             }
@@ -306,10 +301,10 @@ export class Dinosaur {
   }
 
   setupTailAnimation(model) {
-    this.tailBones = TAIL_BONES.map((config, index) => {
+    this.tailBones = TAIL_BONES.map((config,index) => {
       const bone = model.getObjectByName(config.name);
 
-      if (!bone) {
+      if(!bone) {
         console.warn(`Osso della coda non trovato: ${config.name}`);
         return null;
       }
@@ -318,24 +313,24 @@ export class Dinosaur {
         bone,
         baseQuaternion: bone.quaternion.clone(),
         amplitude: config.amplitude,
-        phaseOffset: index * 0.22
+        phaseOffset: index*0.22
       };
     }).filter(Boolean);
   }
 
   startTailAnimation(loop = false) {
-    if (loop) {
-      this.tailLoopRequested = true;
+    if(loop) {
+      this.tailLoopRequested=true;
     }
 
-    if (this.tailTween || this.tailBones.length === 0) {
+    if(this.tailTween || this.tailBones.length === 0) {
       return;
     }
 
-    this.tailState.phase = 0;
-    this.tailState.strength = this.tailLoopRequested ? 1 : 0;
+    this.tailState.phase=0;
+    this.tailState.strength =this.tailLoopRequested ? 1 : 0;
     this.tailTween = new TWEEN.Tween(this.tailState, this.tweenGroup)
-      .to({ phase: Math.PI * 2 }, 2600)
+      .to({ phase: Math.PI * 2 },2600)
       .easing(TWEEN.Easing.Linear.None)
       .onUpdate(() => {
         this.tailBones.forEach(tailBone => {
@@ -343,13 +338,13 @@ export class Dinosaur {
             Math.sin(this.tailState.phase - tailBone.phaseOffset) *
             tailBone.amplitude *
             this.tailState.strength;
-          this.tailOffset.setFromAxisAngle(TAIL_SWING_AXIS, angle);
+          this.tailOffset.setFromAxisAngle(TAIL_SWING_AXIS,angle);
           tailBone.bone.quaternion.copy(tailBone.baseQuaternion).multiply(this.tailOffset);
         });
       })
       .onComplete(() => {
-        this.tailTween = null;
-        if (this.tailLoopRequested) {
+        this.tailTween=null;
+        if(this.tailLoopRequested) {
           this.startTailAnimation(true);
           return;
         }
@@ -360,9 +355,9 @@ export class Dinosaur {
       })
       .start();
 
-    if (!this.tailLoopRequested) {
+    if(!this.tailLoopRequested) {
       new TWEEN.Tween(this.tailState, this.tweenGroup)
-        .to({ strength: 1 }, 700)
+        .to({ strength: 1 },700)
         .easing(TWEEN.Easing.Sinusoidal.Out)
         .start();
     }
@@ -371,7 +366,7 @@ export class Dinosaur {
   setupJawAnimation(model) {
     this.jawBone = model.getObjectByName(JAW_BONE_NAME);
 
-    if (!this.jawBone) {
+    if(!this.jawBone) {
       console.warn(`Osso della bocca non trovato: ${JAW_BONE_NAME}`);
       return;
     }
@@ -398,7 +393,7 @@ export class Dinosaur {
     const headBone = model.getObjectByName(HEAD_BONE_NAME);
     const headIkBone = model.getObjectByName(HEAD_IK_BONE_NAME);
 
-    if (!headBone || !headIkBone) {
+    if(!headBone || !headIkBone) {
       console.warn(`Impossibile collegare ${HEAD_IK_BONE_NAME} al cranio`);
       return;
     }
@@ -420,14 +415,14 @@ export class Dinosaur {
   }
 
   setupLegCompensation(model) {
-    model.updateWorldMatrix(true, true);
+    model.updateWorldMatrix(true,true);
 
     this.legChains = LEG_CHAINS.map(config => {
       const upperBone = model.getObjectByName(config.upper);
       const lowerBone = model.getObjectByName(config.lower);
       const footTargetBone = model.getObjectByName(config.footTarget);
 
-      if (!upperBone || !lowerBone || !footTargetBone) {
+      if(!upperBone || !lowerBone || !footTargetBone) {
         console.warn(`Catena della zampa incompleta: ${config.upper}`);
         return null;
       }
@@ -470,7 +465,7 @@ export class Dinosaur {
   setupLeftStep(model) {
     this.leftStepRoot = model.getObjectByName(LEFT_STEP_ROOT_NAME);
 
-    if (!this.leftStepRoot) {
+    if(!this.leftStepRoot) {
       console.warn(`Controllo della zampa sinistra non trovato: ${LEFT_STEP_ROOT_NAME}`);
       return;
     }
@@ -502,11 +497,11 @@ export class Dinosaur {
   }
 
   applyWalkingStep(foot, bodyStart, landingForward, progress) {
-    const firstHalf = progress < 0.5;
-    const phaseProgress = cosineEase(firstHalf ? progress * 2 : (progress - 0.5) * 2);
+    const firstHalf = progress<0.5;
+    const phaseProgress = cosineEase(firstHalf ? progress*2 : (progress - 0.5) * 2);
     const lift = firstHalf
-      ? THREE.MathUtils.lerp(0, WALK_STEP_LIFT, phaseProgress)
-      : THREE.MathUtils.lerp(WALK_STEP_LIFT, WALK_STEP_LIFT2, phaseProgress);
+      ? THREE.MathUtils.lerp(0,WALK_STEP_LIFT, phaseProgress)
+      : THREE.MathUtils.lerp(WALK_STEP_LIFT,WALK_STEP_LIFT2, phaseProgress);
     const forward = firstHalf
       ? THREE.MathUtils.lerp(0, WALK_STEP_FORWARD, phaseProgress)
       : THREE.MathUtils.lerp(WALK_STEP_FORWARD, landingForward, phaseProgress);
@@ -515,12 +510,12 @@ export class Dinosaur {
       : THREE.MathUtils.lerp(WALK_STEP_SIDE, WALK_STEP_SIDE2, phaseProgress);
 
     foot.bone.position.copy(foot.basePosition);
-    foot.bone.position.x += side;
+    foot.bone.position.x+= side;
     foot.bone.position.z += lift;
     foot.bone.position.y -= forward;
 
     this.bodyBone.position.copy(bodyStart);
-    this.bodyBone.position.y -= WALK_BODY_FORWARD * cosineEase(progress);
+    this.bodyBone.position.y-= WALK_BODY_FORWARD * cosineEase(progress);
     this.bodyBone.position.z = firstHalf
       ? THREE.MathUtils.lerp(
         bodyStart.z,
@@ -536,7 +531,7 @@ export class Dinosaur {
   }
 
   startPlatformDescentIfNeeded() {
-    if (this.platformDescentDone || this.platformDescentActive || this.platformDropDistance <= 0) {
+    if(this.platformDescentDone || this.platformDescentActive || this.platformDropDistance <= 0) {
       return;
     }
 
@@ -544,18 +539,18 @@ export class Dinosaur {
       return;
     }
 
-    this.platformDescentActive = true;
-    this.platformDescentStep = 0;
+    this.platformDescentActive=true;
+    this.platformDescentStep=0;
     this.platformDescentStartY = this.mobileRoot.position.y;
     this.platformDescentTargetY = -this.platformDropDistance;
   }
 
   applyPlatformDescent(stepProgress) {
-    if (!this.platformDescentActive) {
+    if(!this.platformDescentActive) {
       return;
     }
 
-    const progress = THREE.MathUtils.clamp(stepProgress / PLATFORM_DESCENT_STEPS, 0, 1);
+    const progress = THREE.MathUtils.clamp(stepProgress / PLATFORM_DESCENT_STEPS,0, 1);
     const easedProgress = cosineEase(progress);
     this.mobileRoot.position.y = THREE.MathUtils.lerp(
       this.platformDescentStartY,
@@ -697,7 +692,6 @@ export class Dinosaur {
     if (elapsed < secondStepEnd) {
       const progress = THREE.MathUtils.clamp(elapsed / secondStepEnd, 0, 1);
 
-  
       forward = LEFT_STEP_FORWARD2 * cosineEase(progress);
 
       if (elapsed < firstStepEnd) {

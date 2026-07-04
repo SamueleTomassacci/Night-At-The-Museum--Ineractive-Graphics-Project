@@ -43,7 +43,7 @@ export class EgyptianRoom {
   addObelisks(factory) {
     OBELISK_POSITIONS.forEach(position => {
       const obelisk = this.createObelisk(factory);
-      obelisk.position.set(...position);
+      obelisk.position.set(position[0], position[1], position[2]);
       this.group.add(obelisk);
     });
   }
@@ -86,7 +86,10 @@ export class EgyptianRoom {
 
     const bandHeights = [0.72, 1.36, 2.0, 2.64];
     bandHeights.forEach(y => {
-      group.add(...this.createObeliskBand(factory, y));
+      const bandParts = this.createObeliskBand(factory, y);
+      bandParts.forEach(function(part) {
+        group.add(part);
+      });
     });
 
     group.add(lowerBase, upperBase, shaft, collar, cap);

@@ -18,10 +18,12 @@ export class InteractionManager {
 
   handleClick(pointer) {
     this.raycaster.setFromCamera(pointer, this.camera);
-    const hits = this.raycaster.intersectObjects([...this.clickables], true);
-    const hit = hits.find(item => item.object.userData.clickable);
-    if (hit?.object.userData.clickable?.onClick) {
-      hit.object.userData.clickable.onClick(hit);
+    const clickableObjects = Array.from(this.clickables);
+    const hits = this.raycaster.intersectObjects(clickableObjects, true);
+    const clicked = hits.find(item => item.object.userData.clickable);
+
+    if (clicked?.object.userData.clickable?.onClick) {
+      clicked.object.userData.clickable.onClick(clicked);
     }
   }
 }

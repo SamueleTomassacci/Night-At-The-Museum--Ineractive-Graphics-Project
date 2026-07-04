@@ -88,30 +88,6 @@ export function createNormalTexture() {
   return textureFromCanvas(canvas, 8, 8);
 }
 
-export function createPaintingTexture(seed = 1) {
-  const { canvas, context } = createCanvas(384);
-  const hue = (seed * 73) % 360;
-  const gradient = context.createLinearGradient(0, 0, 384, 384);
-  gradient.addColorStop(0, `hsl(${hue}, 55%, 40%)`);
-  gradient.addColorStop(0.45, `hsl(${(hue + 80) % 360}, 68%, 56%)`);
-  gradient.addColorStop(1, `hsl(${(hue + 160) % 360}, 42%, 24%)`);
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, 384, 384);
-  for (let i = 0; i < 14; i += 1) {
-    context.fillStyle = `hsla(${(hue + i * 31) % 360}, 72%, ${42 + Math.random() * 28}%, 0.75)`;
-    context.beginPath();
-    context.ellipse(Math.random() * 384, Math.random() * 384, 20 + Math.random() * 90, 12 + Math.random() * 60, Math.random() * Math.PI, 0, Math.PI * 2);
-    context.fill();
-  }
-  context.strokeStyle = "rgba(255,255,255,0.32)";
-  context.lineWidth = 4;
-  context.beginPath();
-  context.moveTo(40, 280);
-  context.bezierCurveTo(120, 160, 220, 360, 344, 120);
-  context.stroke();
-  return textureFromCanvas(canvas, 1, 1);
-}
-
 export function createSarcophagusTexture() {
   const { canvas, context } = createCanvas(512);
   context.fillStyle = "#b98a36";

@@ -3,9 +3,9 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone as cloneSkinnedModel } from "three/addons/utils/SkeletonUtils.js";
 import policemanModelUrl from "../characters/policeman.glb?url";
 
-const COLUMN_MODEL_URL = "/models/Column/ionic_column.glb";
-const BENCH_MODEL_URL = "/models/bench/modern_bench_1.glb";
-const CEILING_LIGHT_MODEL_URL = "/models/Ceiling%20light/ceiling_light.glb";
+const COLUMN_MODEL_URL = new URL("../models/Column/ionic_column.glb",import.meta.url).href;
+const BENCH_MODEL_URL = new URL("../models/bench/modern_bench_1.glb", import.meta.url).href;
+const CEILING_LIGHT_MODEL_URL = new URL("../models/Ceiling light/ceiling_light.glb", import.meta.url).href;
 const POLICEMAN_MODEL_URL = policemanModelUrl;
 const BENCH_LENGTH = 2.45;
 const CEILING_HEIGHT = 5.0;
@@ -28,26 +28,32 @@ export class AssetFactory {
     this.policemanModelPromise = null;
   }
 
-  mesh(geometry, material, position = [0, 0, 0], castShadow = true, receiveShadow = true) {
+  mesh(geometry, material, position = [0, 0, 0], castShadow = true,receiveShadow = true) {
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(...position);
+    mesh.position.set(position[0], position[1], position[2]);
     mesh.castShadow = castShadow;
     mesh.receiveShadow = receiveShadow;
     return mesh;
   }
 
   createFloor(width, depth, position = [0, 0, 0]) {
-    const mesh = this.mesh(new THREE.BoxGeometry(width, 0.16, depth), this.materials.floor, [position[0], -0.08, position[2]], false, true);
+    const mesh = this.mesh(
+      new THREE.BoxGeometry(width,0.16, depth),
+      this.materials.floor,
+      [position[0], -0.08, position[2]],
+      false,
+      true
+    );
     return mesh;
   }
 
   createWall(width, height, depth, position) {
-    return this.mesh(new THREE.BoxGeometry(width, height, depth), this.materials.wall, position, true, true);
+    return this.mesh(new THREE.BoxGeometry(width,height, depth), this.materials.wall, position, true, true);
   }
 
   createCeiling(width, depth, position, height = CEILING_HEIGHT) {
     const mesh = this.mesh(new THREE.PlaneGeometry(width, depth), this.materials.ceiling, [position[0], height, position[2]], false, true);
-    mesh.rotation.x = Math.PI * 0.5;
+    mesh.rotation.x = Math.PI*0.5;
     return mesh;
   }
 
@@ -55,13 +61,12 @@ export class AssetFactory {
     const group = new THREE.Group();
     group.name = "Ceiling Cornice";
 
-    const y = height - CORNICE_HEIGHT / 2;
+    const y = height- CORNICE_HEIGHT / 2;
     const accentY = height - CORNICE_HEIGHT + CORNICE_ACCENT_HEIGHT / 2;
     const halfWidth = width / 2;
-    const halfDepth = depth / 2;
-
+    const halfDepth = depth/2;
     const addBand = (geometry, bandPosition) => {
-      const band = this.mesh(geometry, this.materials.wood, bandPosition, true, true);
+      const band = this.mesh(geometry,this.materials.wood, bandPosition, true, true);
       group.add(band);
     };
 
@@ -85,7 +90,7 @@ export class AssetFactory {
 
   createCeilingLight(position, diameter = 1.25) {
     const group = new THREE.Group();
-    group.position.set(...position);
+    group.position.set(position[0], position[1], position[2]);
 
     this.loadCeilingLightModel()
       .then(model => {
@@ -127,15 +132,15 @@ export class AssetFactory {
 
     const box = new THREE.Box3().setFromObject(instance);
     const size = box.getSize(new THREE.Vector3());
-    const horizontalSize = Math.max(size.x, size.z, 0.001);
-    const scale = diameter / horizontalSize;
+    const horizontalSize = Math.max(size.x,size.z, 0.001);
+    const scale = diameter/ horizontalSize;
 
     instance.scale.setScalar(scale);
     instance.updateMatrixWorld(true);
 
     const scaledBox = new THREE.Box3().setFromObject(instance);
     const center = scaledBox.getCenter(new THREE.Vector3());
-    instance.position.set(-center.x, -scaledBox.max.y, -center.z);
+    instance.position.set(-center.x,-scaledBox.max.y, -center.z);
 
     return instance;
   }
@@ -143,7 +148,7 @@ export class AssetFactory {
   createWallSconce(position, rotationY = 0) {
     const group = new THREE.Group();
     group.name = "Wall Sconce";
-    group.position.set(...position);
+    group.position.set(position[0], position[1], position[2]);
     group.rotation.y = rotationY;
 
     const metal = new THREE.MeshStandardMaterial({
@@ -162,7 +167,7 @@ export class AssetFactory {
       emissiveIntensity: 0
     });
 
-    const backplate = this.mesh(new THREE.BoxGeometry(0.48, 0.72, 0.08), metal, [0, 0, 0], true, true);
+    const backplate = this.mesh(new THREE.BoxGeometry(0.48,0.72, 0.08), metal, [0, 0, 0], true, true);
     const topCap = this.mesh(new THREE.BoxGeometry(0.58, 0.08, 0.1), this.materials.gold, [0, 0.4, 0.01], true, true);
     const bottomCap = this.mesh(new THREE.BoxGeometry(0.58, 0.08, 0.1), this.materials.gold, [0, -0.4, 0.01], true, true);
 
@@ -182,7 +187,7 @@ export class AssetFactory {
 
   createColumn(position, height = 4.2) {
     const group = new THREE.Group();
-    group.position.set(...position);
+    group.position.set(position[0], position[1], position[2]);
 
     this.loadColumnModel()
       .then(model => {
@@ -231,7 +236,7 @@ export class AssetFactory {
 
   createDoorFrame(position, rotationY = 0, width = 3.6) {
     const group = new THREE.Group();
-    group.position.set(...position);
+    group.position.set(position[0], position[1], position[2]);
     group.rotation.y = rotationY;
     group.userData.isDoor = true;
     group.userData.doorVisual = null;
@@ -355,16 +360,27 @@ export class AssetFactory {
     context.fillText(text, 256, 67);
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    const label = this.mesh(new THREE.PlaneGeometry(width * 0.92, 0.52), new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide }), [0, 0, 0.065], false, false);
+    const labelMaterial = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      side: THREE.DoubleSide
+    });
+    const label = this.mesh(
+      new THREE.PlaneGeometry(width * 0.92, 0.52),
+      labelMaterial,
+      [0, 0, 0.065],
+      false,
+      false
+    );
     group.add(sign, label);
-    group.position.set(...position);
+    group.position.set(position[0], position[1], position[2]);
     group.rotation.y = rotationY;
     return group;
   }
 
   createBench(position, rotationY = 0) {
     const group = new THREE.Group();
-    group.position.set(...position);
+    group.position.set(position[0], position[1], position[2]);
     group.rotation.y = rotationY;
 
     this.loadBenchModel()
@@ -373,23 +389,6 @@ export class AssetFactory {
       })
       .catch(error => {
         console.error("Impossibile caricare il modello della panchina:", error);
-      });
-
-    return group;
-  }
-
-  createPoliceman(position, rotationY = 0, height = 2.05) {
-    const group = new THREE.Group();
-    group.name = "Policeman";
-    group.position.set(...position);
-    group.rotation.y = rotationY;
-
-    this.loadPolicemanModel()
-      .then(model => {
-        group.add(this.createPolicemanModelInstance(model, height));
-      })
-      .catch(error => {
-        console.error("Impossibile caricare il modello del policeman:", error);
       });
 
     return group;

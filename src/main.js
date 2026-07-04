@@ -15,55 +15,67 @@ import { UIController } from "./systems/UIController.js";
 import { DoorInteractionSystem } from "./systems/DoorInteractionSystem.js";
 import { ExhibitPromptSystem } from "./systems/ExhibitPromptSystem.js";
 
-const renderer = new Renderer();
-const sceneManager = new SceneManager();
-const cameraManager = new CameraManager();
-const inputManager = new InputManager(renderer.renderer.domElement);
+const renderer =new Renderer();
+const sceneManager =new SceneManager();
+const cameraManager =new CameraManager();
+const inputManager =new InputManager(renderer.renderer.domElement);
 const materials = createMaterials();
-const factory = new AssetFactory(materials);
+const factory =new AssetFactory(materials);
 const lightingSystem = new LightingSystem(sceneManager.scene);
-const collisionSystem = new CollisionSystem();
+const collisionSystem =new CollisionSystem();
 const animationSystem = new AnimationSystem();
-const museum = new Museum(factory, lightingSystem, sceneManager);
-const player = new Player(materials, inputManager, collisionSystem, factory);
+const museum = new Museum(factory,lightingSystem, sceneManager);
+const player = new Player(materials,inputManager, collisionSystem, factory);
 collisionSystem.register(museum.group);
 lightingSystem.registerFlashlight(player.flashlight);
-const interactionManager = new InteractionManager(cameraManager.camera, inputManager);
-const doorInteractionSystem = new DoorInteractionSystem(player, museum.getDoors());
+const interactionManager = new InteractionManager(cameraManager.camera,inputManager);
+const doorInteractionSystem = new DoorInteractionSystem(player,museum.getDoors());
 const exhibitPromptSystem = new ExhibitPromptSystem(player, [
   {
     object: museum.dinosaurRoom.dinosaur,
-    message: () => "Click the T-Rex to wake it up"
+    message: function() {
+      return "Click the T-Rex to wake it up";
+    }
   },
   {
     object: museum.statueRoom.statue,
-    message: () => "Click the statue to make it talk"
+    message: function() {
+      return "Click the statue to make it talk";
+    }
   },
   {
     object: museum.egyptianRoom.sarcophagus,
-    message: () => "Click the sarcophagus to open it"
+    message: function() {
+      return "Click the sarcophagus to open it";
+    }
   }
 ]);
 const ui = new UIController(document.getElementById("ui-root"));
 
-sceneManager.scene.add(museum.group, player.group);
-animationSystem.addMany([lightingSystem, doorInteractionSystem, exhibitPromptSystem, ...museum.getAnimatables()]);
-museum.getClickables().forEach(clickable => interactionManager.register(clickable.group, clickable));
+sceneManager.scene.add(museum.group,player.group);
+const animatables = [lightingSystem,doorInteractionSystem, exhibitPromptSystem];
+museum.getAnimatables().forEach(function(animatable) {
+  animatables.push(animatable);
+});
+animationSystem.addMany(animatables);
+museum.getClickables().forEach(function(clickable) {
+  interactionManager.register(clickable.group, clickable);
+});
 
-let shadowsEnabled = true;
-let lastTime = performance.now();
+let shadowsEnabled=true;
+let lastTime =performance.now();
 
-inputManager.addEventListener("keyPressed", event => {
-  if (event.detail === "c") {
+inputManager.addEventListener("keyPressed",function(event) {
+  if(event.detail === "c") {
     cameraManager.cycleMode();
     ui.setCamera(cameraManager.getLabel());
     museum.setCeilingVisible(!cameraManager.isOverheadView());
   }
-  if (event.detail === "m") {
+  if(event.detail === "m") {
     museum.dinosaurRoom.dinosaur.startWalking();
     museum.statueRoom.statue.awaken();
   }
-  if (event.detail === "t") {
+  if(event.detail === "t") {
     sceneManager.setAwakening();
     doorInteractionSystem.openAllDoors({ autoClose: false });
     exhibitPromptSystem.removeExhibits(
@@ -75,60 +87,62 @@ inputManager.addEventListener("keyPressed", event => {
   }
 });
 
-inputManager.addEventListener("wheel", event => {
+inputManager.addEventListener("wheel",function(event) {
   cameraManager.zoom(event.detail);
 });
 
-inputManager.addEventListener("cameraDragged", event => {
+inputManager.addEventListener("cameraDragged", function(event) {
   cameraManager.orbit(event.detail.deltaX, event.detail.deltaY);
 });
 
-ui.addEventListener("lightModeChanged", event => {
+ui.addEventListener("lightModeChanged",function(event) {
   ui.setLightMode(lightingSystem.setMode(event.detail));
 });
 
-ui.addEventListener("secondaryIntensityChanged", event => {
+ui.addEventListener("secondaryIntensityChanged", function(event) {
   lightingSystem.setSecondaryIntensity(event.detail);
 });
 
-ui.addEventListener("flashlightIntensityChanged", event => {
+ui.addEventListener("flashlightIntensityChanged", function(event) {
   lightingSystem.setFlashlightIntensity(event.detail);
 });
 
-ui.addEventListener("flashlightRangeChanged", event => {
+ui.addEventListener("flashlightRangeChanged", function(event) {
   lightingSystem.setFlashlightRange(event.detail);
 });
 
-ui.addEventListener("toggleShadows", () => {
+ui.addEventListener("toggleShadows", function() {
   shadowsEnabled = !shadowsEnabled;
   renderer.setShadows(shadowsEnabled);
   ui.setShadows(shadowsEnabled);
 });
 
-ui.addEventListener("qualityChanged", event => {
+ui.addEventListener("qualityChanged", function(event) {
   renderer.setQuality(event.detail);
   shadowsEnabled = renderer.renderer.shadowMap.enabled;
   ui.setShadows(shadowsEnabled);
 });
 
-window.addEventListener("resize", () => renderer.resize(cameraManager.camera));
+window.addEventListener("resize", function() {
+  renderer.resize(cameraManager.camera);
+});
 
 function loop(time) {
   requestAnimationFrame(loop);
-  const deltaTime = Math.min(0.05, (time - lastTime) / 1000);
-  const elapsedTime = time / 1000;
-  lastTime = time;
+  const deltaTime =Math.min(0.05, (time- lastTime) / 1000);
+  const elapsedTime =time / 1000;
+  lastTime=time;
   TWEEN.update(time);
-  if (cameraManager.isFirstPerson()) {
+  if(cameraManager.isFirstPerson()) {
     player.setAimDirection(cameraManager.getAimDirection());
   } else {
     player.aimForward();
   }
-  player.update(deltaTime, elapsedTime);
+  player.update(deltaTime,elapsedTime);
   museum.updateTriggers(player);
-  animationSystem.update(deltaTime, elapsedTime);
-  cameraManager.update(player, deltaTime, elapsedTime);
-  renderer.render(sceneManager.scene, cameraManager.camera);
+  animationSystem.update(deltaTime,elapsedTime);
+  cameraManager.update(player,deltaTime, elapsedTime);
+  renderer.render(sceneManager.scene,cameraManager.camera);
 }
 
 ui.setCamera(cameraManager.getLabel());

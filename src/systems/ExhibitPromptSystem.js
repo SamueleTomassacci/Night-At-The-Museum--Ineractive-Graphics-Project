@@ -43,8 +43,11 @@ export class ExhibitPromptSystem {
     this.prompt.style.display = "block";
   }
 
-  removeExhibits(...objects) {
-    const removedObjects = new Set(objects);
+  removeExhibits() {
+    const removedObjects = new Set();
+    for (let i = 0; i < arguments.length; i += 1) {
+      removedObjects.add(arguments[i]);
+    }
     this.exhibits = this.exhibits.filter(exhibit => !removedObjects.has(exhibit.object));
     this.prompt.style.display = "none";
   }
@@ -56,7 +59,9 @@ export class ExhibitPromptSystem {
     let nearestDistance = PROMPT_DISTANCE;
 
     this.exhibits.forEach(exhibit => {
-      exhibit.object.group.getWorldPosition(this.exhibitPosition);
+      const group = exhibit.object.group;
+      group.getWorldPosition(this.exhibitPosition);
+
       const distance = this.distance2D(this.playerPosition, this.exhibitPosition);
 
       if (distance <= nearestDistance) {

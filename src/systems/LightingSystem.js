@@ -2,13 +2,13 @@ import * as THREE from "three";
 
 export class LightingSystem {
   constructor(scene) {
-    this.scene = scene;
-    this.mode = "day";
-    this.secondaryIntensity = 1;
+    this.scene=scene;
+    this.mode="day";
+    this.secondaryIntensity=1;
     this.flashlightIntensity = 1;
-    this.flashlightRange = 13;
-    this.enabled = true;
-    this.awakening = false;
+    this.flashlightRange=13;
+    this.enabled=true;
+    this.awakening=false;
     this.roomLights = [];
     this.flickerLights = [];
     this.secondaryLights = [];
@@ -18,44 +18,44 @@ export class LightingSystem {
   }
 
   createLights() {
-    this.ambient = new THREE.AmbientLight(0x51639c, 0.35);
+    this.ambient = new THREE.AmbientLight(0x51639c,0.35);
     this.scene.add(this.ambient);
 
-    this.addRoomLight("Atrium", [0, 4.35, 0], 0x9bb8ff, 7.5, 24);
-    this.addRoomLight("Dinosaur", [-16.5, 4.35, 0], 0x8fa6ff, 7.2, 24, true);
+    this.addRoomLight("Atrium",[0, 4.35, 0], 0x9bb8ff, 7.5, 24);
+    this.addRoomLight("Dinosaur",[-16.5, 4.35, 0], 0x8fa6ff, 7.2, 24,true);
     this.addRoomLight("Statue", [16.5, 4.35, 0], 0xb8c7ff, 6.6, 22, true);
     this.addRoomLight("Gallery", [0, 4.35, 14.5], 0xa9b9ff, 7.0, 23, true);
     this.addRoomLight("Egyptian", [0, 4.35, -14.5], 0xffb05c, 4.8, 22);
 
-    this.dinoSpot = new THREE.SpotLight(0xc7d5ff, 2.2, 18, Math.PI * 0.18, 0.32, 1.2);
-    this.dinoSpot.position.set(-16.5, 4.7, 4.4);
-    this.dinoSpot.target.position.set(-16.5, 1.3, -0.4);
-    this.dinoSpot.castShadow = true;
+    this.dinoSpot = new THREE.SpotLight(0xc7d5ff, 2.2, 18, Math.PI*0.18, 0.32, 1.2);
+    this.dinoSpot.position.set(-16.5,4.7, 4.4);
+    this.dinoSpot.target.position.set(-16.5,1.3, -0.4);
+    this.dinoSpot.castShadow=true;
     this.scene.add(this.dinoSpot, this.dinoSpot.target);
   }
 
   addRoomLight(name, position, color, intensity, distance, flicker = false) {
-    const light = new THREE.SpotLight(color, intensity, distance, Math.PI * 0.33, 0.62, 1.35);
-    light.position.set(...position);
-    light.target.position.set(position[0], 0.7, position[2]);
-    light.castShadow = true;
-    light.shadow.mapSize.set(1024, 1024);
+    const light = new THREE.SpotLight(color,intensity, distance, Math.PI * 0.33, 0.62, 1.35);
+    light.position.set(position[0], position[1], position[2]);
+    light.target.position.set(position[0],0.7, position[2]);
+    light.castShadow=true;
+    light.shadow.mapSize.set(1024,1024);
     light.shadow.bias = -0.0002;
     light.shadow.normalBias = 0.04;
     light.userData.baseIntensity = intensity;
-    light.userData.dayColor = name === "Egyptian" ? 0xffd49a : 0xffffff;
+    light.userData.dayColor = name==="Egyptian" ? 0xffd49a : 0xffffff;
     light.userData.name = name;
     this.roomLights.push(light);
-    if (flicker) {
+    if(flicker) {
       this.flickerLights.push(light);
     }
-    this.scene.add(light, light.target);
+    this.scene.add(light,light.target);
     return light;
   }
 
   createSecondaryWallLight(position) {
     const light = new THREE.PointLight(0xffc982, 0, 5.8, 1.75);
-    light.position.set(...position);
+    light.position.set(position[0], position[1], position[2]);
     light.castShadow = false;
     light.userData.baseIntensity = 0.82;
     light.userData.emissiveMaterials = [];
@@ -65,14 +65,14 @@ export class LightingSystem {
   }
 
   registerSecondaryEmitter(light, material) {
-    if (!light || !material) {
+    if(!light || !material) {
       return;
     }
     light.userData.emissiveMaterials.push(material);
   }
 
   registerFlashlight(light) {
-    if (!light) {
+    if(!light) {
       return;
     }
     light.distance = this.flashlightRange;
@@ -105,11 +105,11 @@ export class LightingSystem {
         dinoSpot: this.awakening ? 1.55 : 0.95
       }
     };
-    const selected = modes[mode] ?? modes.day;
-    this.mode = modes[mode] ? mode : "day";
-    this.enabled = this.mode !== "off";
+    const selected =modes[mode] ?? modes.day;
+    this.mode =modes[mode] ? mode : "day";
+    this.enabled = this.mode!=="off";
     this.scene.background.setHex(selected.background);
-    if (this.scene.fog) {
+    if(this.scene.fog) {
       this.scene.fog.color.setHex(selected.fog);
       this.scene.fog.density = selected.fogDensity;
     }
@@ -117,7 +117,7 @@ export class LightingSystem {
     this.ambient.intensity = selected.ambient;
     this.roomLights.forEach(light => {
       light.color.setHex(light.userData.dayColor);
-      light.intensity = light.userData.baseIntensity * selected.roomScalar;
+      light.intensity = light.userData.baseIntensity*selected.roomScalar;
       light.userData.currentScalar = selected.roomScalar;
     });
     this.secondaryLights.forEach(light => {
@@ -128,10 +128,10 @@ export class LightingSystem {
       });
     });
     this.flashlights.forEach(light => {
-      const flashlightScalar = selected.flashlightScalar * this.flashlightIntensity;
-      light.intensity = light.userData.baseIntensity * flashlightScalar;
+      const flashlightScalar =selected.flashlightScalar*this.flashlightIntensity;
+      light.intensity = light.userData.baseIntensity*flashlightScalar;
       light.distance = this.flashlightRange;
-      if (light.userData.emissiveMaterial) {
+      if(light.userData.emissiveMaterial) {
         light.userData.emissiveMaterial.emissiveIntensity = flashlightScalar * 1.8;
       }
     });
@@ -168,21 +168,15 @@ export class LightingSystem {
     return this.flashlightRange;
   }
 
-  cycleMode() {
-    const modes = ["off", "day"];
-    const next = modes[(modes.indexOf(this.mode) + 1) % modes.length];
-    return this.setMode(next);
-  }
-
   setAwakening(enabled = true) {
     this.awakening = enabled;
     this.setMode(this.mode);
   }
 
   update(deltaTime, elapsedTime) {
-    if (this.mode === "day" && this.awakening) {
+    if(this.mode === "day" && this.awakening) {
       this.flickerLights.forEach((light, index) => {
-        const pulse = Math.sin(elapsedTime * (8.5 + index) + index * 3.1) * 0.18 + Math.random() * 0.08;
+        const pulse = Math.sin(elapsedTime *(8.5 + index) + index * 3.1) * 0.18 + Math.random()*0.08;
         light.intensity = Math.max(0.15, light.userData.baseIntensity * light.userData.currentScalar + pulse * 0.35);
       });
     }
