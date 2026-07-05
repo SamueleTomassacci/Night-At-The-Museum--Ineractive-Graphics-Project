@@ -2,7 +2,6 @@ import * as THREE from "three";
 import { COLORS } from "./constants.js";
 import {
   createObeliskTexture,
-  createSarcophagusTexture,
   createWoodTexture
 } from "./proceduralTextures.js";
 
@@ -109,7 +108,6 @@ function createCeilingMaterial() {
 
 export function createMaterials() {
   const woodTexture = createWoodTexture();
-  const sarcophagusTexture = createSarcophagusTexture();
   const obeliskTexture = createObeliskTexture();
   const floorMaterial = createExternalFloorMaterial();
   const wallMaterial = createExternalWallMaterial();
@@ -128,7 +126,6 @@ export function createMaterials() {
     darkBone: new THREE.MeshStandardMaterial({ color: 0xb7ac91, roughness: 0.5 }),
     statue: new THREE.MeshStandardMaterial({ color: COLORS.statue, roughness: 0.38, metalness: 0.05 }),
     gold: new THREE.MeshStandardMaterial({ color: COLORS.gold, roughness: 0.28, metalness: 0.28 }),
-    sarcophagus: new THREE.MeshStandardMaterial({ map: sarcophagusTexture,roughness: 0.32, metalness: 0.14 }),
     obelisk: new THREE.MeshStandardMaterial({ map: obeliskTexture, roughness: 0.54, metalness: 0.05 }),
     glass: new THREE.MeshPhysicalMaterial({
       color: 0xbfd8ff,

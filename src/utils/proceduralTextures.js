@@ -32,27 +32,6 @@ export function createWoodTexture() {
   return textureFromCanvas(canvas, 2, 1);
 }
 
-export function createSarcophagusTexture() {
-  const { canvas, context } = createCanvas(512);
-  context.fillStyle = "#b98a36";
-  context.fillRect(0, 0, 512, 512);
-  context.fillStyle = "#173a61";
-  context.fillRect(220, 30, 72, 420);
-  context.fillStyle = "#e1c56c";
-  for (let y = 70; y < 430; y += 58) {
-    context.beginPath();
-    context.arc(256, y, 24, 0, Math.PI * 2);
-    context.fill();
-  }
-  context.strokeStyle = "#422919";
-  context.lineWidth = 10;
-  context.strokeRect(32, 32, 448, 448);
-  context.strokeStyle = "rgba(255,255,255,0.28)";
-  context.lineWidth = 3;
-  context.strokeRect(58, 58, 396, 396);
-  return textureFromCanvas(canvas, 1, 1);
-}
-
 export function createObeliskTexture() {
   const { canvas, context } = createCanvas(512);
   const gradient = context.createLinearGradient(0, 0, 0, 512);

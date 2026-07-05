@@ -38,7 +38,7 @@ export class CameraManager {
       0.5,
       2
     );
-    this.camera.updateProjectionMatrix();
+    this.camera.updateProjectionMatrix();   //to update the parameters of the camera 
     return this.camera.zoom;
   }
 

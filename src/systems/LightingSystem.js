@@ -10,7 +10,6 @@ export class LightingSystem {
     this.enabled=true;
     this.awakening=false;
     this.roomLights = [];
-    this.flickerLights = [];
     this.secondaryLights = [];
     this.flashlights = [];
     this.createLights();
@@ -22,9 +21,9 @@ export class LightingSystem {
     this.scene.add(this.ambient);
 
     this.addRoomLight("Atrium",[0, 4.35, 0], 0x9bb8ff, 7.5, 24);
-    this.addRoomLight("Dinosaur",[-16.5, 4.35, 0], 0x8fa6ff, 7.2, 24,true);
-    this.addRoomLight("Statue", [16.5, 4.35, 0], 0xb8c7ff, 6.6, 22, true);
-    this.addRoomLight("Gallery", [0, 4.35, 14.5], 0xa9b9ff, 7.0, 23, true);
+    this.addRoomLight("Dinosaur",[-16.5, 4.35, 0], 0x8fa6ff, 7.2, 24);
+    this.addRoomLight("Statue", [16.5, 4.35, 0], 0xb8c7ff, 6.6, 22);
+    this.addRoomLight("Gallery", [0, 4.35, 14.5], 0xa9b9ff, 7.0, 23);
     this.addRoomLight("Egyptian", [0, 4.35, -14.5], 0xffb05c, 4.8, 22);
 
     this.dinoSpot = new THREE.SpotLight(0xc7d5ff, 2.2, 18, Math.PI*0.18, 0.32, 1.2);
@@ -34,7 +33,7 @@ export class LightingSystem {
     this.scene.add(this.dinoSpot, this.dinoSpot.target);
   }
 
-  addRoomLight(name, position, color, intensity, distance, flicker = false) {
+  addRoomLight(name, position, color, intensity, distance) {
     const light = new THREE.SpotLight(color,intensity, distance, Math.PI * 0.33, 0.62, 1.35);
     light.position.set(position[0], position[1], position[2]);
     light.target.position.set(position[0],0.7, position[2]);
@@ -46,9 +45,6 @@ export class LightingSystem {
     light.userData.dayColor = name==="Egyptian" ? 0xffd49a : 0xffffff;
     light.userData.name = name;
     this.roomLights.push(light);
-    if(flicker) {
-      this.flickerLights.push(light);
-    }
     this.scene.add(light,light.target);
     return light;
   }
@@ -173,12 +169,5 @@ export class LightingSystem {
     this.setMode(this.mode);
   }
 
-  update(deltaTime, elapsedTime) {
-    if(this.mode === "day" && this.awakening) {
-      this.flickerLights.forEach((light, index) => {
-        const pulse = Math.sin(elapsedTime *(8.5 + index) + index * 3.1) * 0.18 + Math.random()*0.08;
-        light.intensity = Math.max(0.15, light.userData.baseIntensity * light.userData.currentScalar + pulse * 0.35);
-      });
-    }
-  }
+  update() {}
 }
