@@ -1,4 +1,4 @@
-# Midnight Museum: The Awakening
+# Night at the Museum
 
 Base Interactive Graphics project in JavaScript with Three.js, tween.js and Vite.
 
