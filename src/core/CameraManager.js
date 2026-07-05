@@ -7,6 +7,13 @@ const DEFAULT_CAMERA_UP =new THREE.Vector3(0,1, 0);
 const TOP_DOWN_CAMERA_UP = new THREE.Vector3(0,0, -1);
 const TOP_DOWN_CAMERA_POSITION = new THREE.Vector3(0,52, 0);
 const TOP_DOWN_CAMERA_TARGET = new THREE.Vector3(0,0,0);
+const CAMERA_COLLISION_PROBES = [
+  [0, 0],
+  [0.42, 0],
+  [-0.42, 0],
+  [0, 0.32],
+  [0, -0.32]
+];
 
 export class CameraManager {
   constructor() {
@@ -23,7 +30,23 @@ export class CameraManager {
     this.firstPersonOffset = new THREE.Vector3(0,1.78, 0);
     this.forward = new THREE.Vector3();
     this.panoramaAngle = 0;
+    this.cameraObstacleRoots = [];
+    this.cameraCollisionRaycaster = new THREE.Raycaster();
+    this.cameraCollisionDirection = new THREE.Vector3();
+    this.cameraCollisionRight = new THREE.Vector3();
+    this.cameraCollisionUp = new THREE.Vector3();
+    this.cameraCollisionOrigin = new THREE.Vector3();
+    this.cameraCollisionDesired = new THREE.Vector3();
+    this.resolvedCameraPosition = new THREE.Vector3();
+    this.cameraCollisionPadding = 0.68;
+    this.minimumThirdPersonDistance = 0.24;
     this.camera.position.set(0,3.2,5.2);
+  }
+
+  registerObstacleRoot(root) {
+    if(root && !this.cameraObstacleRoots.includes(root)) {
+      this.cameraObstacleRoots.push(root);
+    }
   }
 
   zoom(deltaY) {
@@ -47,8 +70,10 @@ export class CameraManager {
       return;
     }
 
-    this.cameraYaw -= deltaX*this.cameraSensitivity;
-    this.clampFirstPersonYaw();
+    if(this.mode !== "firstPerson") {
+      this.cameraYaw -= deltaX*this.cameraSensitivity;
+    }
+
     const verticalDelta = deltaY*this.cameraSensitivity;
     this.cameraPitch = THREE.MathUtils.clamp(
       this.cameraPitch +(this.mode === "firstPerson" ? verticalDelta : -verticalDelta),
@@ -102,6 +127,91 @@ export class CameraManager {
     return this.mode === "firstPerson";
   }
 
+  resolveThirdPersonCameraPosition(targetPosition, desiredPosition) {
+    if(this.cameraObstacleRoots.length === 0) {
+      return desiredPosition;
+    }
+
+    this.cameraCollisionDirection.subVectors(desiredPosition,targetPosition);
+    const desiredDistance = this.cameraCollisionDirection.length();
+
+    if(desiredDistance <= this.minimumThirdPersonDistance) {
+      return desiredPosition;
+    }
+
+    this.cameraCollisionDirection.normalize();
+    this.cameraCollisionRight.crossVectors(DEFAULT_CAMERA_UP,this.cameraCollisionDirection);
+
+    if(this.cameraCollisionRight.lengthSq() < 0.0001) {
+      this.cameraCollisionRight.set(1,0,0);
+    } else {
+      this.cameraCollisionRight.normalize();
+    }
+
+    this.cameraCollisionUp
+      .crossVectors(this.cameraCollisionDirection,this.cameraCollisionRight)
+      .normalize();
+
+    let nearestHitDistance = Infinity;
+
+    CAMERA_COLLISION_PROBES.forEach(probe => {
+      this.cameraCollisionOrigin
+        .copy(targetPosition)
+        .addScaledVector(this.cameraCollisionRight,probe[0])
+        .addScaledVector(this.cameraCollisionUp,probe[1]);
+      this.cameraCollisionDesired
+        .copy(desiredPosition)
+        .addScaledVector(this.cameraCollisionRight,probe[0])
+        .addScaledVector(this.cameraCollisionUp,probe[1]);
+      this.cameraCollisionDirection.subVectors(this.cameraCollisionDesired,this.cameraCollisionOrigin);
+      const probeDistance = this.cameraCollisionDirection.length();
+
+      if(probeDistance <= this.minimumThirdPersonDistance) {
+        return;
+      }
+
+      this.cameraCollisionDirection.normalize();
+      this.cameraCollisionRaycaster.set(this.cameraCollisionOrigin,this.cameraCollisionDirection);
+      this.cameraCollisionRaycaster.near = 0.05;
+      this.cameraCollisionRaycaster.far = probeDistance;
+
+      const hit = this.cameraCollisionRaycaster
+        .intersectObjects(this.cameraObstacleRoots,true)
+        .find(intersection => this.isCameraObstacle(intersection.object));
+
+      if(hit) {
+        nearestHitDistance = Math.min(nearestHitDistance,hit.distance);
+      }
+    });
+
+    if(!Number.isFinite(nearestHitDistance)) {
+      return desiredPosition;
+    }
+
+    this.cameraCollisionDirection.subVectors(desiredPosition,targetPosition).normalize();
+    const safeDistance = Math.max(this.minimumThirdPersonDistance,nearestHitDistance - this.cameraCollisionPadding);
+    return this.resolvedCameraPosition
+      .copy(targetPosition)
+      .addScaledVector(this.cameraCollisionDirection,safeDistance);
+  }
+
+  isCameraObstacle(object) {
+    if(!object.isMesh || !object.geometry) {
+      return false;
+    }
+
+    let current = object;
+    while(current) {
+      if(!current.visible) {
+        return false;
+      }
+      current = current.parent;
+    }
+
+    const material = Array.isArray(object.material) ? object.material[0] : object.material;
+    return !(material?.transparent && material.opacity === 0);
+  }
+
   update(player, deltaTime, elapsedTime) {
     const playerPosition =player.group.position;
     const playerYaw = player.group.rotation.y;
@@ -130,14 +240,17 @@ export class CameraManager {
         Math.sin(this.cameraPitch)*this.cameraDistance,
         -Math.cos(this.cameraYaw)*horizontalDistance
       ));
-      this.camera.position.x = damp(this.camera.position.x,desiredCameraPosition.x, 7, deltaTime);
-      this.camera.position.y = damp(this.camera.position.y,desiredCameraPosition.y, 7,deltaTime);
-      this.camera.position.z = damp(this.camera.position.z, desiredCameraPosition.z,7, deltaTime);
+      const resolvedCameraPosition = this.resolveThirdPersonCameraPosition(this.target,desiredCameraPosition);
+      this.camera.position.x = damp(this.camera.position.x,resolvedCameraPosition.x, 7, deltaTime);
+      this.camera.position.y = damp(this.camera.position.y,resolvedCameraPosition.y, 7,deltaTime);
+      this.camera.position.z = damp(this.camera.position.z, resolvedCameraPosition.z,7, deltaTime);
+      this.camera.position.copy(this.resolveThirdPersonCameraPosition(this.target,this.camera.position));
       this.camera.lookAt(this.target);
     }
 
     if(this.mode === "firstPerson") {
       this.camera.up.copy(DEFAULT_CAMERA_UP);
+      this.cameraYaw = playerYaw;
       const eyePosition = playerPosition.clone().add(this.firstPersonOffset).addScaledVector(this.forward,0.18);
       this.camera.position.copy(eyePosition);
       this.camera.lookAt(eyePosition.clone().addScaledVector(this.getAimDirection(),10));
