@@ -52,11 +52,17 @@ npm run build
 src/
   main.js
   core/
-    renderer.js
-    SceneManager.js
-    CameraManager.js
-    InputManager.js
-    InteractionManager.js
+    Renderer.js
+    Scene.js
+    Camera.js
+    Input.js
+    Interaction.js
+    Animation.js
+    Lighting.js
+    Collision.js
+    DoorInteraction.js
+    ExhibitPrompt.js
+    UIController.js
     factory.js
   world/
     Museum.js
@@ -71,11 +77,6 @@ src/
     Statue.js
     Sarcophagus.js
     Paintings.js
-  systems/
-    AnimationSystem.js
-    LightingSystem.js
-    CollisionSystem.js
-    UIController.js
   utils/
     constants.js
     materials.js
