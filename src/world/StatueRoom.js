@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Statue } from "../exhibits/Statue.js";
+import { Statue } from "../entities/Statue.js";
 import { addWallSconce } from "./wallSconces.js";
 
 export class StatueRoom {
@@ -12,6 +12,7 @@ export class StatueRoom {
   }
 
   createRoom(factory, lightingSystem) {
+    // build the room and leave an opening toward the hall
     this.group.add(factory.createFloor(17,12,[16.5,0,0]));
     this.group.add(factory.createWall(17,5.0,0.35, [16.5,2.5, -6]));
     this.group.add(factory.createWall(17, 5.0,0.35, [16.5,2.5,6]));
@@ -27,6 +28,7 @@ export class StatueRoom {
   }
 
   addWallSconces(factory, lightingSystem) {
+    // bdd sconces on the wall
     addWallSconce(this.group,factory, lightingSystem, [13.1,2.45,-5.76],0);
     addWallSconce(this.group, factory,lightingSystem, [19.9,2.45,-5.76], 0);
     addWallSconce(this.group,factory, lightingSystem, [24.76,2.45,-2.35],-Math.PI * 0.5);

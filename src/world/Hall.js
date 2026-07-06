@@ -11,10 +11,12 @@ export class Hall {
     this.group = new THREE.Group();
     this.group.name = "Central Atrium";
     this.group.add(factory.createFloor(16,12,[0,0,0]));
+    // Add wall headers above room entrances
     this.group.add(factory.createWall(0.35,DOOR_HEADER_HEIGHT,3.6, [-8,DOOR_HEADER_CENTER_Y,0]));
     this.group.add(factory.createWall(0.35, DOOR_HEADER_HEIGHT,3.6, [8,DOOR_HEADER_CENTER_Y,0]));
     this.group.add(factory.createWall(4.4,DOOR_HEADER_HEIGHT,0.35, [0,DOOR_HEADER_CENTER_Y,-6]));
     this.group.add(factory.createWall(4.4, DOOR_HEADER_HEIGHT,0.35, [0,DOOR_HEADER_CENTER_Y,6]));
+    // create one doorway for each room
     this.doors = [
       factory.createDoorFrame([-8,0,0], Math.PI * 0.5,3.6),
       factory.createDoorFrame([8,0,0], -Math.PI * 0.5,3.6),
@@ -39,6 +41,7 @@ export class Hall {
   }
 
   addWallSconces(factory, lightingSystem) {
+    // place sconces on thw walls
     addWallSconce(this.group,factory, lightingSystem, [-7.76,2.45,-3.35],Math.PI * 0.5);
     addWallSconce(this.group, factory,lightingSystem, [-7.76,2.45,3.35], Math.PI * 0.5);
     addWallSconce(this.group,factory, lightingSystem, [7.76,2.45,-3.35], -Math.PI * 0.5);
@@ -46,6 +49,7 @@ export class Hall {
   }
 
   getDoors() {
+    // return the four doorways connected to the atrium.
     return this.doors;
   }
 }

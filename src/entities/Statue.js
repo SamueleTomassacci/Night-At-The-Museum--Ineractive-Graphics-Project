@@ -2,7 +2,7 @@ import * as THREE from "three";
 import * as TWEEN from "@tweenjs/tween.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const MOAI_MODEL_URL = new URL("../models/moai statue/animal_crossing_new_horizons_moai_statue.glb", import.meta.url).href;
+const MOAI_MODEL_URL = new URL("../models/characters/moai_statue.glb", import.meta.url).href;
 const MOAI_TARGET_HEIGHT = 2.45;
 const MOAI_LOCAL_FACE_ANGLE = -THREE.MathUtils.degToRad(40);
 const MOAI_FACE_ENTRANCE_ROTATION = -Math.PI / 2 - MOAI_LOCAL_FACE_ANGLE;

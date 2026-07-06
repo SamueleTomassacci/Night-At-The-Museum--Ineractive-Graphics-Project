@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Paintings } from "../exhibits/Paintings.js";
+import { Paintings } from "../entities/Paintings.js";
 import { addWallSconce } from "./wallSconces.js";
 
 export class GalleryRoom {
@@ -12,6 +12,7 @@ export class GalleryRoom {
   }
 
   createRoom(factory, lightingSystem) {
+    // Build the gallery room and leave the entrance open toward the hall
     this.group.add(factory.createFloor(16,17,[0,0,14.5]));
     this.group.add(factory.createWall(16,5.0,0.35, [0,2.5,23]));
     this.group.add(factory.createWall(0.35,5.0,17, [-8,2.5,14.5]));
@@ -27,6 +28,7 @@ export class GalleryRoom {
   }
 
   addWallSconces(factory, lightingSystem) {
+    // Place sconces along both side walls
     addWallSconce(this.group,factory, lightingSystem, [-7.76,2.45,10.4],Math.PI * 0.5);
     addWallSconce(this.group, factory,lightingSystem, [-7.76,2.45,20.4], Math.PI * 0.5);
     addWallSconce(this.group,factory, lightingSystem, [7.76,2.45,10.4], -Math.PI * 0.5);

@@ -1,11 +1,11 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { clone as cloneSkinnedModel } from "three/addons/utils/SkeletonUtils.js";
-import policemanModelUrl from "../characters/policeman.glb?url";
+import policemanModelUrl from "../models/characters/policeman.glb?url";
 
-const COLUMN_MODEL_URL = new URL("../models/Column/ionic_column.glb",import.meta.url).href;
-const BENCH_MODEL_URL = new URL("../models/bench/modern_bench_1.glb", import.meta.url).href;
-const CEILING_LIGHT_MODEL_URL = new URL("../models/Ceiling light/ceiling_light.glb",import.meta.url).href;
+const COLUMN_MODEL_URL = new URL("../models/props/Column/ionic_column.glb",import.meta.url).href;
+const BENCH_MODEL_URL = new URL("../models/props/bench/modern_bench_1.glb", import.meta.url).href;
+const CEILING_LIGHT_MODEL_URL = new URL("../models/props/Ceiling light/ceiling_light.glb",import.meta.url).href;
 const POLICEMAN_MODEL_URL = policemanModelUrl;
 const BENCH_LENGTH = 2.45;
 const CEILING_HEIGHT = 5.0;

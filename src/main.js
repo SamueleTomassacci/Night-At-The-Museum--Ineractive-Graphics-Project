@@ -6,7 +6,7 @@ import { InputManager } from "./core/InputManager.js";
 import { InteractionManager } from "./core/InteractionManager.js";
 import { Factory } from "./core/factory.js";
 import { createMaterials } from "./utils/materials.js";
-import { Player } from "./characters/Player.js";
+import { Player } from "./entities/Player.js";
 import { Museum } from "./world/Museum.js";
 import { AnimationSystem } from "./systems/AnimationSystem.js";
 import { LightingSystem } from "./systems/LightingSystem.js";

@@ -17,6 +17,7 @@ export class Museum {
     this.statueRoom = new StatueRoom(factory, lightingSystem);
     this.egyptianRoom=new EgyptianRoom(factory, lightingSystem);
     this.galleryRoom = new GalleryRoom(factory, lightingSystem);
+    // assemble every room in a museum group
     this.rooms = [
       this.hall,
       this.dinosaurRoom,
@@ -30,6 +31,7 @@ export class Museum {
     this.ceilings=this.createCeilings(factory);
     this.cornices = this.createCornices(factory);
     this.group.add(this.ceilings,this.cornices);
+
     this.sceneManager.addEventListener("museumAwakens", () => {
       this.lightingSystem.setAwakening(true);
     });
@@ -39,6 +41,7 @@ export class Museum {
     const group = new THREE.Group();
     group.name = "Museum Ceilings";
 
+    // create one ceiling for each room
     Object.values(ROOM_RECTS).forEach(rect => {
       const width = rect.maxX- rect.minX;
       const depth=rect.maxZ - rect.minZ;
@@ -52,6 +55,7 @@ export class Museum {
     const group = new THREE.Group();
     group.name = "Museum Cornices";
 
+    // create one cornice for eac room
     Object.values(ROOM_RECTS).forEach(rect => {
       const width = rect.maxX - rect.minX;
       const depth = rect.maxZ- rect.minZ;
@@ -67,6 +71,7 @@ export class Museum {
   }
 
   getAnimatables() {
+    // return the museum entities updated on every frame
     return [
       this.dinosaurRoom.dinosaur,
       this.statueRoom.statue,
@@ -76,6 +81,7 @@ export class Museum {
   }
 
   getClickables() {
+    // return every museum entity that can be clicked
     const clickables = [
       this.dinosaurRoom.dinosaur,
       this.statueRoom.statue,
@@ -92,6 +98,7 @@ export class Museum {
   }
 
   updateTriggers(player) {
+    // update painting reactions
     const position=player.group.position;
     this.galleryRoom.paintings.updateReactions(position);
   }

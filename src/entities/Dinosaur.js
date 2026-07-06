@@ -2,8 +2,20 @@ import * as THREE from "three";
 import * as TWEEN from "@tweenjs/tween.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-const MODEL_URL =new URL("../characters/trex.glb", import.meta.url).href;
+// GLB model to load
+const MODEL_URL = new URL("../models/characters/trex.glb", import.meta.url).href;
 const MODEL_TARGET_HEIGHT = 2.7;
+
+// Skeleton configuration for animations
+
+// Bones names
+const JAW_BONE_NAME = "Boca_ArmatureRexy";
+const HEAD_BONE_NAME = "Cabeza_ArmatureRexy";
+const HEAD_IK_BONE_NAME = "CabezaIK_ArmatureRexy";
+const BODY_BONE_NAME = "Mover_ArmatureRexy";
+const LEFT_STEP_ROOT_NAME = "PiernaIKL_ArmatureRexy";
+
+// Tail bones from base to tip and swing amplitude
 const TAIL_BONES = [
   { name: "Cola1_ArmatureRexy", amplitude: 0.15 },
   { name: "Cola2_ArmatureRexy", amplitude: 0.2 },
@@ -12,19 +24,25 @@ const TAIL_BONES = [
   { name: "Cola5_ArmatureRexy", amplitude: 0.7 },
   { name: "Cola6_ArmatureRexy", amplitude: 0.9 }
 ];
-const TAIL_SWING_AXIS = new THREE.Vector3(0,0, 1);
-const JAW_BONE_NAME = "Boca_ArmatureRexy";
+
+// Local axis the tail bones swing around
+const TAIL_SWING_AXIS = new THREE.Vector3(0, 0, 1);
+
+// axis/angles used to open the jaw during roar
 const JAW_OPEN_AXIS = new THREE.Vector3(-1, 0, -0.022).normalize();
-const JAW_OPEN_ANGLE_FIRST = THREE.MathUtils.degToRad(15);
-const JAW_OPEN_ANGLE = THREE.MathUtils.degToRad(30);
-const STEP_DURATION = 400;
-const JAW_SECOND_OPEN_DURATION = 150;
-const JAW_OPEN_DURATION = STEP_DURATION + JAW_SECOND_OPEN_DURATION;
-const JAW_CLOSE_DURATION = 450;
-const JAW_OPEN_PAUSE = 2000;
-const JAW_CYCLE_DURATION = JAW_OPEN_DURATION+ JAW_OPEN_PAUSE + JAW_CLOSE_DURATION;
-const HEAD_BONE_NAME = "Cabeza_ArmatureRexy";
-const HEAD_IK_BONE_NAME = "CabezaIK_ArmatureRexy";
+const JAW_OPEN_ANGLE_FIRST = THREE.MathUtils.degToRad(15); // opening during the step
+const JAW_OPEN_ANGLE = THREE.MathUtils.degToRad(30); // full open angle after the step
+
+// Timing constants in ms in the roar timeline
+const STEP_DURATION = 400; // duration of the step before the jaw fully opens
+const JAW_SECOND_OPEN_DURATION = 150; // time to go from partially open to fully open
+const JAW_OPEN_DURATION = STEP_DURATION + JAW_SECOND_OPEN_DURATION; // total time to reach full jaw opening
+const JAW_OPEN_PAUSE = 2000; // how long the jaw stays fully open
+const JAW_CLOSE_DURATION = 450; // time to close the jaw again
+const JAW_CYCLE_DURATION = JAW_OPEN_DURATION + JAW_OPEN_PAUSE + JAW_CLOSE_DURATION; // full roar cycle length
+
+
+// bones fror the neck curl and their angle
 const HEAD_NECK_BONES = [
   { name: "Pecho001_ArmatureRexy", angle: THREE.MathUtils.degToRad(5) },
   { name: "Cuello_ArmatureRexy", angle: THREE.MathUtils.degToRad(10) },
@@ -33,18 +51,24 @@ const HEAD_NECK_BONES = [
   { name: "Atlas001_ArmatureRexy", angle: THREE.MathUtils.degToRad(3) },
   { name: "Cabeza_ArmatureRexy", angle: THREE.MathUtils.degToRad(35) }
 ];
-const HEAD_NECK_ROTATION_AXIS = new THREE.Vector3(1, 0, 0);
-const HEAD_TILT_AXIS = new THREE.Vector3(0, 1, 0);
+
+const HEAD_NECK_ROTATION_AXIS = new THREE.Vector3(1, 0, 0); // pitch axis
+const HEAD_TILT_AXIS = new THREE.Vector3(0, 1, 0); // yaw axis for head tilt
 const HEAD_TILT_ANGLE = THREE.MathUtils.degToRad(30);
-const BODY_BONE_NAME = "Mover_ArmatureRexy";
+
+// body rotation and lean for the the walk
 const BODY_ROTATION_AXIS = new THREE.Vector3(1, 0.0, -0.5).normalize();
 const BODY_DOWN_ANGLE = THREE.MathUtils.degToRad(15);
-const BODY_STEP_FORWARD = 1.00;
-const BODY_STEP_DROP = 0.1;
+const BODY_STEP_FORWARD = 1.00; // forward body displacement during the roar step
+const BODY_STEP_DROP = 0.1; // vertical dip during the roar step
+
+// shake applied to the body while the jaw is held open
 const BODY_VIBRATION_AXIS = new THREE.Vector3(0.33, 0.33, 0.33).normalize();
 const BODY_VIBRATION_ANGLE = THREE.MathUtils.degToRad(0.2);
 const BODY_VIBRATION_PERIOD = 120;
-const BODY_VIBRATION_FADE_DURATION = 150;
+const BODY_VIBRATION_FADE_DURATION = 150; // Fade time for the vibration envelope
+
+// Two-bone IK leg chains
 const LEG_CHAINS = [
   {
     upper: "MusloL_ArmatureRexy",
@@ -57,6 +81,8 @@ const LEG_CHAINS = [
     footTarget: "TalonR_ArmatureRexy"
   }
 ];
+
+// Arm bones rotated during the roar
 const ARM_BONES = [
   {
     name: "AntebrazoL_ArmatureRexy",
@@ -82,37 +108,46 @@ const ARM_BONES = [
     angle: THREE.MathUtils.degToRad(20)
   },
 ];
-const LEFT_STEP_ROOT_NAME = "PiernaIKL_ArmatureRexy";
-const LEFT_STEP_LIFT = 0.80;
-const LEFT_STEP_SIDE = 0.0;
 
-const LEFT_STEP_LIFT2 = 0.0;
-const LEFT_STEP_FORWARD2 = 1.7;
+//  left step taken before the roar 
+const LEFT_STEP_LIFT = 0.80; 
+const LEFT_STEP_SIDE = 0.0; 
+
+const LEFT_STEP_LIFT2 = 0.0; 
+const LEFT_STEP_FORWARD2 = 1.7; // Total forward distance covered by the step
 const LEFT_STEP_SIDE2 = 0.0;
-const LEFT_STEP_FIRST_DURATION = STEP_DURATION*0.5;
-const LEFT_STEP_SECOND_DURATION = LEFT_STEP_FIRST_DURATION;
+
+const LEFT_STEP_FIRST_DURATION = STEP_DURATION * 0.5; // lift duration
+const LEFT_STEP_SECOND_DURATION = LEFT_STEP_FIRST_DURATION; // landing duration
+
+// Parameters for the walk cycle
 const WALK_STEP_LIFT = 0.80;
 const WALK_STEP_FORWARD = 1.5;
 const WALK_STEP_SIDE = 0.0;
 const WALK_STEP_LIFT2 = 0.0;
 const WALK_STEP_FORWARD2 = 3.0;
 const WALK_STEP_SIDE2 = 0.0;
-const WALK_BODY_FORWARD = 1.5;
-const WALK_BODY_LIFT = 0.12;
-const WALK_BODY_DROP = -0.12;
+const WALK_BODY_FORWARD = 1.5; 
+const WALK_BODY_LIFT = 0.12; 
+const WALK_BODY_DROP = -0.12; 
 const WALK_STEP_DURATION = STEP_DURATION;
-const PLATFORM_DESCENT_DELAY_STEPS = 3;
-const PLATFORM_DESCENT_STEPS = 1;
-const ATRIUM_WALK_STEP_COUNT = 23;
 
+// Controls to descends to the floor while walking
+const PLATFORM_DESCENT_DELAY_STEPS = 3; // number of walk steps before starting the descent
+const PLATFORM_DESCENT_STEPS = 1; // number of steps to complete the descent
+const ATRIUM_WALK_STEP_COUNT = 23; // total steps taken when walking to the atrium
+
+
+// smoothly progress value between 0 and 1
 function cosineEase(progress) {
-  const safeProgress = THREE.MathUtils.clamp(progress,0, 1);
+  const safeProgress = THREE.MathUtils.clamp(progress, 0, 1);
   return (1 - Math.cos(Math.PI * safeProgress)) * 0.5;
 }
 
+// Cubic Hermite interpolation between start/end values
 function hermiteInterpolate(start, end, startVelocity, endVelocity, elapsed, duration) {
-  const progress = THREE.MathUtils.clamp(elapsed / duration,0, 1);
-  const progress2 = progress*progress;
+  const progress = THREE.MathUtils.clamp(elapsed / duration, 0, 1);
+  const progress2 = progress * progress;
   const progress3 = progress2 * progress;
   const startWeight = 2 * progress3 - 3 * progress2 + 1;
   const startVelocityWeight = progress3 - 2 * progress2 + progress;
@@ -125,6 +160,7 @@ function hermiteInterpolate(start, end, startVelocity, endVelocity, elapsed, dur
     + endVelocityWeight * endVelocity * duration;
 }
 
+// Returns a -1..1 shake value for the body vibration effect
 function bodyVibrationAt(elapsed) {
   const pauseElapsed = elapsed - JAW_OPEN_DURATION;
 
@@ -144,8 +180,9 @@ function bodyVibrationAt(elapsed) {
   );
   const envelope = Math.min(fadeIn, fadeOut);
 
-  return Math.sin((pauseElapsed / BODY_VIBRATION_PERIOD) * Math.PI*2) * envelope;
+  return Math.sin((pauseElapsed / BODY_VIBRATION_PERIOD) * Math.PI * 2) * envelope;
 }
+
 
 function bodyMovementProgressAt(elapsed) {
   const returnStart = JAW_OPEN_DURATION + JAW_OPEN_PAUSE;
@@ -161,43 +198,63 @@ function bodyMovementProgressAt(elapsed) {
   return 1 - cosineEase((elapsed - returnStart) / JAW_CLOSE_DURATION);
 }
 
+// Main Dinosaur class
 export class Dinosaur {
   constructor() {
     this.group = new THREE.Group();
-    this.group.position.set(-16.5,0.05, 0);
+    this.group.position.set(-16.5, 0.05, 0);
     this.group.rotation.y = Math.PI * 0.5;
     this.mobileRoot = new THREE.Group();
     this.group.add(this.mobileRoot);
+
+    // Tail anim 
     this.tailBones = [];
     this.tailTween = null;
     this.tailLoopRequested = false;
-    this.tailState ={ phase: 0, strength: 0 };
+    this.tailState = { phase: 0, strength: 0 };
     this.tailOffset = new THREE.Quaternion();
+
+    // Jaw anim
     this.jawBone = null;
     this.jawBaseQuaternion = new THREE.Quaternion();
     this.jawOffset = new THREE.Quaternion();
     this.jawState = { progress: 0 };
     this.jawTween = null;
+
+    // head and neck animation
     this.headNeckBones = [];
     this.headNeckOffset = new THREE.Quaternion();
     this.headTiltOffset = new THREE.Quaternion();
+
+    // Body anim
     this.bodyBone = null;
     this.bodyBaseQuaternion = new THREE.Quaternion();
     this.bodyBasePosition = new THREE.Vector3();
     this.bodyOffset = new THREE.Quaternion();
     this.bodyVibrationOffset = new THREE.Quaternion();
+
     this.model = null;
+
+    // leg IK state
     this.legChains = [];
+
+    // arm animation state
     this.armBones = [];
     this.armOffset = new THREE.Quaternion();
+
+    // left-foot step state
     this.leftStepRoot = null;
     this.leftStepBasePosition = new THREE.Vector3();
+
+    // walking state
     this.walkFeet = [];
     this.walkingTween = null;
     this.walkingRequested = false;
     this.roarLoopRequested = false;
     this.walkingStepsRemaining = null;
     this.walkingCompleteCallback = null;
+
+    // Platform descent state
     this.platformDropDistance = 0;
     this.platformDescentActive = false;
     this.platformDescentDone = false;
@@ -205,16 +262,20 @@ export class Dinosaur {
     this.platformDescentDelayStep = 0;
     this.platformDescentStartY = 0;
     this.platformDescentTargetY = 0;
+
     this.nextWalkingFoot = 0;
     this.lastWalkingLandingY = null;
     this.walkingStanceInitialized = false;
     this.walkingBodyBaseZ = null;
+
     this.tweenGroup = new TWEEN.Group();
+
     this.createClickHitbox();
     this.loadModel();
   }
 
   createClickHitbox() {
+    // invisible mesh to click on the dino
     const hitbox = new THREE.Mesh(
       new THREE.BoxGeometry(7.2, 3.4, 2.2),
       new THREE.MeshBasicMaterial({
@@ -239,6 +300,7 @@ export class Dinosaur {
         model.rotation.x = 0;
         model.updateMatrixWorld(true);
 
+        // scale the model to match MODEL_TARGET_HEIGHT
         const initialBox = new THREE.Box3().setFromObject(model);
         const initialSize = initialBox.getSize(new THREE.Vector3());
         const scale = MODEL_TARGET_HEIGHT / initialSize.y;
@@ -279,14 +341,12 @@ export class Dinosaur {
   }
 
   keepPlatformOnDisplayBase(model) {
+    // Keep the platform fixed while the dinosaur moves
     const platform = model.getObjectByName("platform");
-
-    if (!platform) {
-      return;
-    }
 
     model.updateMatrixWorld(true);
     this.group.updateMatrixWorld(true);
+
     this.group.attach(platform);
     this.updatePlatformDropDistance(platform);
   }
@@ -301,10 +361,10 @@ export class Dinosaur {
   }
 
   setupTailAnimation(model) {
-    this.tailBones = TAIL_BONES.map((config,index) => {
+    this.tailBones = TAIL_BONES.map((config, index) => {
       const bone = model.getObjectByName(config.name);
 
-      if(!bone) {
+      if (!bone) {
         return null;
       }
 
@@ -312,24 +372,24 @@ export class Dinosaur {
         bone,
         baseQuaternion: bone.quaternion.clone(),
         amplitude: config.amplitude,
-        phaseOffset: index*0.22
+        phaseOffset: index * 0.22
       };
     }).filter(Boolean);
   }
 
   startTailAnimation(loop = false) {
-    if(loop) {
-      this.tailLoopRequested=true;
+    if (loop) {
+      this.tailLoopRequested = true;
     }
 
-    if(this.tailTween || this.tailBones.length === 0) {
+    if (this.tailTween || this.tailBones.length === 0) {
       return;
     }
 
-    this.tailState.phase=0;
-    this.tailState.strength =this.tailLoopRequested ? 1 : 0;
+    this.tailState.phase = 0;
+    this.tailState.strength = this.tailLoopRequested ? 1 : 0;
     this.tailTween = new TWEEN.Tween(this.tailState, this.tweenGroup)
-      .to({ phase: Math.PI * 2 },2600)
+      .to({ phase: Math.PI * 2 }, 2600)
       .easing(TWEEN.Easing.Linear.None)
       .onUpdate(() => {
         this.tailBones.forEach(tailBone => {
@@ -337,26 +397,29 @@ export class Dinosaur {
             Math.sin(this.tailState.phase - tailBone.phaseOffset) *
             tailBone.amplitude *
             this.tailState.strength;
-          this.tailOffset.setFromAxisAngle(TAIL_SWING_AXIS,angle);
+          this.tailOffset.setFromAxisAngle(TAIL_SWING_AXIS, angle);
           tailBone.bone.quaternion.copy(tailBone.baseQuaternion).multiply(this.tailOffset);
         });
       })
       .onComplete(() => {
-        this.tailTween=null;
-        if(this.tailLoopRequested) {
+        this.tailTween = null;
+        if (this.tailLoopRequested) {
+          // loop the sway as long as the roar loop is active
           this.startTailAnimation(true);
           return;
         }
 
+        // reset bones back to bind pose
         this.tailBones.forEach(tailBone => {
           tailBone.bone.quaternion.copy(tailBone.baseQuaternion);
         });
       })
       .start();
 
-    if(!this.tailLoopRequested) {
+    // fade the strength smoothly for a single sway
+    if (!this.tailLoopRequested) {
       new TWEEN.Tween(this.tailState, this.tweenGroup)
-        .to({ strength: 1 },700)
+        .to({ strength: 1 }, 700)
         .easing(TWEEN.Easing.Sinusoidal.Out)
         .start();
     }
@@ -365,7 +428,7 @@ export class Dinosaur {
   setupJawAnimation(model) {
     this.jawBone = model.getObjectByName(JAW_BONE_NAME);
 
-    if(!this.jawBone) {
+    if (!this.jawBone) {
       return;
     }
 
@@ -390,7 +453,7 @@ export class Dinosaur {
     const headBone = model.getObjectByName(HEAD_BONE_NAME);
     const headIkBone = model.getObjectByName(HEAD_IK_BONE_NAME);
 
-    if(!headBone || !headIkBone) {
+    if (!headBone || !headIkBone) {
       return;
     }
 
@@ -410,14 +473,14 @@ export class Dinosaur {
   }
 
   setupLegCompensation(model) {
-    model.updateWorldMatrix(true,true);
+    model.updateWorldMatrix(true, true);
 
     this.legChains = LEG_CHAINS.map(config => {
       const upperBone = model.getObjectByName(config.upper);
       const lowerBone = model.getObjectByName(config.lower);
       const footTargetBone = model.getObjectByName(config.footTarget);
 
-      if(!upperBone || !lowerBone || !footTargetBone) {
+      if (!upperBone || !lowerBone || !footTargetBone) {
         return null;
       }
 
@@ -433,6 +496,7 @@ export class Dinosaur {
         lowerBaseQuaternion: lowerBone.quaternion.clone(),
         upperLength: hipPosition.distanceTo(kneePosition),
         lowerLength: kneePosition.distanceTo(targetPosition),
+
         anklePoint: lowerBone.worldToLocal(targetPosition.clone())
       };
     }).filter(Boolean);
@@ -458,7 +522,7 @@ export class Dinosaur {
   setupLeftStep(model) {
     this.leftStepRoot = model.getObjectByName(LEFT_STEP_ROOT_NAME);
 
-    if(!this.leftStepRoot) {
+    if (!this.leftStepRoot) {
       return;
     }
 
@@ -467,6 +531,7 @@ export class Dinosaur {
   }
 
   setupWalking(model) {
+    // cache both foot IK targets and their bind-pose positions
     this.walkFeet = ["PiernaIKL_ArmatureRexy", "PiernaIKR_ArmatureRexy"]
       .map(name => {
         const bone = model.getObjectByName(name);
@@ -488,11 +553,12 @@ export class Dinosaur {
   }
 
   applyWalkingStep(foot, bodyStart, landingForward, progress) {
-    const firstHalf = progress<0.5;
-    const phaseProgress = cosineEase(firstHalf ? progress*2 : (progress - 0.5) * 2);
+    // Split step into a lift phase and a landing phase 
+    const firstHalf = progress < 0.5;
+    const phaseProgress = cosineEase(firstHalf ? progress * 2 : (progress - 0.5) * 2);
     const lift = firstHalf
-      ? THREE.MathUtils.lerp(0,WALK_STEP_LIFT, phaseProgress)
-      : THREE.MathUtils.lerp(WALK_STEP_LIFT,WALK_STEP_LIFT2, phaseProgress);
+      ? THREE.MathUtils.lerp(0, WALK_STEP_LIFT, phaseProgress)
+      : THREE.MathUtils.lerp(WALK_STEP_LIFT, WALK_STEP_LIFT2, phaseProgress);
     const forward = firstHalf
       ? THREE.MathUtils.lerp(0, WALK_STEP_FORWARD, phaseProgress)
       : THREE.MathUtils.lerp(WALK_STEP_FORWARD, landingForward, phaseProgress);
@@ -501,12 +567,13 @@ export class Dinosaur {
       : THREE.MathUtils.lerp(WALK_STEP_SIDE, WALK_STEP_SIDE2, phaseProgress);
 
     foot.bone.position.copy(foot.basePosition);
-    foot.bone.position.x+= side;
+    foot.bone.position.x += side;
     foot.bone.position.z += lift;
     foot.bone.position.y -= forward;
 
+    // advance the body forward during the step and up/down movement
     this.bodyBone.position.copy(bodyStart);
-    this.bodyBone.position.y-= WALK_BODY_FORWARD * cosineEase(progress);
+    this.bodyBone.position.y -= WALK_BODY_FORWARD * cosineEase(progress);
     this.bodyBone.position.z = firstHalf
       ? THREE.MathUtils.lerp(
         bodyStart.z,
@@ -522,7 +589,8 @@ export class Dinosaur {
   }
 
   startPlatformDescentIfNeeded() {
-    if(this.platformDescentDone || this.platformDescentActive || this.platformDropDistance <= 0) {
+    // start the descent once and only if there's actually a platform to descend from
+    if (this.platformDescentDone || this.platformDescentActive || this.platformDropDistance <= 0) {
       return;
     }
 
@@ -530,18 +598,19 @@ export class Dinosaur {
       return;
     }
 
-    this.platformDescentActive=true;
-    this.platformDescentStep=0;
+    this.platformDescentActive = true;
+    this.platformDescentStep = 0;
     this.platformDescentStartY = this.mobileRoot.position.y;
     this.platformDescentTargetY = -this.platformDropDistance;
   }
 
   applyPlatformDescent(stepProgress) {
-    if(!this.platformDescentActive) {
+    if (!this.platformDescentActive) {
       return;
     }
 
-    const progress = THREE.MathUtils.clamp(stepProgress / PLATFORM_DESCENT_STEPS,0, 1);
+    // Lower the mobile root smoothly over PLATFORM_DESCENT_STEPS walking steps
+    const progress = THREE.MathUtils.clamp(stepProgress / PLATFORM_DESCENT_STEPS, 0, 1);
     const easedProgress = cosineEase(progress);
     this.mobileRoot.position.y = THREE.MathUtils.lerp(
       this.platformDescentStartY,
@@ -557,6 +626,8 @@ export class Dinosaur {
   }
 
   startWalkingStep() {
+    // don't start a new step while one is already running, while the roar
+    // jaw animation is playing, or if the rig has no feet set up
     if (this.walkingTween || this.jawTween || !this.bodyBone || this.walkFeet.length < 2) {
       return;
     }
@@ -572,8 +643,10 @@ export class Dinosaur {
 
     this.startPlatformDescentIfNeeded();
 
+    // Alternate between the two feet for each successive step
     const foot = this.walkFeet[this.nextWalkingFoot];
     const bodyStart = this.bodyBone.position.clone();
+
     const landingY = this.lastWalkingLandingY === null
       ? foot.basePosition.y - WALK_STEP_FORWARD2
       : this.lastWalkingLandingY - WALK_BODY_FORWARD;
@@ -592,6 +665,7 @@ export class Dinosaur {
         this.lastWalkingLandingY = foot.basePosition.y;
         this.bodyBasePosition.copy(this.bodyBone.position);
         this.nextWalkingFoot = (this.nextWalkingFoot + 1) % this.walkFeet.length;
+
         if (this.platformDescentActive) {
           this.platformDescentStep += 1;
           this.applyPlatformDescent(this.platformDescentStep);
@@ -600,6 +674,7 @@ export class Dinosaur {
         }
         this.walkingTween = null;
 
+        // Stop after the requested number of step
         if (this.walkingStepsRemaining !== null) {
           this.walkingStepsRemaining -= 1;
 
@@ -616,6 +691,7 @@ export class Dinosaur {
           }
         }
 
+        // otherwise keep walking indefinitely
         if (this.walkingRequested) {
           this.startWalkingStep();
         }
@@ -624,6 +700,7 @@ export class Dinosaur {
   }
 
   startWalking(stepCount = null, onComplete = null) {
+    // start or reusme walking
     this.roarLoopRequested = false;
     this.walkingRequested = true;
     this.walkingStepsRemaining = stepCount;
@@ -643,10 +720,12 @@ export class Dinosaur {
   }
 
   walkToAtriumAndRoar() {
+    // walk a fixed number of steps
     if (this.walkingStepsRemaining !== null || this.roarLoopRequested) {
       return;
     }
 
+    // looping roar animation once the walk finishes
     this.roarLoopRequested = false;
     this.startWalking(ATRIUM_WALK_STEP_COUNT, () => this.startRoarLoop());
   }
@@ -669,6 +748,7 @@ export class Dinosaur {
   }
 
   applyLeftStep(elapsed) {
+    // single left-foot step that precedes the roar
     if (!this.leftStepRoot) {
       return;
     }
@@ -681,6 +761,7 @@ export class Dinosaur {
     let side;
 
     if (elapsed < secondStepEnd) {
+      // lift then land.
       const progress = THREE.MathUtils.clamp(elapsed / secondStepEnd, 0, 1);
 
       forward = LEFT_STEP_FORWARD2 * cosineEase(progress);
@@ -697,10 +778,12 @@ export class Dinosaur {
         side = THREE.MathUtils.lerp(LEFT_STEP_SIDE, LEFT_STEP_SIDE2, landingProgress);
       }
     } else if (elapsed < returnStart) {
+      // foot stays where it was during the roar
       lift = LEFT_STEP_LIFT2;
       forward = LEFT_STEP_FORWARD2;
       side = LEFT_STEP_SIDE2;
     } else {
+      // back to the resting position as the jaw closes
       const progress = cosineEase(
         (elapsed - returnStart) / JAW_CLOSE_DURATION
       );
@@ -716,6 +799,7 @@ export class Dinosaur {
   }
 
   applyBodyStep(elapsed) {
+    // Moves the body root forward and down
     if (!this.bodyBone) {
       return;
     }
@@ -740,11 +824,13 @@ export class Dinosaur {
   }
 
   solveLegCompensation() {
+    // thigh/shin analytic IK solver so the feet stay locked to their IK target
     if (!this.model || this.legChains.length === 0) {
       return;
     }
 
     this.legChains.forEach(chain => {
+
       chain.upperBone.quaternion.copy(chain.upperBaseQuaternion);
       chain.lowerBone.quaternion.copy(chain.lowerBaseQuaternion);
     });
@@ -756,6 +842,7 @@ export class Dinosaur {
       const target = chain.footTargetBone.getWorldPosition(new THREE.Vector3());
       const hipToTarget = target.clone().sub(hip);
       const targetDirection = hipToTarget.clone().normalize();
+
       const minimumReach = Math.abs(chain.upperLength - chain.lowerLength) + 0.0001;
       const maximumReach = chain.upperLength + chain.lowerLength - 0.0001;
       const distance = THREE.MathUtils.clamp(
@@ -763,11 +850,13 @@ export class Dinosaur {
         minimumReach,
         maximumReach
       );
+
       const along =
         (chain.upperLength ** 2 + distance ** 2 - chain.lowerLength ** 2) /
         (2 * distance);
       const height = Math.sqrt(Math.max(0, chain.upperLength ** 2 - along ** 2));
       const currentHipToKnee = currentKnee.clone().sub(hip);
+      // preserve the current bend direction
       const bendDirection = currentHipToKnee
         .clone()
         .addScaledVector(targetDirection, -currentHipToKnee.dot(targetDirection))
@@ -777,6 +866,7 @@ export class Dinosaur {
         .addScaledVector(targetDirection, along)
         .addScaledVector(bendDirection, height);
 
+  
       this.rotateBoneToward(
         chain.upperBone,
         currentHipToKnee,
@@ -806,10 +896,11 @@ export class Dinosaur {
       .easing(TWEEN.Easing.Linear.None)
       .onUpdate(() => {
         const elapsed = this.jawState.progress * JAW_CYCLE_DURATION;
-        let openness = 1;
+        let openness = 1; // 0 = jaw closed, 1 = jaw fully open.
         const transitionVelocity = 1 / JAW_OPEN_DURATION;
 
         if (elapsed < STEP_DURATION) {
+          // small initial opening
           openness = hermiteInterpolate(
             0,
             JAW_OPEN_ANGLE_FIRST / JAW_OPEN_ANGLE,
@@ -819,6 +910,7 @@ export class Dinosaur {
             STEP_DURATION
           );
         } else if (elapsed < JAW_OPEN_DURATION) {
+          // finish opening to the full angle and hold
           openness = hermiteInterpolate(
             JAW_OPEN_ANGLE_FIRST / JAW_OPEN_ANGLE,
             1,
@@ -828,6 +920,7 @@ export class Dinosaur {
             JAW_SECOND_OPEN_DURATION
           );
         } else if (elapsed > JAW_OPEN_DURATION + JAW_OPEN_PAUSE) {
+          // close the jaw after the hold phase
           const progress = (
             elapsed - JAW_OPEN_DURATION - JAW_OPEN_PAUSE
           ) / JAW_CLOSE_DURATION;
@@ -837,6 +930,7 @@ export class Dinosaur {
         this.jawOffset.setFromAxisAngle(JAW_OPEN_AXIS, JAW_OPEN_ANGLE * openness);
         this.jawBone.quaternion.copy(this.jawBaseQuaternion).multiply(this.jawOffset);
 
+        // curl the neck back in proportion the jaw openness
         this.headNeckBones.forEach(headNeckBone => {
           this.headNeckOffset.setFromAxisAngle(
             HEAD_NECK_ROTATION_AXIS,
@@ -846,6 +940,7 @@ export class Dinosaur {
             .copy(headNeckBone.baseQuaternion)
             .multiply(this.headNeckOffset);
 
+          // head bone tilt
           if (headNeckBone.bone.name === HEAD_BONE_NAME) {
             this.headTiltOffset.setFromAxisAngle(
               HEAD_TILT_AXIS,
@@ -856,6 +951,7 @@ export class Dinosaur {
         });
 
         if (this.bodyBone) {
+          // lean the body down and forward 
           this.bodyOffset.setFromAxisAngle(
             BODY_ROTATION_AXIS,
             BODY_DOWN_ANGLE * bodyMovementProgressAt(elapsed)
@@ -863,6 +959,7 @@ export class Dinosaur {
           this.bodyBone.quaternion
             .copy(this.bodyBaseQuaternion)
             .multiply(this.bodyOffset);
+          //  small vibration shake on top 
           this.bodyVibrationOffset.setFromAxisAngle(
             BODY_VIBRATION_AXIS,
             BODY_VIBRATION_ANGLE * bodyVibrationAt(elapsed)
@@ -870,6 +967,7 @@ export class Dinosaur {
           this.bodyBone.quaternion.multiply(this.bodyVibrationOffset);
         }
 
+        // Rotate the arms 
         this.armBones.forEach(armBone => {
           this.armOffset.setFromAxisAngle(
             armBone.axis,
@@ -887,6 +985,7 @@ export class Dinosaur {
       .onComplete(() => {
         this.jawTween = null;
         if (this.roarLoopRequested) {
+          // Keep repeating the roar cycle
           this.startJawAnimation();
         } else if (this.walkingRequested) {
           this.startWalkingStep();
@@ -896,6 +995,7 @@ export class Dinosaur {
   }
 
   startRoarLoop() {
+    // stop walk, start the looping tail sway and roar cycle
     this.stopWalking();
     this.roarLoopRequested = true;
     this.prepareRoarFromWalkingPose();
@@ -904,6 +1004,7 @@ export class Dinosaur {
   }
 
   awaken() {
+    // sway the tail once and play a single roar cycle if not walking
     this.startTailAnimation();
     if (!this.walkingRequested) {
       this.startJawAnimation();

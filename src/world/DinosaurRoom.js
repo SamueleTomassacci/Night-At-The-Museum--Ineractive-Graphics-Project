@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Dinosaur } from "../exhibits/Dinosaur.js";
+import { Dinosaur } from "../entities/Dinosaur.js";
 import { addWallSconce } from "./wallSconces.js";
 
 export class DinosaurRoom {
@@ -12,6 +12,7 @@ export class DinosaurRoom {
   }
 
   createRoom(factory, lightingSystem) {
+    // Build the room and leave an opening toward the hall
     this.group.add(factory.createFloor(17,12,[-16.5,0, 0]));
     this.group.add(factory.createWall(17,5.0, 0.35, [-16.5,2.5, -6]));
     this.group.add(factory.createWall(17, 5.0,0.35, [-16.5,2.5, 6]));
@@ -27,6 +28,7 @@ export class DinosaurRoom {
   }
 
   addWallSconces(factory, lightingSystem) {
+    // Place paired sconces on the two long walls
     addWallSconce(this.group,factory, lightingSystem, [-20.9,2.45,-5.76],0);
     addWallSconce(this.group, factory,lightingSystem, [-12.1,2.45, -5.76], 0);
     addWallSconce(this.group,factory, lightingSystem, [-20.9,2.45,5.76],Math.PI);
@@ -36,6 +38,7 @@ export class DinosaurRoom {
   createDisplayRopes(factory) {
     const material = factory.materials.gold;
 
+    // Create barriers on both sides of the dinosaur
     for (const z of [-2.8,2.8]) {
       const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04, 10, 12), material);
       rail.rotation.z=Math.PI * 0.5;
@@ -44,6 +47,7 @@ export class DinosaurRoom {
       rail.receiveShadow = true;
       this.group.add(rail);
 
+      // Add evenly spaced supports along each barrier
       for (const x of [-21.2,-18.85, -16.5,-14.15, -11.8]) {
         const post = new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.075,0.8, 14), material);
         post.position.set(x,0.4,z);

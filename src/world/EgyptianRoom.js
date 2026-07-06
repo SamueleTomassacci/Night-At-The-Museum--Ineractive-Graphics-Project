@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { Sarcophagus } from "../exhibits/Sarcophagus.js";
+import { Sarcophagus } from "../entities/Sarcophagus.js";
 import { addWallSconce } from "./wallSconces.js";
 
 const OBELISK_POSITIONS = [
@@ -21,6 +21,7 @@ export class EgyptianRoom {
   }
 
   createRoom(factory, lightingSystem) {
+    // build the room and leave the entrance open toward the hall
     this.group.add(factory.createFloor(16,17,[0,0, -14.5]));
     this.group.add(factory.createWall(16,5.0,0.35, [0,2.5, -23]));
     this.group.add(factory.createWall(0.35,5.0,17, [-8,2.5, -14.5]));
@@ -34,6 +35,7 @@ export class EgyptianRoom {
   }
 
   addWallSconces(factory, lightingSystem) {
+    // place sconces along both side walls
     addWallSconce(this.group,factory, lightingSystem, [-7.76,2.45, -10.4], Math.PI * 0.5);
     addWallSconce(this.group, factory,lightingSystem, [-7.76,2.45,-18.6],Math.PI * 0.5);
     addWallSconce(this.group,factory, lightingSystem, [7.76,2.45, -10.4], -Math.PI * 0.5);
@@ -41,6 +43,7 @@ export class EgyptianRoom {
   }
 
   addObelisks(factory) {
+    // create the two obelisks
     OBELISK_POSITIONS.forEach(position => {
       const obelisk = this.createObelisk(factory);
       obelisk.position.set(position[0],position[1], position[2]);
@@ -49,6 +52,7 @@ export class EgyptianRoom {
   }
 
   createObelisk(factory) {
+    // Assemble one obelisk
     const group = new THREE.Group();
     group.name = "Egyptian Procedural Obelisk";
 

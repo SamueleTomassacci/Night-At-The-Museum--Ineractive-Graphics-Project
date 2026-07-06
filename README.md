@@ -65,9 +65,8 @@ src/
     StatueRoom.js
     EgyptianRoom.js
     GalleryRoom.js
-  characters/
+  entities/
     Player.js
-  exhibits/
     Dinosaur.js
     Statue.js
     Sarcophagus.js
@@ -86,6 +85,6 @@ src/
 
 ## Notes
 
-The museum elements, except for the imported T-Rex and the GLB models for columns, benches and chandeliers, are compositions of Three.js primitives. Animations are handled through the render loop, tween.js and AnimationMixer; the added GLB models do not introduce external animations. Wood and sarcophagus textures are generated procedurally through canvas, while the paintings use images in `src/images`. The floor uses static ambientCG WoodFloor064 PBR maps in `src/texture/floor/`; the walls use static ambientCG Concrete030 PBR maps in `src/texture/wall/`. Both use `Color`, `NormalGL` and `Roughness` maps directly.
+The museum elements, except for the imported T-Rex and the GLB models for columns, benches and chandeliers, are compositions of Three.js primitives. Animations are handled through the render loop, tween.js and AnimationMixer; the added GLB models do not introduce external animations. Wood and sarcophagus textures are generated procedurally through canvas, while the paintings use images in `src/texture/paintings`. The floor uses static ambientCG WoodFloor064 PBR maps in `src/texture/floor/`; the walls use static ambientCG Concrete030 PBR maps in `src/texture/wall/`. Both use `Color`, `NormalGL` and `Roughness` maps directly.
 
 The T-Rex model is based on ["T-rex-skeleton-rigged-and-animated"](https://sketchfab.com/3d-models/t-rex-skeleton-rigged-and-animated-cca5cf48215142db91f657053bd74057) by [felixjoshua10251025](https://sketchfab.com/felixjoshua10251025), distributed under the [CC BY 4.0](http://creativecommons.org/licenses/by/4.0/) license.

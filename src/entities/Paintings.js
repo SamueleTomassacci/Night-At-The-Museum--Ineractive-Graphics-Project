@@ -1,16 +1,19 @@
 import * as THREE from "three";
 import { distance2D } from "../utils/math.js";
 
+// painting images
 const PAINTING_IMAGE_URLS = [
-  new URL("../images/van_gogh_1.jpg", import.meta.url).href,
-  new URL("../images/van_gogh_2.jpeg", import.meta.url).href,
-  new URL("../images/seraut.jpg", import.meta.url).href,
-  new URL("../images/picasso.jpg", import.meta.url).href,
-  new URL("../images/monet.jpg", import.meta.url).href,
-  new URL("../images/daVinci.jpeg", import.meta.url).href,
-  new URL("../images/botticelli.jpg", import.meta.url).href
+  new URL("../texture/paintings/van_gogh_1.jpg", import.meta.url).href,
+  new URL("../texture/paintings/van_gogh_2.jpeg", import.meta.url).href,
+  new URL("../texture/paintings/seraut.jpg", import.meta.url).href,
+  new URL("../texture/paintings/picasso.jpg", import.meta.url).href,
+  new URL("../texture/paintings/monet.jpg", import.meta.url).href,
+  new URL("../texture/paintings/daVinci.jpeg", import.meta.url).href,
+  new URL("../texture/paintings/botticelli.jpg", import.meta.url).href
 ];
-const PAINTING_ASPECT =1.8 / 1.22;
+// Target aspect ratio to crop the loaded image 
+const PAINTING_ASPECT = 1.8 / 1.22;
+// Distance to show the hint "click to change artwork"
 const PAINTING_PROMPT_DISTANCE = 4.2;
 
 const textureLoader = new THREE.TextureLoader();
@@ -18,6 +21,7 @@ const textureCache = new Map();
 
 function loadPaintingTexture(url) {
   if (!textureCache.has(url)) {
+    // Load the texture and crop it
     const texture = textureLoader.load(url, loadedTexture => {
       fitTextureToPainting(loadedTexture);
       loadedTexture.needsUpdate = true;
@@ -30,6 +34,7 @@ function loadPaintingTexture(url) {
 }
 
 function fitTextureToPainting(texture) {
+  // Crop the image to PAINTING_ASPECT
   const image = texture.image;
   if (!image?.width || !image?.height) {
     return;
@@ -37,32 +42,34 @@ function fitTextureToPainting(texture) {
 
   const imageAspect = image.width / image.height;
   texture.offset.set(0, 0);
-  texture.repeat.set(1,1);
+  texture.repeat.set(1, 1);
 
   if (imageAspect > PAINTING_ASPECT) {
     texture.repeat.x = PAINTING_ASPECT / imageAspect;
-    texture.offset.x = (1 - texture.repeat.x)/ 2;
+    texture.offset.x = (1 - texture.repeat.x) / 2;
   } else {
-    texture.repeat.y = imageAspect/ PAINTING_ASPECT;
+    texture.repeat.y = imageAspect / PAINTING_ASPECT;
     texture.offset.y = (1 - texture.repeat.y) / 2;
   }
 }
 
 class Painting {
-  constructor(materials,index, position, rotationY, textureIndex, onRequestTextureChange) {
+  constructor(materials, index, position, rotationY, textureIndex, onRequestTextureChange) {
     this.materials = materials;
     this.index = index;
     this.textureIndex = textureIndex;
+    // pick a new texture for the painting
     this.onRequestTextureChange = onRequestTextureChange;
     this.group = new THREE.Group();
     this.group.position.set(position[0], position[1], position[2]);
     this.group.rotation.y = rotationY;
-    this.reactive = false;
+    this.reactive = false; // whether the player is near this painting
     this.createModel();
   }
 
   createModel() {
-    const topFrame = new THREE.Mesh(new THREE.BoxGeometry(2.25,0.18, 0.18), this.materials.wood);
+    // wooden frame bars around the canvas
+    const topFrame = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.18, 0.18), this.materials.wood);
     const bottomFrame = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.18, 0.18), this.materials.wood);
     const leftFrame = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.65, 0.18), this.materials.wood);
     const rightFrame = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.65, 0.18), this.materials.wood);
@@ -72,6 +79,7 @@ class Painting {
     leftFrame.position.x = -1.035;
     rightFrame.position.x = 1.035;
 
+    // canvas surface textured with the current artwork image
     const artMaterial = new THREE.MeshStandardMaterial({
       map: this.getTexture(),
       roughness: 0.34,
@@ -82,9 +90,10 @@ class Painting {
     this.surface = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.22), artMaterial);
     this.surface.position.z = -0.12;
 
+    // slightly larger glass pane in front of the canvas
     const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.3), this.materials.glass);
     glass.position.z = -0.17;
-    this.group.add(topFrame,bottomFrame, leftFrame, rightFrame, this.surface, glass);
+    this.group.add(topFrame, bottomFrame, leftFrame, rightFrame, this.surface, glass);
     this.group.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true;
@@ -98,6 +107,7 @@ class Painting {
   }
 
   setTextureIndex(textureIndex) {
+    // swap with a new artwork texture
     this.textureIndex = textureIndex;
     this.surface.material.map = this.getTexture();
     this.surface.material.needsUpdate = true;
@@ -108,23 +118,27 @@ class Painting {
   }
 
   react(strength) {
+    // Lights up the canvas
     this.reactive = strength > 0;
     this.surface.material.emissive.setHex(this.reactive ? 0x222244 : 0x000000);
-    this.surface.material.emissiveIntensity = strength*0.9;
+    this.surface.material.emissiveIntensity = strength * 0.9;
   }
 
   update(deltaTime, elapsedTime) {
-    const target = this.reactive ? Math.sin(elapsedTime *5 + this.index) * 0.08 : 0;
+    // when player nearby, shake the painting using a sine wave
+    const target = this.reactive ? Math.sin(elapsedTime * 5 + this.index) * 0.08 : 0;
     this.group.rotation.z += (target - this.group.rotation.z) * Math.min(1, deltaTime * 7);
   }
 }
 
+// Manages the full set of paintings in the scene
 export class Paintings {
   constructor(materials) {
     this.materials = materials;
     this.group = new THREE.Group();
     this.nextTextureCursor = 4;
     this.prompt = this.createPrompt();
+    // painting placements
     this.paintings = [
       new Painting(materials, 0, [-2.4, 2.3, 22.68], 0, 0, painting => this.changePaintingTexture(painting)),
       new Painting(materials, 1, [2.4, 2.3, 22.68], 0, 1, painting => this.changePaintingTexture(painting)),
@@ -137,6 +151,7 @@ export class Paintings {
   }
 
   createPrompt() {
+    // hint shown when the player is close enough to a painting 
     const prompt = document.createElement("div");
     prompt.textContent = "Click the painting to change the artwork";
     prompt.style.position = "fixed";
@@ -151,13 +166,15 @@ export class Paintings {
     prompt.style.font = "600 18px/1.2 system-ui, sans-serif";
     prompt.style.letterSpacing = "0";
     prompt.style.pointerEvents = "none";
-    prompt.style.display = "none";
+    prompt.style.display = "none"; 
     prompt.style.zIndex = "20";
     document.body.appendChild(prompt);
     return prompt;
   }
 
   changePaintingTexture(selectedPainting) {
+    // picks the next texture index that isn't currently displayed by any other painting 
+    // and differs from the selected painting's current texture.
     const usedByOtherPaintings = new Set(
       this.paintings
         .filter(painting => painting !== selectedPainting)
@@ -165,7 +182,7 @@ export class Paintings {
     );
 
     for (let i = 0; i < PAINTING_IMAGE_URLS.length; i += 1) {
-      const candidate = (this.nextTextureCursor +i) % PAINTING_IMAGE_URLS.length;
+      const candidate = (this.nextTextureCursor + i) % PAINTING_IMAGE_URLS.length;
       if (!usedByOtherPaintings.has(candidate) && candidate !== selectedPainting.textureIndex) {
         selectedPainting.setTextureIndex(candidate);
         this.nextTextureCursor = (candidate + 1) % PAINTING_IMAGE_URLS.length;
@@ -179,6 +196,7 @@ export class Paintings {
   }
 
   updateReactions(playerPosition) {
+    // find the painting closest to the player
     let nearest = null;
     let nearestDistance = Infinity;
     this.paintings.forEach(painting => {
@@ -191,15 +209,17 @@ export class Paintings {
       }
     });
 
+    // only the nearest painting reacts: the closer the player, the higher the strength
     this.paintings.forEach(painting => {
-      painting.react(painting === nearest && nearestDistance < 5 ? 1-nearestDistance / 5 : 0);
+      painting.react(painting === nearest && nearestDistance < 5 ? 1 - nearestDistance / 5 : 0);
     });
+    // interaction hint only when close enough
     this.prompt.style.display = nearestDistance < PAINTING_PROMPT_DISTANCE ? "block" : "none";
   }
 
   update(deltaTime, elapsedTime) {
     this.paintings.forEach(painting => {
-      painting.update(deltaTime,elapsedTime);
+      painting.update(deltaTime, elapsedTime);
     });
   }
 }
