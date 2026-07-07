@@ -3,6 +3,7 @@ import * as THREE from "three";
 export class InputManager extends EventTarget {
   constructor(domElement) {
     super();
+    // track keyboard, click, drag, and wheel input and register as custom events
     this.domElement = domElement;
     this.keys =new Set();
     this.pointer =new THREE.Vector2();
@@ -62,6 +63,7 @@ export class InputManager extends EventTarget {
     domElement.addEventListener("pointercancel",stopCameraDrag);
     domElement.addEventListener("click",event => {
       this.updatePointer(event);
+      // large drags are camera movement not click on objects
       if(this.dragDistance > 4) {
         this.dragDistance=0;
         return;
@@ -75,6 +77,7 @@ export class InputManager extends EventTarget {
   }
 
   updatePointer(event) {
+    // store normalized device coordinates and raw screen coordinates
     const rect =this.domElement.getBoundingClientRect();
     this.pointer.x = ((event.clientX - rect.left) / rect.width)*2 - 1;
     this.pointer.y = -(((event.clientY - rect.top) / rect.height)*2 - 1);
@@ -83,6 +86,7 @@ export class InputManager extends EventTarget {
   }
 
   isDown() {
+    // returns true if any requested key is pressed
     for (let i = 0; i < arguments.length; i += 1) {
       if (this.keys.has(arguments[i].toLowerCase())) {
         return true;

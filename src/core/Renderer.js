@@ -3,6 +3,7 @@ import { QUALITY_SETTINGS } from "../utils/constants.js";
 
 export class renderer {
   constructor() {
+    // create and configure the main Three.js renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(window.innerWidth,window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,QUALITY_SETTINGS.medium.pixelRatio));
@@ -15,6 +16,7 @@ export class renderer {
   }
 
   setQuality(quality) {
+    // apply seelcted quality preset and shadows
     const setting = QUALITY_SETTINGS[quality] ?? QUALITY_SETTINGS.medium;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio,setting.pixelRatio));
     this.setShadows(setting.shadows);
@@ -25,6 +27,7 @@ export class renderer {
   }
 
   resize(camera) {
+    // resize renderer and update camera aspect ratio
     this.renderer.setSize(window.innerWidth,window.innerHeight);
     camera.aspect=window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();

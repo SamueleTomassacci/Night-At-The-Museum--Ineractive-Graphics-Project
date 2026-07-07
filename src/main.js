@@ -8,12 +8,12 @@ import { Factory } from "./core/factory.js";
 import { createMaterials } from "./utils/materials.js";
 import { Player } from "./entities/Player.js";
 import { Museum } from "./world/Museum.js";
-import { AnimationSystem } from "./core/Animation.js";
-import { LightingSystem } from "./core/Lighting.js";
-import { CollisionSystem } from "./core/Collision.js";
-import { UIController } from "./core/UIController.js";
-import { DoorInteractionSystem } from "./core/DoorInteraction.js";
-import { ExhibitPromptSystem } from "./core/ExhibitPrompt.js";
+import { AnimationSystem } from "./systems/Animation.js";
+import { LightingSystem } from "./systems/Lighting.js";
+import { CollisionSystem } from "./systems/Collision.js";
+import { UIController } from "./systems/UIController.js";
+import { DoorInteractionSystem } from "./systems/DoorInteraction.js";
+import { ExhibitPromptSystem } from "./systems/ExhibitPrompt.js";
 
 const renderer =new rendererClass();
 const sceneManager =new SceneManager();

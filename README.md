@@ -57,12 +57,6 @@ src/
     Camera.js
     Input.js
     Interaction.js
-    Animation.js
-    Lighting.js
-    Collision.js
-    DoorInteraction.js
-    ExhibitPrompt.js
-    UIController.js
     factory.js
   world/
     Museum.js
@@ -77,6 +71,13 @@ src/
     Statue.js
     Sarcophagus.js
     Paintings.js
+  systems/
+    Animation.js
+    Lighting.js
+    Collision.js
+    DoorInteraction.js
+    ExhibitPrompt.js
+    UIController.js
   utils/
     constants.js
     materials.js

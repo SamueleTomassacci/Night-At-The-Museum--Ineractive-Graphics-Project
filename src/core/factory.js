@@ -21,6 +21,7 @@ const DOOR_STILE_THICKNESS = 0.09;
 
 export class Factory {
   constructor(materials) {
+    // builds reusable meshes and loaded model instances
     this.materials=materials;
     this.columnModelPromise = null;
     this.benchModelPromise=null;
@@ -29,6 +30,7 @@ export class Factory {
   }
 
   mesh(geometry, material, position = [0, 0, 0], castShadow = true,receiveShadow = true) {
+    // helper to create a positioned mesh with common shadow defaults
     const mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(position[0],position[1], position[2]);
     mesh.castShadow=castShadow;
@@ -58,6 +60,7 @@ export class Factory {
   }
 
   createCornice(width, depth, position, height = CEILING_HEIGHT) {
+    // decorative ceiling frame from simple bands
     const group = new THREE.Group();
     group.name = "Ceiling Cornice";
 
@@ -89,6 +92,7 @@ export class Factory {
   }
 
   createCeilingLight(position, diameter = 1.25) {
+    // Return a placeholder group and fill it once the chandelier model loads
     const group = new THREE.Group();
     group.position.set(position[0],position[1], position[2]);
 
@@ -105,6 +109,7 @@ export class Factory {
 
   loadCeilingLightModel() {
     if (!this.ceilingLightModelPromise) {
+      // Cache the load promise so repeated placements reuse one source model.
       const loader = new GLTFLoader();
       this.ceilingLightModelPromise = loader.loadAsync(CEILING_LIGHT_MODEL_URL).then(gltf => {
         const model = gltf.scene;
@@ -122,6 +127,7 @@ export class Factory {
   }
 
   createCeilingLightModelInstance(model, diameter) {
+    // Scale the loaded model to the requested diameter and center it on the hook point.
     const instance = model.clone(true);
     instance.traverse(child => {
       if (child.isMesh) {
@@ -146,6 +152,7 @@ export class Factory {
   }
 
   createWallSconce(position, rotationY = 0) {
+    // Procedural wall lamp used together with a separate scene light.
     const group = new THREE.Group();
     group.name = "Wall Sconce";
     group.position.set(position[0],position[1], position[2]);
@@ -186,6 +193,7 @@ export class Factory {
   }
 
   createColumn(position, height = 4.2) {
+    // Return a placeholder group and insert the column once the model is ready.
     const group = new THREE.Group();
     group.position.set(position[0], position[1], position[2]);
 
@@ -235,6 +243,7 @@ export class Factory {
   }
 
   createDoorFrame(position, rotationY = 0, width = 3.6) {
+    // Create one interactive sliding doorway and cache its open/closed panel positions.
     const group = new THREE.Group();
     group.position.set(position[0], position[1], position[2]);
     group.rotation.y = rotationY;
@@ -264,6 +273,7 @@ export class Factory {
   }
 
   createProceduralSlidingDoor(width) {
+    // Procedural two-panel door used instead of a loaded model.
     const group = new THREE.Group();
     group.name = "ProceduralSlidingDoor";
 
@@ -342,6 +352,7 @@ export class Factory {
   }
 
   createSign(text, position, rotationY = 0, width = 3.1) {
+    // Render the room label into a canvas texture and mount it on a sign board.
     const group = new THREE.Group();
     const sign = this.mesh(new THREE.BoxGeometry(width, 0.7, 0.12), this.materials.sign, [0, 0, 0], true, false);
     const canvas = document.createElement("canvas");
@@ -379,6 +390,7 @@ export class Factory {
   }
 
   createBench(position, rotationY = 0) {
+    // Return a placeholder group and populate it after the bench model loads.
     const group = new THREE.Group();
     group.position.set(position[0], position[1], position[2]);
     group.rotation.y = rotationY;
@@ -396,6 +408,7 @@ export class Factory {
 
   loadPolicemanModel() {
     if (!this.policemanModelPromise) {
+      // load the policeman model once and reuse it for cloned player instances
       const loader = new GLTFLoader();
       this.policemanModelPromise = loader.loadAsync(POLICEMAN_MODEL_URL).then(async gltf => {
         const model = gltf.scene;
@@ -415,6 +428,7 @@ export class Factory {
   }
 
   async applyPolicemanSpecGlossMaterials(gltf) {
+    // Convert the imported materials into the roughness-based setup
     const parser = gltf.parser;
     const materialDefs = parser?.json?.materials ?? [];
     const patchedMaterials = new Set();
@@ -468,6 +482,7 @@ export class Factory {
   }
 
   createPolicemanModelInstance(model, height) {
+    // clone, pose and scale the skinned model
     const instance = cloneSkinnedModel(model);
     this.posePolicemanArmsAtSides(instance);
 
@@ -486,6 +501,7 @@ export class Factory {
   }
 
   posePolicemanArmsAtSides(model) {
+    // rotate the imported arm bones into a standing pos.
     model.updateMatrixWorld(true);
     this.posePolicemanArm(model, {
       upperArm: "mixamorig:LeftArm_09",
@@ -541,6 +557,7 @@ export class Factory {
 
   loadBenchModel() {
     if (!this.benchModelPromise) {
+      // load the bench mode and reuse it for every bench in the scene
       const loader = new GLTFLoader();
       this.benchModelPromise = loader.loadAsync(BENCH_MODEL_URL).then(gltf => {
         const model = gltf.scene;
@@ -558,6 +575,7 @@ export class Factory {
   }
 
   createBenchModelInstance(model, length) {
+    // scale the bench to requested footprint and place it on the floor
     const instance = model.clone(true);
     const box = new THREE.Box3().setFromObject(instance);
     const size = box.getSize(new THREE.Vector3());
