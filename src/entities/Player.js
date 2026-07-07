@@ -9,7 +9,8 @@ const TAU =Math.PI * 2;
 const FOOT_LIFT_ANGLE = THREE.MathUtils.degToRad(22);
 const FOOT_PUSH_ANGLE = THREE.MathUtils.degToRad(-8);
 const HELD_FLASHLIGHT_WORLD_SCALE = 0.44;
-const HELD_FLASHLIGHT_HAND_OFFSET = new THREE.Vector3(0.72, 9.55, 0.58);
+const HELD_FLASHLIGHT_HAND_OFFSET = new THREE.Vector3(0.2, 5.0, 5.0);
+const RIGHT_WRIST_GRIP_BEND = THREE.MathUtils.degToRad(40);
 const RIGHT_HAND_BONE_NAME = "mixamorig:RightHand_035";
 const RIGHT_HAND_GRIP_CHAINS = [
   {
@@ -17,41 +18,35 @@ const RIGHT_HAND_GRIP_CHAINS = [
     mid: "mixamorig:RightHandThumb2_037",
     tip: "mixamorig:RightHandThumb3_038",
     end: "mixamorig:RightHandThumb4_039",
-    gripX: 1.85,
-    gripZ: 0.28,
-    thumb: true
+    curl: [25, 35, 25]
   },
   {
     base: "mixamorig:RightHandIndex1_040",
     mid: "mixamorig:RightHandIndex2_041",
     tip: "mixamorig:RightHandIndex3_042",
     end: "mixamorig:RightHandIndex4_043",
-    gripX: 1.3,
-    gripZ: -0.2
+    curl: [42, 55, 40]
   },
   {
     base: "mixamorig:RightHandMiddle1_044",
     mid: "mixamorig:RightHandMiddle2_045",
     tip: "mixamorig:RightHandMiddle3_046",
     end: "mixamorig:RightHandMiddle4_047",
-    gripX: 0.38,
-    gripZ: -0.28
+    curl: [46, 58, 42]
   },
   {
     base: "mixamorig:RightHandRing1_048",
     mid: "mixamorig:RightHandRing2_049",
     tip: "mixamorig:RightHandRing3_050",
     end: "mixamorig:RightHandRing4_00",
-    gripX: -0.48,
-    gripZ: -0.24
+    curl: [48, 60, 44]
   },
   {
     base: "mixamorig:RightHandPinky1_051",
     mid: "mixamorig:RightHandPinky2_052",
     tip: "mixamorig:RightHandPinky3_053",
     end: "mixamorig:RightHandPinky4_054",
-    gripX: -1.18,
-    gripZ: -0.12
+    curl: [50, 62, 46]
   }
 ];
 
@@ -200,9 +195,7 @@ export class Player {
       mid: this.trackAnimatedBone(mid),
       tip: this.trackAnimatedBone(tip),
       end,
-      gripX: config.gripX,
-      gripZ: config.gripZ,
-      thumb: config.thumb ?? false
+      curl: config.curl.map(THREE.MathUtils.degToRad)
     };
   }
 
@@ -475,31 +468,30 @@ export class Player {
       return;
     }
 
-    this.modelRoot.updateMatrixWorld(true);
+    const wrist = this.armChains[1]?.end;
+    if (wrist) {
+      this.offsetQuaternion.setFromAxisAngle(
+        new THREE.Vector3(0, 0, 1),
+        RIGHT_WRIST_GRIP_BEND
+      );
+      wrist.bone.quaternion
+        .copy(wrist.baseQuaternion)
+        .multiply(this.offsetQuaternion);
+    }
 
     this.rightHandGripChains.forEach(chain => {
-      const handCenter = HELD_FLASHLIGHT_HAND_OFFSET;
-      const knuckleLocal = chain.thumb
-        ? new THREE.Vector3(chain.gripX, handCenter.y - 0.25, handCenter.z + 0.3)
-        : new THREE.Vector3(chain.gripX, handCenter.y + 0.25, handCenter.z + 0.25);
-      const middleLocal = chain.thumb
-        ? new THREE.Vector3(chain.gripX * 0.75, handCenter.y + 0.1, handCenter.z - 0.22)
-        : new THREE.Vector3(chain.gripX * 0.62, handCenter.y + 0.45, handCenter.z + chain.gripZ - 0.28);
-      const tipLocal = chain.thumb
-        ? new THREE.Vector3(chain.gripX * 0.45, handCenter.y + 0.3, handCenter.z - 0.42)
-        : new THREE.Vector3(chain.gripX * 0.35, handCenter.y + 0.15, handCenter.z + chain.gripZ - 0.52);
-
-      const knuckleTarget = this.rightHand.localToWorld(knuckleLocal.clone());
-      const middleTarget = this.rightHand.localToWorld(middleLocal.clone());
-      const tipTarget = this.rightHand.localToWorld(tipLocal.clone());
-
-      this.rotateBoneTowardChild(chain.base.bone, chain.mid.bone, knuckleTarget.sub(chain.base.bone.getWorldPosition(new THREE.Vector3())));
-      this.modelRoot.updateMatrixWorld(true);
-      this.rotateBoneTowardChild(chain.mid.bone, chain.tip.bone, middleTarget.sub(chain.mid.bone.getWorldPosition(new THREE.Vector3())));
-      this.modelRoot.updateMatrixWorld(true);
-      this.rotateBoneTowardChild(chain.tip.bone, chain.end, tipTarget.sub(chain.tip.bone.getWorldPosition(new THREE.Vector3())));
-      this.modelRoot.updateMatrixWorld(true);
+      [chain.base, chain.mid, chain.tip].forEach((joint, index) => {
+        this.offsetQuaternion.setFromAxisAngle(
+          new THREE.Vector3(1, 0, 0),
+          chain.curl[index]
+        );
+        joint.bone.quaternion
+          .copy(joint.baseQuaternion)
+          .multiply(this.offsetQuaternion);
+      });
     });
+
+    this.modelRoot.updateMatrixWorld(true);
   }
 
   updateHeldFlashlightTransform() {

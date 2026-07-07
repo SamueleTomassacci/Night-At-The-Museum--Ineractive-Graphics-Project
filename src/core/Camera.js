@@ -2,8 +2,6 @@ import * as THREE from "three";
 import { CAMERA_LABELS, CAMERA_MODES } from "../utils/constants.js";
 import { damp } from "../utils/math.js";
 
-// max yaw offset allowed in first-person mode
-const FIRST_PERSON_MAX_YAW = THREE.MathUtils.degToRad(75);
 const DEFAULT_CAMERA_UP = new THREE.Vector3(0, 1, 0);
 const TOP_DOWN_CAMERA_UP = new THREE.Vector3(0, 0, -1);
 const TOP_DOWN_CAMERA_POSITION = new THREE.Vector3(0, 52, 0);
@@ -94,24 +92,6 @@ export class CameraManager {
     );
   }
 
-  // first-person look direction in a cone around player facing
-  clampFirstPersonYaw() {
-    if (this.mode !== "firstPerson") {
-      return;
-    }
-
-    const playerYaw = this.lastPlayerYaw ?? 0;
-    const yawOffset = Math.atan2(
-      Math.sin(this.cameraYaw - playerYaw),
-      Math.cos(this.cameraYaw - playerYaw)
-    );
-    this.cameraYaw = playerYaw + THREE.MathUtils.clamp(
-      yawOffset,
-      -FIRST_PERSON_MAX_YAW,
-      FIRST_PERSON_MAX_YAW
-    );
-  }
-
   getAimDirection() {
     const horizontal = Math.cos(this.cameraPitch);
     return new THREE.Vector3(
@@ -125,7 +105,6 @@ export class CameraManager {
   cycleMode() {
     this.modeIndex = (this.modeIndex + 1) % CAMERA_MODES.length;
     this.mode = CAMERA_MODES[this.modeIndex];
-    this.clampFirstPersonYaw();
     return this.mode;
   }
 
