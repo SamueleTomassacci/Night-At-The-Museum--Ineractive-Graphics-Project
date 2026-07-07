@@ -15,6 +15,7 @@ import { UIController } from "./systems/UIController.js";
 import { DoorInteractionSystem } from "./systems/DoorInteraction.js";
 import { ExhibitPromptSystem } from "./systems/ExhibitPrompt.js";
 
+// core app services and scene content.
 const renderer =new rendererClass();
 const sceneManager =new SceneManager();
 const cameraManager =new CameraManager();
@@ -54,11 +55,13 @@ const exhibitPromptSystem = new ExhibitPromptSystem(player, [
 const ui = new UIController(document.getElementById("ui-root"));
 
 sceneManager.scene.add(museum.group,player.group);
+// per-frame updated elements
 const animatables = [lightingSystem,doorInteractionSystem, exhibitPromptSystem];
 museum.getAnimatables().forEach(function(animatable) {
   animatables.push(animatable);
 });
 animationSystem.addMany(animatables);
+// register scene objects that react to clicks
 museum.getClickables().forEach(function(clickable) {
   interactionManager.register(clickable.group, clickable);
 });
@@ -67,15 +70,13 @@ let shadowsEnabled=true;
 let lastTime =performance.now();
 
 inputManager.addEventListener("keyPressed",function(event) {
+  // cycle through the available camera views
   if(event.detail === "c") {
     cameraManager.cycleMode();
     ui.setCamera(cameraManager.getLabel());
     museum.setCeilingVisible(!cameraManager.isOverheadView());
   }
-  if(event.detail === "m") {
-    museum.dinosaurRoom.dinosaur.startWalking();
-    museum.statueRoom.statue.awaken();
-  }
+  // activate full museum awakening sequence
   if(event.detail === "t") {
     sceneManager.setAwakening();
     doorInteractionSystem.openAllDoors({ autoClose: false });
@@ -129,6 +130,7 @@ window.addEventListener("resize", function() {
 });
 
 function loop(time) {
+  // update gameplay, camera and render
   requestAnimationFrame(loop);
   const deltaTime =Math.min(0.05, (time- lastTime) / 1000);
   const elapsedTime =time / 1000;
