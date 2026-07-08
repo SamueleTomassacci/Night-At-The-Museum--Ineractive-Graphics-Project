@@ -98,7 +98,9 @@ inputManager.addEventListener("cameraDragged", function(event) {
 });
 
 ui.addEventListener("lightModeChanged",function(event) {
-  ui.setLightMode(lightingSystem.setMode(event.detail));
+  const mode = lightingSystem.setMode(event.detail);
+  player.setFlashlightActive(mode === "off");
+  ui.setLightMode(mode);
 });
 
 ui.addEventListener("secondaryIntensityChanged", function(event) {
@@ -150,6 +152,7 @@ function loop(time) {
 
 ui.setCamera(cameraManager.getLabel());
 museum.setCeilingVisible(!cameraManager.isOverheadView());
+player.setFlashlightActive(lightingSystem.mode === "off");
 ui.setLightMode(lightingSystem.mode);
 ui.setShadows(shadowsEnabled);
 requestAnimationFrame(loop);

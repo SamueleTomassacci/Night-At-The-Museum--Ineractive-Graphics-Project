@@ -114,6 +114,8 @@ export class Player {
     this.offsetQuaternion = new THREE.Quaternion();
     this.aimDirection = new THREE.Vector3(0, 0, 1);
     this.targetAimDirection = new THREE.Vector3(0, 0, 1);
+    // The flashlight pose is only active when the museum uses secondary lighting.
+    this.flashlightActive = false;
 
     this.createFlashlight();
     this.loadModel();
@@ -300,10 +302,20 @@ export class Player {
     const parentScale = Math.max(handWorldScale.x,handWorldScale.y, handWorldScale.z, 0.0001);
     const localScale = HELD_FLASHLIGHT_WORLD_SCALE/parentScale;
 
-    this.flashlightGroup.visible = true;
+    this.flashlightGroup.visible = this.flashlightActive;
     this.flashlightGroup.scale.setScalar(localScale);
     this.flashlightGroup.position.copy(HELD_FLASHLIGHT_HAND_OFFSET);
     this.updateHeldFlashlightTransform();
+  }
+
+  setFlashlightActive(active) {
+    this.flashlightActive = Boolean(active);
+    this.flashlightGroup.visible = this.flashlightActive;
+
+    // Rebuild the pose immediately, including when the player is stationary.
+    if (this.modelRoot) {
+      this.applyWalkPose();
+    }
   }
 
   update(deltaTime, elapsedTime) {
@@ -414,8 +426,12 @@ export class Player {
     this.modelRoot.updateMatrixWorld(true);
 
     this.applyArmSwing(this.armChains[0],-leftStep);
-    this.applyTorchArmPose(this.armChains[1],phase, strength);
-    this.applyRightHandGrip();
+    if (this.flashlightActive) {
+      this.applyTorchArmPose(this.armChains[1],phase, strength);
+      this.applyRightHandGrip();
+    } else {
+      this.applyArmSwing(this.armChains[1],-rightStep);
+    }
     this.applyLegSwing(this.legChains[0],leftStep);
     this.applyLegSwing(this.legChains[1],rightStep);
     this.updateHeldFlashlightTransform();
