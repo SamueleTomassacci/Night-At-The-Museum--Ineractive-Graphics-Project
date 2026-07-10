@@ -250,7 +250,6 @@ export class Player {
 
     const lens = new THREE.Mesh(new THREE.CircleGeometry(0.083, 20), this.flashlightLensMaterial);
     lens.position.z = 0.325;
-    lens.rotation.y = Math.PI;
 
     this.flashlight = new THREE.SpotLight(0xffe2b2, 0, 13, Math.PI / 8, 0.55, 1.25);
     this.flashlight.position.set(0, 0, 0.34);
