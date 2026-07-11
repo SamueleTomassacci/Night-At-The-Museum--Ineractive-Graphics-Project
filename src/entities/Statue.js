@@ -2,17 +2,22 @@ import * as THREE from "three";
 import * as TWEEN from "@tweenjs/tween.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+// Moai model setup and orientation
 const MOAI_MODEL_URL = new URL("../models/characters/moai_statue.glb", import.meta.url).href;
 const MOAI_TARGET_HEIGHT = 2.45;
 const MOAI_LOCAL_FACE_ANGLE = -THREE.MathUtils.degToRad(40);
 const MOAI_FACE_ENTRANCE_ROTATION = -Math.PI / 2 - MOAI_LOCAL_FACE_ANGLE;
 const PEDESTAL_HEIGHT = 0.55;
 const MOUTH_INTERIOR_DARKNESS = 0.08;
+
+// hopping animation values
 const HOP_FLOOR_Y = 0;
 const HOP_HEIGHT = 0.5;
 const HOP_DURATION = 620;
 const HOP_PAUSE = 90;
 const HOP_TILT = 0.12;
+
+// room hopping path
 const HOP_WAYPOINTS = [
   { x: 2.45, z: -1.7 },
   { x: 4.45, z: -0.9 },
@@ -21,6 +26,8 @@ const HOP_WAYPOINTS = [
   { x: 2.7, z: -2.25 },
   { x: 4.85, z: 0.95 }
 ];
+
+// path used when the museum awakens
 const ATRIUM_APPROACH_WAYPOINTS = [
   { x: 12.2, z: 0 },
   { x: 8.8, z: 0 },
@@ -35,6 +42,8 @@ const ATRIUM_LOOP_WAYPOINTS = [
   { x: 2.75, z: 0.2 },
   { x: 4.05, z: 0.05 }
 ];
+
+// simple mouth opening sequence
 const TALK_PHRASE = [
   { open: 0.52, openMs: 260, closeMs: 220, pauseMs: 90 },
   { open: 0.28, openMs: 180, closeMs: 170, pauseMs: 55 },
@@ -56,6 +65,7 @@ export class Statue {
     this.modelRoot.add(this.createClickHitbox());
     this.group.add(this.pedestal, this.modelRoot);
     this.model = null;
+    // mouth shader animation state
     this.mouthState = { open: 0 };
     this.mouthOpenUniform = { value: 0 };
     this.mouthDeformations = [];
@@ -63,6 +73,7 @@ export class Statue {
     this.mouthCloseTween = null;
     this.mouthPlaying = false;
     this.talkIndex = 0;
+    // hopping state
     this.hopping = false;
     this.hopTween = null;
     this.hopIndex = 0;
@@ -76,6 +87,7 @@ export class Statue {
   }
 
   createPedestal() {
+    // simple stone base under the Moai
     const group = new THREE.Group();
     const base = new THREE.Mesh(
       new THREE.CylinderGeometry(1.15, 1.25, 0.18, 36),
@@ -101,6 +113,7 @@ export class Statue {
   }
 
   createClickHitbox() {
+    // invisible mesh to click on the statue
     const hitbox = new THREE.Mesh(
       new THREE.BoxGeometry(2.5, 3.2, 2.5),
       new THREE.MeshBasicMaterial({
@@ -116,6 +129,7 @@ export class Statue {
   }
 
   createFaceSpotlights() {
+    // lights aimed at the statue face before awakening
     const group = new THREE.Group();
     group.name = "Statue Face Spotlights";
 
@@ -154,6 +168,7 @@ export class Statue {
   }
 
   createModel() {
+    // load the Moai model and place it on the pedestal
     const loader = new GLTFLoader();
     const promise = loader.loadAsync(MOAI_MODEL_URL).then(gltf => {
       const model = gltf.scene;
@@ -189,6 +204,7 @@ export class Statue {
   }
 
   setupMouthDeformation(model) {
+    // prepare vertex offsets used to fake the talking mouth
     this.modelRoot.updateMatrixWorld(true);
     model.updateMatrixWorld(true);
 
@@ -292,6 +308,7 @@ export class Statue {
   }
 
   applyMouthShaderMaterial(mesh) {
+    // inject mouth offset and darkness into the material shader
     const enhance = material => {
       const shaderMaterial = material.clone();
 
@@ -351,6 +368,7 @@ export class Statue {
   }
 
   getMouthBand(model, mouthY, mouthRadiusY, frontStart, forward, lateral) {
+    // find the horizontal mouth area from the front vertices
     const vertex = new THREE.Vector3();
     let minLateral = Infinity;
     let maxLateral = -Infinity;
@@ -406,6 +424,7 @@ export class Statue {
   }
 
   getModelRootBounds(model) {
+    // measure the model in the statue local face directions
     const forward = this.getLocalFaceDirection();
     const lateral = new THREE.Vector2(forward.y, -forward.x);
     const vertex = new THREE.Vector3();
@@ -445,6 +464,7 @@ export class Statue {
   }
 
   startMouthAnimation() {
+    // play the short talking sequence when clicked
     if (this.mouthDeformations.length === 0 || this.mouthPlaying) {
       return;
     }
@@ -455,6 +475,7 @@ export class Statue {
   }
 
   playNextMouthSyllable() {
+    // chain one mouth opening into the next
     const syllable = TALK_PHRASE[this.talkIndex];
     this.talkIndex += 1;
 
@@ -524,6 +545,7 @@ export class Statue {
   }
 
   startHopping(waypoints = HOP_WAYPOINTS, options = {}) {
+    // start or restart the hopping path
     const {
       restart = false,
       loop = true,
@@ -548,6 +570,7 @@ export class Statue {
   }
 
   startNextHop(delay = HOP_PAUSE) {
+    // jump toward the next waypoint and loop when needed
     if (this.hopIndex >= this.hopWaypoints.length) {
       if (this.hopLoopWaypoints) {
         this.hopWaypoints = this.hopLoopWaypoints;
@@ -621,6 +644,7 @@ export class Statue {
   }
 
   getGroundAnchor(model) {
+    // use lower vertices to keep the imported model grounded
     const box = new THREE.Box3().setFromObject(model);
     const size = box.getSize(new THREE.Vector3());
     const cutoffY = box.min.y + size.y * 0.22;
@@ -662,6 +686,7 @@ export class Statue {
   }
 
   awakenIntoAtrium() {
+    // switch from room path to atrium path
     const approachWaypoints = ATRIUM_APPROACH_WAYPOINTS.map(waypoint => this.toLocalHopWaypoint(waypoint));
     const loopWaypoints = ATRIUM_LOOP_WAYPOINTS.map(waypoint => this.toLocalHopWaypoint(waypoint));
 

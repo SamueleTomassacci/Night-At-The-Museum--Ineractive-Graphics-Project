@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import * as TWEEN from "@tweenjs/tween.js";
 
+// player scale and walking animation timings
 const PLAYER_MODEL_HEIGHT = 2.05;
 const WALK_CYCLE_DURATION = 760;
 const WALK_START_DURATION = 160;
@@ -12,6 +13,7 @@ const HELD_FLASHLIGHT_WORLD_SCALE = 0.44;
 const HELD_FLASHLIGHT_HAND_OFFSET = new THREE.Vector3(0.2, 5.0, 5.0);
 const RIGHT_WRIST_GRIP_BEND = THREE.MathUtils.degToRad(40);
 const RIGHT_HAND_BONE_NAME = "mixamorig:RightHand_035";
+// finger bones used for the flashlight grip
 const RIGHT_HAND_GRIP_CHAINS = [
   {
     base: "mixamorig:RightHandThumb1_036",
@@ -50,6 +52,7 @@ const RIGHT_HAND_GRIP_CHAINS = [
   }
 ];
 
+// arm bones used for procedural swing and aiming
 const ARM_CHAINS = [
   {
     upper: "mixamorig:LeftArm_09",
@@ -65,6 +68,7 @@ const ARM_CHAINS = [
   }
 ];
 
+// leg bones used for procedural walking
 const LEG_CHAINS = [
   {
     upper: "mixamorig:LeftUpLeg_055",
@@ -97,6 +101,7 @@ export class Player {
 
     this.modelRoot = null;
     this.modelBasePosition = new THREE.Vector3();
+    // walk cycle and procedural pose state
     this.walkDirection = 1;
     this.isWalking = false;
     this.walkState = { phase: 0, strength: 0 };
@@ -122,6 +127,7 @@ export class Player {
   }
 
   loadModel() {
+    // load, scale and prepare the player model
     this.factory.loadPolicemanModel()
       .then(model => {
         const instance = this.factory.createPolicemanModelInstance(model, PLAYER_MODEL_HEIGHT);
@@ -142,6 +148,7 @@ export class Player {
   }
 
   setupHierarchicalWalk(model) {
+    // cache bones used by walk and flashlight poses
     this.animatedBones = [];
     this.armChains = ARM_CHAINS.map(config => this.createAnimatedChain(model,config)).filter(Boolean);
     this.legChains = LEG_CHAINS.map(config => this.createAnimatedChain(model, config)).filter(Boolean);
@@ -220,6 +227,7 @@ export class Player {
   }
 
   createFlashlight() {
+    // small handheld flashlight with its spotlight target
     this.flashlightGroup = new THREE.Group();
     this.flashlightGroup.name = "Player Flashlight";
     this.flashlightGroup.visible = false;
@@ -287,6 +295,7 @@ export class Player {
   }
 
   attachFlashlightToHand(model) {
+    // attach flashlight to the right hand and keep a stable scale
     const hand = this.rightHand ?? this.getModelObjectByOriginalName(model, RIGHT_HAND_BONE_NAME);
 
     if (!hand) {
@@ -318,6 +327,7 @@ export class Player {
   }
 
   update(deltaTime, elapsedTime) {
+    // read input, move the player and refresh the pose
     const previousPosition =this.group.position.clone();
     const turnInput = (this.inputManager.isDown("d") ? 1 :0) - (this.inputManager.isDown("a") ? 1 : 0);
     const moveInput = (this.inputManager.isDown("w") ? 1 : 0) -(this.inputManager.isDown("s") ? 1 : 0);
@@ -343,6 +353,7 @@ export class Player {
   }
 
   setWalking(walking) {
+    // fade the walking strength when movement starts or stops
     if(walking === this.isWalking) {
       return;
     }
@@ -377,6 +388,7 @@ export class Player {
   }
 
   startWalkCycle() {
+    // loop the walk phase while movement is active
     if(this.walkTween) {
       return;
     }
@@ -400,6 +412,7 @@ export class Player {
   }
 
   applyWalkPose() {
+    // rebuild the procedural pose from the current walk phase
     if(!this.modelRoot) {
       return;
     }
@@ -454,6 +467,7 @@ export class Player {
   }
 
   applyTorchArmPose(chain, phase, strength) {
+    // aim the right arm toward the flashlight direction
     if (!chain) {
       return;
     }
@@ -528,6 +542,7 @@ export class Player {
   }
 
   applyLegSwing(chain, swing) {
+    // lift the advancing foot and bend the supporting leg
     if (!chain) {
       return;
     }
@@ -598,6 +613,7 @@ export class Player {
   }
 
   rotateBoneTowardChild(bone, childBone, targetWorldDirection) {
+    // rotate a bone so its child points toward the target direction
     const bonePosition = bone.getWorldPosition(new THREE.Vector3());
     const childPosition = childBone.getWorldPosition(new THREE.Vector3());
     const currentDirection = childPosition.sub(bonePosition).normalize();
