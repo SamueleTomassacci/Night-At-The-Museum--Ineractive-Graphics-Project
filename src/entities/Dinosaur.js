@@ -200,7 +200,8 @@ function bodyMovementProgressAt(elapsed) {
 
 // Main Dinosaur class
 export class Dinosaur {
-  constructor() {
+  constructor(loadingController) {
+    this.loadingController = loadingController;
     this.group = new THREE.Group();
     this.group.position.set(-16.5, 0.05, 0);
     this.group.rotation.y = Math.PI * 0.5;
@@ -271,7 +272,7 @@ export class Dinosaur {
     this.tweenGroup = new TWEEN.Group();
 
     this.createClickHitbox();
-    this.loadModel();
+    this.ready = this.loadModel();
   }
 
   createClickHitbox() {
@@ -292,52 +293,51 @@ export class Dinosaur {
   loadModel() {
     const loader = new GLTFLoader();
 
-    loader.load(
-      MODEL_URL,
-      gltf => {
-        const model = gltf.scene;
-        this.model = model;
-        model.rotation.x = 0;
-        model.updateMatrixWorld(true);
+    const promise = loader.loadAsync(MODEL_URL).then(gltf => {
+      const model = gltf.scene;
+      this.model = model;
+      model.rotation.x = 0;
+      model.updateMatrixWorld(true);
 
-        // scale the model to match MODEL_TARGET_HEIGHT
-        const initialBox = new THREE.Box3().setFromObject(model);
-        const initialSize = initialBox.getSize(new THREE.Vector3());
-        const scale = MODEL_TARGET_HEIGHT / initialSize.y;
-        model.scale.setScalar(scale);
-        model.updateMatrixWorld(true);
+      // scale the model to match MODEL_TARGET_HEIGHT
+      const initialBox = new THREE.Box3().setFromObject(model);
+      const initialSize = initialBox.getSize(new THREE.Vector3());
+      const scale = MODEL_TARGET_HEIGHT / initialSize.y;
+      model.scale.setScalar(scale);
+      model.updateMatrixWorld(true);
 
-        const box = new THREE.Box3().setFromObject(model);
-        const center = box.getCenter(new THREE.Vector3());
-        model.position.set(-center.x, -box.min.y, -center.z);
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.set(-center.x, -box.min.y, -center.z);
 
-        model.traverse(child => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
+      model.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
 
-            if (child.isSkinnedMesh) {
-              child.frustumCulled = false;
-            }
+          if (child.isSkinnedMesh) {
+            child.frustumCulled = false;
           }
-        });
+        }
+      });
 
-        this.mobileRoot.add(model);
-        this.keepPlatformOnDisplayBase(model);
-        this.setupTailAnimation(model);
-        this.setupJawAnimation(model);
-        this.setupHeadNeckAnimation(model);
-        this.setupBodyAnimation(model);
-        this.setupLegCompensation(model);
-        this.setupArmAnimation(model);
-        this.setupLeftStep(model);
-        this.setupWalking(model);
-      },
-      undefined,
-      error => {
-        console.error("Failed to load the T-Rex model:", error);
-      }
-    );
+      this.mobileRoot.add(model);
+      this.keepPlatformOnDisplayBase(model);
+      this.setupTailAnimation(model);
+      this.setupJawAnimation(model);
+      this.setupHeadNeckAnimation(model);
+      this.setupBodyAnimation(model);
+      this.setupLegCompensation(model);
+      this.setupArmAnimation(model);
+      this.setupLeftStep(model);
+      this.setupWalking(model);
+    });
+
+    const trackedPromise = this.loadingController?.track(promise) ?? promise;
+    trackedPromise.catch(error => {
+      console.error("Failed to load the T-Rex model:", error);
+    });
+    return trackedPromise;
   }
 
   keepPlatformOnDisplayBase(model) {

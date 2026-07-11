@@ -3,10 +3,10 @@ import { Statue } from "../entities/Statue.js";
 import { addWallSconce } from "./wallSconces.js";
 
 export class StatueRoom {
-  constructor(factory, lightingSystem) {
+  constructor(factory, lightingSystem, loadingController) {
     this.group = new THREE.Group();
     this.group.name = "Statue Room";
-    this.statue=new Statue(factory.materials);
+    this.statue=new Statue(factory.materials, loadingController);
     this.createRoom(factory,lightingSystem);
     this.group.add(this.statue.group);
   }

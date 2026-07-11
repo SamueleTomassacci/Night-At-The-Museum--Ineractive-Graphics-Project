@@ -3,10 +3,10 @@ import { Dinosaur } from "../entities/Dinosaur.js";
 import { addWallSconce } from "./wallSconces.js";
 
 export class DinosaurRoom {
-  constructor(factory, lightingSystem) {
+  constructor(factory, lightingSystem, loadingController) {
     this.group = new THREE.Group();
     this.group.name = "Dinosaur Room";
-    this.dinosaur = new Dinosaur();
+    this.dinosaur = new Dinosaur(loadingController);
     this.createRoom(factory,lightingSystem);
     this.group.add(this.dinosaur.group);
   }

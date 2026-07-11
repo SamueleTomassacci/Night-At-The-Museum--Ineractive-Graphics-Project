@@ -12,10 +12,10 @@ const OBELISK_SHAFT_BOTTOM_RADIUS = 0.38;
 const OBELISK_SHAFT_TOP_RADIUS = 0.25;
 
 export class EgyptianRoom {
-  constructor(factory, lightingSystem) {
+  constructor(factory, lightingSystem, loadingController) {
     this.group = new THREE.Group();
     this.group.name = "Egyptian Room";
-    this.sarcophagus=new Sarcophagus(factory.materials);
+    this.sarcophagus=new Sarcophagus(factory.materials, loadingController);
     this.createRoom(factory,lightingSystem);
     this.group.add(this.sarcophagus.group);
   }

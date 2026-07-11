@@ -7,16 +7,16 @@ import { EgyptianRoom } from "./EgyptianRoom.js";
 import { GalleryRoom } from "./GalleryRoom.js";
 
 export class Museum {
-  constructor(factory,lightingSystem, sceneManager) {
+  constructor(factory,lightingSystem, sceneManager, loadingController) {
     this.group = new THREE.Group();
     this.factory=factory;
     this.lightingSystem = lightingSystem;
     this.sceneManager = sceneManager;
     this.hall = new Hall(factory,lightingSystem);
-    this.dinosaurRoom = new DinosaurRoom(factory,lightingSystem);
-    this.statueRoom = new StatueRoom(factory, lightingSystem);
-    this.egyptianRoom=new EgyptianRoom(factory, lightingSystem);
-    this.galleryRoom = new GalleryRoom(factory, lightingSystem);
+    this.dinosaurRoom = new DinosaurRoom(factory,lightingSystem, loadingController);
+    this.statueRoom = new StatueRoom(factory, lightingSystem, loadingController);
+    this.egyptianRoom=new EgyptianRoom(factory, lightingSystem, loadingController);
+    this.galleryRoom = new GalleryRoom(factory, lightingSystem, loadingController);
     // assemble every room in a museum group
     this.rooms = [
       this.hall,

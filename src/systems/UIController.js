@@ -4,6 +4,7 @@ export class UIController extends EventTarget {
   constructor(root) {
     super();
     this.root = root;
+    this.visible = true;
     this.values = {
       camera: CAMERA_LABELS.thirdPerson,
       lights: "Main Lighting",
@@ -18,12 +19,15 @@ export class UIController extends EventTarget {
     this.panel =document.createElement("section");
     this.panel.className = "museum-panel";
     this.panel.innerHTML = `
-      <h1>Night at the Museum</h1>
+      <header class="museum-panel-header">
+        <h1>Night at the Museum</h1>
+      </header>
       <div class="museum-grid">
         <div class="museum-row museum-section-row"><span class="museum-key">Controls</span><span class="museum-value"></span></div>
         <div class="museum-row"><span class="museum-key">W / S</span><span class="museum-value">Forward / Backward</span></div>
         <div class="museum-row"><span class="museum-key">A / D</span><span class="museum-value">Turn</span></div>
         <div class="museum-row"><span class="museum-key">C</span><span class="museum-value">Change Viewpoint</span></div>
+        <div class="museum-row"><span class="museum-key">H</span><span class="museum-value">Hide / Show menu</span></div>
         <div class="museum-row"><span class="museum-key">Mouse wheel</span><span class="museum-value">Zoom in / out</span></div>
         <div class="museum-row"><span class="museum-key">Mouse drag</span><span class="museum-value">Orbit camera</span></div>
         <div class="museum-row museum-section-row"><span class="museum-key">Status</span><span class="museum-value"></span></div>
@@ -57,15 +61,12 @@ export class UIController extends EventTarget {
         <output for="flashlight-range">13</output>
         <input id="flashlight-range" type="range" min="5" max="30" step="1" value="13" aria-label="Flashlight range">
       </div>
+      <section class="museum-wake-panel">
+        <span class="museum-key">T</span>
+        <span>Press T to wake the museum</span>
+      </section>
     `;
     this.root.appendChild(this.panel);
-    this.wakePanel = document.createElement("section");
-    this.wakePanel.className = "museum-wake-panel";
-    this.wakePanel.innerHTML = `
-      <span class="museum-key">T</span>
-      <span>Press T to wake the museum</span>
-    `;
-    this.root.appendChild(this.wakePanel);
     const lightModeSelect = this.panel.querySelector('[data-action="lightMode"]');
     const shadowButton = this.panel.querySelector('[data-action="shadows"]');
     const qualitySelect = this.panel.querySelector('[data-action="quality"]');
@@ -104,6 +105,15 @@ export class UIController extends EventTarget {
   setCamera(label) {
     this.values.camera = label;
     this.refresh();
+  }
+
+  setVisible(visible) {
+    this.visible = visible;
+    this.root.hidden = !visible;
+  }
+
+  toggleVisible() {
+    this.setVisible(!this.visible);
   }
 
   setLightMode(mode) {

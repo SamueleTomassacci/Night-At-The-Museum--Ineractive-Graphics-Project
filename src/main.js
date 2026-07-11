@@ -12,20 +12,22 @@ import { AnimationSystem } from "./systems/Animation.js";
 import { LightingSystem } from "./systems/Lighting.js";
 import { CollisionSystem } from "./systems/Collision.js";
 import { UIController } from "./systems/UIController.js";
+import { LoadingController } from "./systems/LoadingController.js";
 import { DoorInteractionSystem } from "./systems/DoorInteraction.js";
 import { ExhibitPromptSystem } from "./systems/ExhibitPrompt.js";
 
 // core app services and scene content.
+const loadingController = new LoadingController(document.getElementById("loading-root"));
 const renderer =new rendererClass();
 const sceneManager =new SceneManager();
 const cameraManager =new CameraManager();
 const inputManager =new InputManager(renderer.renderer.domElement);
-const materials = createMaterials();
-const factory =new Factory(materials);
+const materials = createMaterials(loadingController);
+const factory =new Factory(materials, loadingController);
 const lightingSystem = new LightingSystem(sceneManager.scene);
 const collisionSystem =new CollisionSystem();
 const animationSystem = new AnimationSystem();
-const museum = new Museum(factory,lightingSystem, sceneManager);
+const museum = new Museum(factory,lightingSystem, sceneManager, loadingController);
 const player = new Player(materials,inputManager, collisionSystem, factory);
 collisionSystem.register(museum.group);
 cameraManager.registerObstacleRoot(museum.group);
@@ -75,6 +77,9 @@ inputManager.addEventListener("keyPressed",function(event) {
     cameraManager.cycleMode();
     ui.setCamera(cameraManager.getLabel());
     museum.setCeilingVisible(!cameraManager.isOverheadView());
+  }
+  if(event.detail === "h") {
+    ui.toggleVisible();
   }
   // activate full museum awakening sequence
   if(event.detail === "t") {
@@ -155,4 +160,13 @@ museum.setCeilingVisible(!cameraManager.isOverheadView());
 player.setFlashlightActive(lightingSystem.mode === "off");
 ui.setLightMode(lightingSystem.mode);
 ui.setShadows(shadowsEnabled);
-requestAnimationFrame(loop);
+
+loadingController.waitForReady()
+  .then(() => {
+    loadingController.hide();
+    lastTime = performance.now();
+    requestAnimationFrame(loop);
+  })
+  .catch(error => {
+    loadingController.showError(error);
+  });

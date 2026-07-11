@@ -30,8 +30,9 @@ const COFFIN_TOP_PART_NAMES = [
 
 
 export class Sarcophagus {
-  constructor(materials) {
+  constructor(materials, loadingController) {
     this.materials = materials;
+    this.loadingController = loadingController;
     this.group = new THREE.Group();
     this.group.position.set(0, 0, -15);
     this.open = false; // whether the lid is currently open
@@ -45,7 +46,7 @@ export class Sarcophagus {
     this.topParts = []; // lid pieces that slide
     this.topSlideState = { distance: 0 };
     this.animationRunning = false;
-    this.createModel();
+    this.ready = this.createModel();
   }
 
   createPedestal() {
@@ -90,88 +91,79 @@ export class Sarcophagus {
     hitbox.position.y = PEDESTAL_HEIGHT + COFFIN_TARGET_HEIGHT * 0.5;
 
     this.group.add(this.pedestal, this.modelRoot, hitbox);
-    this.loadModel();
+    return this.loadModel();
   }
 
   loadModel() {
     const loader = new GLTFLoader();
 
-    loader.load(
-      COFFIN_MODEL_URL,
-      gltf => {
-        const model = gltf.scene;
-        // Reorient the model
-        model.quaternion.setFromRotationMatrix(COFFIN_UPRIGHT_ORIENTATION);
-        model.updateMatrixWorld(true);
+    const promise = loader.loadAsync(COFFIN_MODEL_URL).then(async gltf => {
+      const model = gltf.scene;
+      // Reorient the model
+      model.quaternion.setFromRotationMatrix(COFFIN_UPRIGHT_ORIENTATION);
+      model.updateMatrixWorld(true);
 
-        // Scale to match COFFIN_TARGET_HEIGHT
-        const initialBox = new THREE.Box3().setFromObject(model);
-        const initialSize = initialBox.getSize(new THREE.Vector3());
-        const scale = COFFIN_TARGET_HEIGHT / Math.max(initialSize.y, 0.001);
-        model.scale.setScalar(scale);
-        model.updateMatrixWorld(true);
+      // Scale to match COFFIN_TARGET_HEIGHT
+      const initialBox = new THREE.Box3().setFromObject(model);
+      const initialSize = initialBox.getSize(new THREE.Vector3());
+      const scale = COFFIN_TARGET_HEIGHT / Math.max(initialSize.y, 0.001);
+      model.scale.setScalar(scale);
+      model.updateMatrixWorld(true);
 
-        const box = new THREE.Box3().setFromObject(model);
-        const center = box.getCenter(new THREE.Vector3());
-        model.position.set(-center.x, -box.min.y, -center.z);
+      const box = new THREE.Box3().setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.set(-center.x, -box.min.y, -center.z);
 
-        model.traverse(child => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
+      model.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
 
-        this.model = model;
-        this.setupTopSlide(model);
-        this.applyTopSlide();
-        this.modelRoot.add(model);
+      this.model = model;
+      this.setupTopSlide(model);
+      this.applyTopSlide();
+      this.modelRoot.add(model);
 
-        this.loadMummy();
-      },
-      undefined,
-      error => {
-        console.error("Failed to load the sarcophagus model:", error);
-      }
-    );
+      await this.loadMummy();
+    });
+
+    const trackedPromise = this.loadingController?.track(promise) ?? promise;
+    trackedPromise.catch(error => {
+      console.error("Failed to load the sarcophagus model:", error);
+    });
+    return trackedPromise;
   }
 
-  loadMummy() {
+  async loadMummy() {
     const loader = new GLTFLoader();
 
-    loader.load(
-      MUMMY_MODEL_URL,
-      gltf => {
-        const mummy = gltf.scene;
-        mummy.updateMatrixWorld(true);
+    const gltf = await loader.loadAsync(MUMMY_MODEL_URL);
+    const mummy = gltf.scene;
+    mummy.updateMatrixWorld(true);
 
-        // Scale so the mummy's height matches MUMMY_TARGET_HEIGHT
-        const initialBox = new THREE.Box3().setFromObject(mummy);
-        const initialSize = initialBox.getSize(new THREE.Vector3());
-        const scale = MUMMY_TARGET_HEIGHT / Math.max(initialSize.y, 0.001);
-        mummy.scale.setScalar(scale);
-        mummy.updateMatrixWorld(true);
+    // Scale so the mummy's height matches MUMMY_TARGET_HEIGHT
+    const initialBox = new THREE.Box3().setFromObject(mummy);
+    const initialSize = initialBox.getSize(new THREE.Vector3());
+    const scale = MUMMY_TARGET_HEIGHT / Math.max(initialSize.y, 0.001);
+    mummy.scale.setScalar(scale);
+    mummy.updateMatrixWorld(true);
 
-        // Center the mummy in the sarcophagus
-        const box = new THREE.Box3().setFromObject(mummy);
-        const center = box.getCenter(new THREE.Vector3());
-        mummy.position.set(-center.x, 0.15 - box.min.y, -0.08 - center.z);
+    // Center the mummy in the sarcophagus
+    const box = new THREE.Box3().setFromObject(mummy);
+    const center = box.getCenter(new THREE.Vector3());
+    mummy.position.set(-center.x, 0.15 - box.min.y, -0.08 - center.z);
 
-        mummy.traverse(child => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-
-        mummy.name = "Mummy Inside Coffin";
-        this.modelRoot.add(mummy);
-      },
-      undefined,
-      error => {
-        console.error("Failed to load the mummy model:", error);
+    mummy.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
       }
-    );
+    });
+
+    mummy.name = "Mummy Inside Coffin";
+    this.modelRoot.add(mummy);
   }
 
   setupTopSlide(model) {

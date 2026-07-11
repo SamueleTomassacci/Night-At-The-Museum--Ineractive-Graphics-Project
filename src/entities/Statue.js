@@ -44,8 +44,9 @@ const TALK_PHRASE = [
 ];
 
 export class Statue {
-  constructor(materials) {
+  constructor(materials, loadingController) {
     this.materials = materials;
+    this.loadingController = loadingController;
     this.group = new THREE.Group();
     this.group.position.set(16.5, 0, 0);
     this.pedestal = this.createPedestal();
@@ -71,7 +72,7 @@ export class Statue {
     this.awake = false;
     this.faceSpotlights = this.createFaceSpotlights();
     this.group.add(this.faceSpotlights);
-    this.createModel();
+    this.ready = this.createModel();
   }
 
   createPedestal() {
@@ -153,37 +154,36 @@ export class Statue {
 
   createModel() {
     const loader = new GLTFLoader();
-    loader.load(
-      MOAI_MODEL_URL,
-      gltf => {
-        const model = gltf.scene;
+    const promise = loader.loadAsync(MOAI_MODEL_URL).then(gltf => {
+      const model = gltf.scene;
 
-        model.traverse(child => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
+      model.traverse(child => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
 
-        model.updateMatrixWorld(true);
-        const initialBox = new THREE.Box3().setFromObject(model);
-        const initialSize = initialBox.getSize(new THREE.Vector3());
-        const scale = MOAI_TARGET_HEIGHT / Math.max(initialSize.y, 0.001);
-        model.scale.setScalar(scale);
+      model.updateMatrixWorld(true);
+      const initialBox = new THREE.Box3().setFromObject(model);
+      const initialSize = initialBox.getSize(new THREE.Vector3());
+      const scale = MOAI_TARGET_HEIGHT / Math.max(initialSize.y, 0.001);
+      model.scale.setScalar(scale);
 
-        model.updateMatrixWorld(true);
-        const groundAnchor = this.getGroundAnchor(model);
-        model.position.set(-groundAnchor.x, -groundAnchor.y, -groundAnchor.z);
+      model.updateMatrixWorld(true);
+      const groundAnchor = this.getGroundAnchor(model);
+      model.position.set(-groundAnchor.x, -groundAnchor.y, -groundAnchor.z);
 
-        this.model = model;
-        this.modelRoot.add(model);
-        this.setupMouthDeformation(model);
-      },
-      undefined,
-      error => {
-        console.error("Failed to load the Moai model:", error);
-      }
-    );
+      this.model = model;
+      this.modelRoot.add(model);
+      this.setupMouthDeformation(model);
+    });
+
+    const trackedPromise = this.loadingController?.track(promise) ?? promise;
+    trackedPromise.catch(error => {
+      console.error("Failed to load the Moai model:", error);
+    });
+    return trackedPromise;
   }
 
   setupMouthDeformation(model) {

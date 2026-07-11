@@ -20,9 +20,10 @@ const DOOR_RAIL_THICKNESS = 0.1;
 const DOOR_STILE_THICKNESS = 0.09;
 
 export class Factory {
-  constructor(materials) {
+  constructor(materials, loadingController) {
     // builds reusable meshes and loaded model instances
     this.materials=materials;
+    this.loadingController = loadingController;
     this.columnModelPromise = null;
     this.benchModelPromise=null;
     this.ceilingLightModelPromise = null;
@@ -111,7 +112,7 @@ export class Factory {
     if (!this.ceilingLightModelPromise) {
       // Load the chandelier and then reuse it 
       const loader = new GLTFLoader();
-      this.ceilingLightModelPromise = loader.loadAsync(CEILING_LIGHT_MODEL_URL).then(gltf => {
+      const promise = loader.loadAsync(CEILING_LIGHT_MODEL_URL).then(gltf => {
         const model = gltf.scene;
         model.traverse(child => {
           if (child.isMesh) {
@@ -121,6 +122,7 @@ export class Factory {
         });
         return model;
       });
+      this.ceilingLightModelPromise = this.loadingController?.track(promise) ?? promise;
     }
 
     return this.ceilingLightModelPromise;
@@ -210,7 +212,7 @@ export class Factory {
   loadColumnModel() {
     if (!this.columnModelPromise) {
       const loader = new GLTFLoader();
-      this.columnModelPromise = loader.loadAsync(COLUMN_MODEL_URL).then(gltf => {
+      const promise = loader.loadAsync(COLUMN_MODEL_URL).then(gltf => {
         const model = gltf.scene;
         model.traverse(child => {
           if (child.isMesh) {
@@ -220,6 +222,7 @@ export class Factory {
         });
         return model;
       });
+      this.columnModelPromise = this.loadingController?.track(promise) ?? promise;
     }
 
     return this.columnModelPromise;
@@ -364,7 +367,7 @@ export class Factory {
     context.lineWidth = 8;
     context.strokeRect(10, 10, 492, 108);
     context.fillStyle = "#ffe3a6";
-    context.font = "bold 40px serif";
+    context.font = 'bold 40px "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif';
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.fillText(text, 256, 67);
@@ -409,7 +412,7 @@ export class Factory {
     if (!this.policemanModelPromise) {
       // load the policeman model once and reuse it for cloned instances
       const loader = new GLTFLoader();
-      this.policemanModelPromise = loader.loadAsync(POLICEMAN_MODEL_URL).then(async gltf => {
+      const promise = loader.loadAsync(POLICEMAN_MODEL_URL).then(async gltf => {
         const model = gltf.scene;
         gltf.animations.length = 0;
         await this.applyPolicemanSpecGlossMaterials(gltf);
@@ -421,6 +424,7 @@ export class Factory {
         });
         return model;
       });
+      this.policemanModelPromise = this.loadingController?.track(promise) ?? promise;
     }
 
     return this.policemanModelPromise;
@@ -558,7 +562,7 @@ export class Factory {
     if (!this.benchModelPromise) {
       // load the bench mode and reuse it for every bench in the scene
       const loader = new GLTFLoader();
-      this.benchModelPromise = loader.loadAsync(BENCH_MODEL_URL).then(gltf => {
+      const promise = loader.loadAsync(BENCH_MODEL_URL).then(gltf => {
         const model = gltf.scene;
         model.traverse(child => {
           if (child.isMesh) {
@@ -568,6 +572,7 @@ export class Factory {
         });
         return model;
       });
+      this.benchModelPromise = this.loadingController?.track(promise) ?? promise;
     }
 
     return this.benchModelPromise;

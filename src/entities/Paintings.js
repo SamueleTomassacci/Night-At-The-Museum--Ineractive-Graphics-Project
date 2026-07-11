@@ -19,14 +19,29 @@ const PAINTING_PROMPT_DISTANCE = 4.2;
 const textureLoader = new THREE.TextureLoader();
 const textureCache = new Map();
 
-function loadPaintingTexture(url) {
+function loadPaintingTexture(url, loadingController) {
   if (!textureCache.has(url)) {
     // Load the texture and crop it
-    const texture = textureLoader.load(url, loadedTexture => {
-      fitTextureToPainting(loadedTexture);
-      loadedTexture.needsUpdate = true;
+    let resolveTexture;
+    let rejectTexture;
+    const promise = new Promise((resolve, reject) => {
+      resolveTexture = resolve;
+      rejectTexture = reject;
     });
+    const texture = textureLoader.load(
+      url,
+      loadedTexture => {
+        fitTextureToPainting(loadedTexture);
+        loadedTexture.needsUpdate = true;
+        resolveTexture(loadedTexture);
+      },
+      undefined,
+      error => {
+        rejectTexture(error);
+      }
+    );
     texture.colorSpace = THREE.SRGBColorSpace;
+    loadingController?.track(promise);
     textureCache.set(url, texture);
   }
 
@@ -54,10 +69,11 @@ function fitTextureToPainting(texture) {
 }
 
 class Painting {
-  constructor(materials, index, position, rotationY, textureIndex, onRequestTextureChange) {
+  constructor(materials, index, position, rotationY, textureIndex, onRequestTextureChange, loadingController) {
     this.materials = materials;
     this.index = index;
     this.textureIndex = textureIndex;
+    this.loadingController = loadingController;
     // pick a new texture for the painting
     this.onRequestTextureChange = onRequestTextureChange;
     this.group = new THREE.Group();
@@ -103,7 +119,7 @@ class Painting {
   }
 
   getTexture() {
-    return loadPaintingTexture(PAINTING_IMAGE_URLS[this.textureIndex]);
+    return loadPaintingTexture(PAINTING_IMAGE_URLS[this.textureIndex], this.loadingController);
   }
 
   setTextureIndex(textureIndex) {
@@ -133,17 +149,21 @@ class Painting {
 
 // Manages the full set of paintings in the scene
 export class Paintings {
-  constructor(materials) {
+  constructor(materials, loadingController) {
     this.materials = materials;
+    this.loadingController = loadingController;
     this.group = new THREE.Group();
     this.nextTextureCursor = 4;
     this.prompt = this.createPrompt();
+    PAINTING_IMAGE_URLS.forEach(url => {
+      loadPaintingTexture(url, loadingController);
+    });
     // painting placements
     this.paintings = [
-      new Painting(materials, 0, [-2.4, 2.3, 22.68], 0, 0, painting => this.changePaintingTexture(painting)),
-      new Painting(materials, 1, [2.4, 2.3, 22.68], 0, 1, painting => this.changePaintingTexture(painting)),
-      new Painting(materials, 2, [-7.68, 2.3, 15.2], Math.PI * 0.5, 2, painting => this.changePaintingTexture(painting)),
-      new Painting(materials, 3, [7.68, 2.3, 15.2], -Math.PI * 0.5, 3, painting => this.changePaintingTexture(painting))
+      new Painting(materials, 0, [-2.4, 2.3, 22.68], 0, 0, painting => this.changePaintingTexture(painting), loadingController),
+      new Painting(materials, 1, [2.4, 2.3, 22.68], 0, 1, painting => this.changePaintingTexture(painting), loadingController),
+      new Painting(materials, 2, [-7.68, 2.3, 15.2], Math.PI * 0.5, 2, painting => this.changePaintingTexture(painting), loadingController),
+      new Painting(materials, 3, [7.68, 2.3, 15.2], -Math.PI * 0.5, 3, painting => this.changePaintingTexture(painting), loadingController)
     ];
     this.paintings.forEach(painting => {
       this.group.add(painting.group);
@@ -159,11 +179,16 @@ export class Paintings {
     prompt.style.bottom = "72px";
     prompt.style.transform = "translateX(-50%)";
     prompt.style.padding = "10px 16px";
-    prompt.style.border = "1px solid rgba(255, 228, 174, 0.65)";
-    prompt.style.borderRadius = "6px";
-    prompt.style.background = "rgba(12, 17, 28, 0.78)";
-    prompt.style.color = "#ffe4ae";
-    prompt.style.font = "600 18px/1.2 system-ui, sans-serif";
+    prompt.style.border = "0";
+    prompt.style.borderRadius = "4px";
+    prompt.style.background = "rgba(17, 13, 10, 0.94)";
+    prompt.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.22)";
+    prompt.style.clipPath = "polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)";
+    prompt.style.color = "#cbb98e";
+    prompt.style.fontFamily = "var(--museum-font-family)";
+    prompt.style.fontSize = "18px";
+    prompt.style.fontWeight = "600";
+    prompt.style.lineHeight = "1.2";
     prompt.style.letterSpacing = "0";
     prompt.style.pointerEvents = "none";
     prompt.style.display = "none"; 

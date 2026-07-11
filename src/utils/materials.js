@@ -44,7 +44,31 @@ function configureCeilingTexture(texture) {
   return texture;
 }
 
-function createExternalFloorMaterial() {
+function loadTrackedTexture(textureLoader, url, loadingController, onLoad) {
+  let resolveTexture;
+  let rejectTexture;
+  const promise = new Promise((resolve, reject) => {
+    resolveTexture = resolve;
+    rejectTexture = reject;
+  });
+
+  const texture = textureLoader.load(
+    url,
+    loadedTexture => {
+      onLoad?.(loadedTexture);
+      resolveTexture(loadedTexture);
+    },
+    undefined,
+    error => {
+      rejectTexture(error);
+    }
+  );
+
+  loadingController?.track(promise);
+  return texture;
+}
+
+function createExternalFloorMaterial(loadingController) {
   const textureLoader = new THREE.TextureLoader();
   const material = new THREE.MeshStandardMaterial({
     map: null,
@@ -54,11 +78,11 @@ function createExternalFloorMaterial() {
     metalness: 0.0
   });
 
-  const colorTexture=configureFloorTexture(textureLoader.load(FLOOR_TEXTURE_PATHS.color));
+  const colorTexture=configureFloorTexture(loadTrackedTexture(textureLoader, FLOOR_TEXTURE_PATHS.color, loadingController));
   colorTexture.colorSpace = THREE.SRGBColorSpace;
 
-  const normalTexture = configureFloorTexture(textureLoader.load(FLOOR_TEXTURE_PATHS.normal));
-  const roughnessTexture = configureFloorTexture(textureLoader.load(FLOOR_TEXTURE_PATHS.roughness));
+  const normalTexture = configureFloorTexture(loadTrackedTexture(textureLoader, FLOOR_TEXTURE_PATHS.normal, loadingController));
+  const roughnessTexture = configureFloorTexture(loadTrackedTexture(textureLoader, FLOOR_TEXTURE_PATHS.roughness, loadingController));
 
   material.map=colorTexture;
   material.normalMap = normalTexture;
@@ -67,7 +91,7 @@ function createExternalFloorMaterial() {
   return material;
 }
 
-function createExternalWallMaterial() {
+function createExternalWallMaterial(loadingController) {
   const textureLoader = new THREE.TextureLoader();
   const material = new THREE.MeshStandardMaterial({
     map: null,
@@ -77,11 +101,11 @@ function createExternalWallMaterial() {
     metalness: 0.0
   });
 
-  const colorTexture=configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.color));
+  const colorTexture=configureWallTexture(loadTrackedTexture(textureLoader, WALL_TEXTURE_PATHS.color, loadingController));
   colorTexture.colorSpace = THREE.SRGBColorSpace;
 
-  const normalTexture = configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.normal));
-  const roughnessTexture = configureWallTexture(textureLoader.load(WALL_TEXTURE_PATHS.roughness));
+  const normalTexture = configureWallTexture(loadTrackedTexture(textureLoader, WALL_TEXTURE_PATHS.normal, loadingController));
+  const roughnessTexture = configureWallTexture(loadTrackedTexture(textureLoader, WALL_TEXTURE_PATHS.roughness, loadingController));
 
   material.map=colorTexture;
   material.normalMap = normalTexture;
@@ -90,10 +114,10 @@ function createExternalWallMaterial() {
   return material;
 }
 
-function createCeilingMaterial() {
+function createCeilingMaterial(loadingController) {
   const textureLoader=new THREE.TextureLoader();
-  const colorTexture = configureCeilingTexture(textureLoader.load(CEILING_TEXTURE_PATHS.color));
-  const bumpTexture = configureCeilingTexture(textureLoader.load(CEILING_TEXTURE_PATHS.bump));
+  const colorTexture = configureCeilingTexture(loadTrackedTexture(textureLoader, CEILING_TEXTURE_PATHS.color, loadingController));
+  const bumpTexture = configureCeilingTexture(loadTrackedTexture(textureLoader, CEILING_TEXTURE_PATHS.bump, loadingController));
   colorTexture.colorSpace = THREE.SRGBColorSpace;
 
   return new THREE.MeshStandardMaterial({
@@ -106,16 +130,16 @@ function createCeilingMaterial() {
   });
 }
 
-export function createMaterials() {
+export function createMaterials(loadingController) {
   const woodTexture = createWoodTexture();
   const obeliskTexture = createObeliskTexture();
-  const floorMaterial = createExternalFloorMaterial();
-  const wallMaterial = createExternalWallMaterial();
+  const floorMaterial = createExternalFloorMaterial(loadingController);
+  const wallMaterial = createExternalWallMaterial(loadingController);
 
   return {
     floor: floorMaterial,
     wall: wallMaterial,
-    ceiling: createCeilingMaterial(),
+    ceiling: createCeilingMaterial(loadingController),
     trim: new THREE.MeshStandardMaterial({ color: COLORS.trim,roughness: 0.58 }),
     wood: new THREE.MeshStandardMaterial({
       map: woodTexture,
