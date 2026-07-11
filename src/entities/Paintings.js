@@ -100,16 +100,12 @@ class Painting {
       map: this.getTexture(),
       roughness: 0.34,
       metalness: 0.04,
-      emissive: 0x000000,
       side: THREE.DoubleSide
     });
     this.surface = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.22), artMaterial);
     this.surface.position.z = -0.12;
 
-    // slightly larger glass pane in front of the canvas
-    const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.3), this.materials.glass);
-    glass.position.z = -0.17;
-    this.group.add(topFrame, bottomFrame, leftFrame, rightFrame, this.surface, glass);
+    this.group.add(topFrame, bottomFrame, leftFrame, rightFrame, this.surface);
     this.group.traverse(child => {
       if (child.isMesh) {
         child.castShadow = true;
@@ -134,10 +130,7 @@ class Painting {
   }
 
   react(strength) {
-    // Lights up the canvas
     this.reactive = strength > 0;
-    this.surface.material.emissive.setHex(this.reactive ? 0x222244 : 0x000000);
-    this.surface.material.emissiveIntensity = strength * 0.9;
   }
 
   update(deltaTime, elapsedTime) {
@@ -160,8 +153,8 @@ export class Paintings {
     });
     // painting placements
     this.paintings = [
-      new Painting(materials, 0, [-2.4, 2.3, 22.68], 0, 0, painting => this.changePaintingTexture(painting), loadingController),
-      new Painting(materials, 1, [2.4, 2.3, 22.68], 0, 1, painting => this.changePaintingTexture(painting), loadingController),
+      new Painting(materials, 0, [-2.4, 2.3, 22.68], Math.PI, 0, painting => this.changePaintingTexture(painting), loadingController),
+      new Painting(materials, 1, [2.4, 2.3, 22.68], Math.PI, 1, painting => this.changePaintingTexture(painting), loadingController),
       new Painting(materials, 2, [-7.68, 2.3, 15.2], Math.PI * 0.5, 2, painting => this.changePaintingTexture(painting), loadingController),
       new Painting(materials, 3, [7.68, 2.3, 15.2], -Math.PI * 0.5, 3, painting => this.changePaintingTexture(painting), loadingController)
     ];
