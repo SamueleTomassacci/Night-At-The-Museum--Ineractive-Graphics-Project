@@ -110,6 +110,7 @@ export class Statue {
       })
     );
     hitbox.name = "Statue Click Hitbox";
+    hitbox.userData.isCameraObstacle = true;
     hitbox.position.y = 1.45;
     return hitbox;
   }
@@ -161,6 +162,7 @@ export class Statue {
         if (child.isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
+          child.frustumCulled = false;
         }
       });
 

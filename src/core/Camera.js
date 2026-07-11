@@ -211,7 +211,11 @@ export class CameraManager {
       current = current.parent;
     }
 
-    // fully transparent materials arenìt obstacles
+    if (object.userData?.isCameraObstacle) {
+      return true;
+    }
+
+    // Fully transparent materials are skipped unless explicitly marked above.
     const material = Array.isArray(object.material) ? object.material[0] : object.material;
     return !(material?.transparent && material.opacity === 0);
   }
